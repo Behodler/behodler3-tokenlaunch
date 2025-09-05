@@ -10,13 +10,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title Behodler3Tokenlaunch (B3)
  * @notice Bootstrap AMM using Virtual Pair architecture for token launches
- * @dev THIS IS A CONTRACT STUB FOR TDD RED PHASE - IMPLEMENTATIONS WILL FAIL
+ * @dev Refactored to eliminate code duplication and implement DRY principles
  * 
  * CRITICAL CONCEPT: Virtual Pair Architecture
  * - Virtual Pair: (inputToken, virtualL) where virtualL exists only as internal accounting
  * - Initial setup: (10000 inputToken, 100000000 virtualL) establishing k = 1,000,000,000,000
  * - Trading: Calculate virtual swap FIRST using xy=k, THEN mint actual bondingToken
  * - virtualL is NOT the same as bondingToken.totalSupply() - it's virtual/unminted
+ * 
+ * REFACTORING NOTES (Stories 002 & 003):
+ * - Add operations use _calculateBondingTokensOut() for DRY principle compliance
+ * - Remove operations use _calculateInputTokensOut() for symmetric architecture
+ * - Both utilize _calculateVirtualPairQuote() for generalized quote logic
+ * - Eliminates all code duplication between quote and actual operation functions
  */
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
@@ -81,8 +87,34 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     // ============ INTERNAL HELPER FUNCTIONS ============
     
     /**
+     * @notice Generalized quote calculation for virtual pair operations (DRY principle)
+     * @dev Unified logic for both add and remove operations using virtual pair math formula
+     * @param virtualFrom Current virtual amount of the token being reduced
+     * @param virtualTo Current virtual amount of the token being increased  
+     * @param inputAmount Amount of tokens being added to virtualTo
+     * @return outputAmount Amount of tokens that would be reduced from virtualFrom
+     */
+    function _calculateVirtualPairQuote(
+        uint256 virtualFrom, 
+        uint256 virtualTo, 
+        uint256 inputAmount
+    ) 
+        internal 
+        pure 
+        returns (uint256 outputAmount) 
+    {
+        // Generalized virtual pair formula: newVirtualFrom = K / (virtualTo + inputAmount)
+        uint256 newVirtualFrom = K / (virtualTo + inputAmount);
+        
+        // Output amount = reduction in virtualFrom
+        outputAmount = virtualFrom - newVirtualFrom;
+        
+        return outputAmount;
+    }
+
+    /**
      * @notice Calculate bonding tokens output for a given input amount using virtual pair math
-     * @dev Extracted common logic to eliminate duplication between addLiquidity and quoteAddLiquidity
+     * @dev Uses generalized quote logic to eliminate duplication across quote system
      * @param inputAmount Amount of input tokens being added
      * @return bondingTokensOut Amount of bonding tokens that would be minted
      */
@@ -91,13 +123,27 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         view 
         returns (uint256 bondingTokensOut) 
     {
-        // Calculate new virtual L after input: newVirtualL = K / (virtualInputTokens + inputAmount)
-        uint256 newVirtualL = K / (virtualInputTokens + inputAmount);
-        
-        // Bonding tokens minted = reduction in virtual L
-        bondingTokensOut = virtualL - newVirtualL;
+        // Use generalized quote: virtualL reduces, virtualInputTokens increases
+        bondingTokensOut = _calculateVirtualPairQuote(virtualL, virtualInputTokens, inputAmount);
         
         return bondingTokensOut;
+    }
+    
+    /**
+     * @notice Calculate input tokens output for a given bonding token amount using virtual pair math
+     * @dev Uses generalized quote logic to eliminate duplication across quote system
+     * @param bondingTokenAmount Amount of bonding tokens being burned
+     * @return inputTokensOut Amount of input tokens that would be received
+     */
+    function _calculateInputTokensOut(uint256 bondingTokenAmount) 
+        internal 
+        view 
+        returns (uint256 inputTokensOut) 
+    {
+        // Use generalized quote: virtualInputTokens reduces, virtualL increases
+        inputTokensOut = _calculateVirtualPairQuote(virtualInputTokens, virtualL, bondingTokenAmount);
+        
+        return inputTokensOut;
     }
     
     // ============ MAIN FUNCTIONS - ALL STUBS THAT WILL FAIL ============
@@ -146,6 +192,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     /**
      * @notice Remove liquidity from the bootstrap AMM
+     * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance
      * @param bondingTokenAmount Amount of bonding tokens to burn
      * @param minInputTokens Minimum input tokens to receive (MEV protection)
      * @return inputTokensOut Amount of input tokens received
@@ -159,9 +206,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
         
-        // Calculate input tokens using virtual pair math
-        uint256 newVirtualInputTokens = K / (virtualL + bondingTokenAmount);
-        inputTokensOut = virtualInputTokens - newVirtualInputTokens;
+        // Calculate input tokens using refactored virtual pair math
+        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
         
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
@@ -176,6 +222,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         
         // Update virtual pair state
+        uint256 newVirtualInputTokens = K / (virtualL + bondingTokenAmount);
         virtualInputTokens = newVirtualInputTokens;
         virtualL += bondingTokenAmount;
         
@@ -205,6 +252,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     /**
      * @notice Quote how many input tokens would be received for removing liquidity
+     * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity
      * @param bondingTokenAmount Amount of bonding tokens to burn
      * @return inputTokensOut Expected input tokens to be received
      */
@@ -215,9 +263,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     {
         if (bondingTokenAmount == 0) return 0;
         
-        // Calculate using virtual pair math: inputTokens_out = virtualInputTokens - (K / (virtualL + bondingAmount))
-        uint256 newVirtualInputTokens = K / (virtualL + bondingTokenAmount);
-        inputTokensOut = virtualInputTokens - newVirtualInputTokens;
+        // Calculate using refactored virtual pair math
+        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
         
         return inputTokensOut;
     }

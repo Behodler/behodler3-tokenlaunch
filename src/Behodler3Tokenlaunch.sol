@@ -78,10 +78,33 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         virtualL = 100000000; // Initial virtual L tokens
     }
     
+    // ============ INTERNAL HELPER FUNCTIONS ============
+    
+    /**
+     * @notice Calculate bonding tokens output for a given input amount using virtual pair math
+     * @dev Extracted common logic to eliminate duplication between addLiquidity and quoteAddLiquidity
+     * @param inputAmount Amount of input tokens being added
+     * @return bondingTokensOut Amount of bonding tokens that would be minted
+     */
+    function _calculateBondingTokensOut(uint256 inputAmount) 
+        internal 
+        view 
+        returns (uint256 bondingTokensOut) 
+    {
+        // Calculate new virtual L after input: newVirtualL = K / (virtualInputTokens + inputAmount)
+        uint256 newVirtualL = K / (virtualInputTokens + inputAmount);
+        
+        // Bonding tokens minted = reduction in virtual L
+        bondingTokensOut = virtualL - newVirtualL;
+        
+        return bondingTokensOut;
+    }
+    
     // ============ MAIN FUNCTIONS - ALL STUBS THAT WILL FAIL ============
     
     /**
      * @notice Add liquidity to the bootstrap AMM
+     * @dev Uses refactored _calculateBondingTokensOut() for DRY principle compliance
      * @param inputAmount Amount of input tokens to add
      * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
      * @return bondingTokensOut Amount of bonding tokens minted
@@ -94,9 +117,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     {
         require(inputAmount > 0, "B3: Input amount must be greater than 0");
         
-        // Calculate bonding tokens using virtual pair math
-        uint256 newVirtualL = K / (virtualInputTokens + inputAmount);
-        bondingTokensOut = virtualL - newVirtualL;
+        // Calculate bonding tokens using refactored virtual pair math
+        bondingTokensOut = _calculateBondingTokensOut(inputAmount);
         
         // Check MEV protection
         require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
@@ -113,9 +135,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Mint bonding tokens to user
         bondingToken.mint(msg.sender, bondingTokensOut);
         
-        // Update virtual pair state
+        // Update virtual pair state  
         virtualInputTokens += inputAmount;
-        virtualL = newVirtualL;
+        virtualL -= bondingTokensOut;
         
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
         
@@ -164,6 +186,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     /**
      * @notice Quote how many bonding tokens would be received for adding liquidity
+     * @dev Uses refactored _calculateBondingTokensOut() for consistent calculation with addLiquidity
      * @param inputAmount Amount of input tokens to add
      * @return bondingTokensOut Expected bonding tokens to be minted
      */
@@ -174,9 +197,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     {
         if (inputAmount == 0) return 0;
         
-        // Calculate using virtual pair math: virtualL_out = virtualL - (K / (virtualInputTokens + inputAmount))
-        uint256 newVirtualL = K / (virtualInputTokens + inputAmount);
-        bondingTokensOut = virtualL - newVirtualL;
+        // Calculate using refactored virtual pair math
+        bondingTokensOut = _calculateBondingTokensOut(inputAmount);
         
         return bondingTokensOut;
     }

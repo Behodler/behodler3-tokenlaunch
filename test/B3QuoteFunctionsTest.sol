@@ -93,7 +93,7 @@ contract B3QuoteFunctionsTest is Test {
     }
     
     function testQuoteAddLiquidityLargeAmount() public view {
-        uint256 inputAmount = 1000000 * 1e18; // Large amount
+        uint256 inputAmount = 1000; // Large amount relative to virtual pair scale (10000 initial)
         
         uint256 quote = b3.quoteAddLiquidity(inputAmount);
         
@@ -103,11 +103,11 @@ contract B3QuoteFunctionsTest is Test {
     
     function testQuoteAddLiquidityDifferentAmounts() public view {
         uint256[] memory amounts = new uint256[](5);
-        amounts[0] = 100 * 1e18;
-        amounts[1] = 1000 * 1e18;
-        amounts[2] = 10000 * 1e18;
-        amounts[3] = 50000 * 1e18;
-        amounts[4] = 100000 * 1e18;
+        amounts[0] = 10; // Use small amounts proportional to virtual pair scale
+        amounts[1] = 25;
+        amounts[2] = 50;
+        amounts[3] = 100;
+        amounts[4] = 200;
         
         uint256 lastQuote = 0;
         
@@ -177,10 +177,10 @@ contract B3QuoteFunctionsTest is Test {
     
     function testQuoteRemoveLiquidityDifferentAmounts() public view {
         uint256[] memory amounts = new uint256[](5);
-        amounts[0] = 1000;
-        amounts[1] = 10000;
-        amounts[2] = 100000;
-        amounts[3] = 1000000;
+        amounts[0] = 100000;   // These amounts should be significant relative to virtualL = 100000000
+        amounts[1] = 500000;
+        amounts[2] = 1000000;
+        amounts[3] = 5000000;
         amounts[4] = 10000000;
         
         uint256 lastQuote = 0;

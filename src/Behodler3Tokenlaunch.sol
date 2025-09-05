@@ -5,6 +5,7 @@ import "./interfaces/IVault.sol";
 import "./interfaces/IBondingToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Behodler3Tokenlaunch (B3)
@@ -17,7 +18,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * - Trading: Calculate virtual swap FIRST using xy=k, THEN mint actual bondingToken
  * - virtualL is NOT the same as bondingToken.totalSupply() - it's virtual/unminted
  */
-contract Behodler3Tokenlaunch is ReentrancyGuard {
+contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     // ============ STATE VARIABLES ============
     
@@ -29,9 +30,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard {
     
     /// @notice The vault contract for token storage
     IVault public vault;
-    
-    /// @notice Owner of the contract
-    address public owner;
     
     /// @notice Whether the contract is locked for emergency purposes
     bool public locked;
@@ -55,14 +53,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard {
     event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
     event ContractLocked();
     event ContractUnlocked();
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     
     // ============ MODIFIERS ============
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner, "B3: Not owner");
-        _;
-    }
     
     modifier notLocked() {
         require(!locked, "B3: Contract is locked");
@@ -75,12 +67,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard {
         IERC20 _inputToken,
         IBondingToken _bondingToken,
         IVault _vault
-    ) {
+    ) Ownable(msg.sender){
         // STUB: This should initialize but will cause test failures
         inputToken = _inputToken;
         bondingToken = _bondingToken;
         vault = _vault;
-        owner = msg.sender;
         
         // Initialize virtual pair to establish constant product k = 1,000,000,000,000
         virtualInputTokens = 10000; // Initial virtual input tokens
@@ -226,17 +217,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard {
         locked = false;
         emit ContractUnlocked();
     }
-    
-    /**
-     * @notice Transfer ownership of the contract
-     * @param newOwner The new owner address
-     */
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "B3: New owner cannot be zero address");
-        address previousOwner = owner;
-        owner = newOwner;
-        emit OwnershipTransferred(previousOwner, newOwner);
-    }
+
     
     /**
      * @notice Set auto-lock functionality

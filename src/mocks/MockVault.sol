@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.13;
+
+import "../interfaces/IVault.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/**
+ * @title MockVault
+ * @notice Mock implementation of IVault for testing purposes
+ * @dev Tracks token balances internally and simulates deposit/withdrawal behavior
+ */
+contract MockVault is IVault {
+    // Mapping of token => user => balance
+    mapping(address => mapping(address => uint256)) private balances;
+    
+    // Track total deposits per token for testing
+    mapping(address => uint256) public totalDeposits;
+
+    /**
+     * @notice Deposit tokens into the vault
+     * @param token The token address to deposit
+     * @param amount The amount of tokens to deposit
+     * @param recipient The address that will own the deposited tokens
+     */
+    function deposit(address token, uint256 amount, address recipient) external override {
+        require(token != address(0), "MockVault: token is zero address");
+        require(amount > 0, "MockVault: amount is zero");
+        require(recipient != address(0), "MockVault: recipient is zero address");
+        
+        // Transfer tokens from sender to vault
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        
+        // Update internal accounting
+        balances[token][recipient] += amount;
+        totalDeposits[token] += amount;
+    }
+
+    /**
+     * @notice Withdraw tokens from the vault
+     * @param token The token address to withdraw
+     * @param amount The amount of tokens to withdraw
+     * @param recipient The address that will receive the tokens
+     */
+    function withdraw(address token, uint256 amount, address recipient) external override {
+        require(token != address(0), "MockVault: token is zero address");
+        require(amount > 0, "MockVault: amount is zero");
+        require(recipient != address(0), "MockVault: recipient is zero address");
+        require(balances[token][msg.sender] >= amount, "MockVault: insufficient balance");
+        
+        // Update internal accounting
+        balances[token][msg.sender] -= amount;
+        totalDeposits[token] -= amount;
+        
+        // Transfer tokens from vault to recipient
+        IERC20(token).transfer(recipient, amount);
+    }
+
+    /**
+     * @notice Get the balance of a token for a specific address
+     * @param token The token address
+     * @param account The account address
+     * @return The token balance
+     */
+    function balanceOf(address token, address account) external view override returns (uint256) {
+        return balances[token][account];
+    }
+
+    // Additional helper functions for testing
+    function getTotalDeposits(address token) external view returns (uint256) {
+        return totalDeposits[token];
+    }
+}

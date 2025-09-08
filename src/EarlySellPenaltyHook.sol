@@ -44,12 +44,20 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         uint256 baseBondingToken, 
         uint256 baseInputToken
     ) external override returns (uint256 fee, int256 deltaBondingToken) {
-        // Record timestamp for buyer (updates existing timestamp if buyer already exists)
+        // TIMESTAMP STORAGE LOGIC:
+        // Store the current block timestamp for the buyer. This timestamp serves as the
+        // starting point for penalty calculations on future sell operations.
+        // Key behaviors:
+        // 1. First-time buyers: Creates new timestamp entry
+        // 2. Existing buyers: RESETS timestamp to current block time
+        // 3. Timestamp reset prevents gaming through multiple small buys
+        // 4. Each buy operation starts a new 96-hour penalty countdown
         buyerLastBuyTimestamp[buyer] = block.timestamp;
         
         emit BuyerTimestampRecorded(buyer, block.timestamp);
         
-        // No fee or adjustment for buy operations
+        // Buy operations never apply fees or adjust bonding token amounts
+        // The penalty mechanism only applies to sell operations
         return (0, 0);
     }
     
@@ -66,18 +74,29 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         uint256 baseBondingToken, 
         uint256 baseInputToken
     ) external override returns (uint256 fee, int256 deltaBondingToken) {
+        // PENALTY ACTIVATION CHECK:
+        // Allow owner to temporarily disable penalty mechanism for emergencies,
+        // contract upgrades, or market interventions without needing to change the hook
         if (!penaltyActive) {
             return (0, 0);
         }
         
+        // PENALTY CALCULATION:
+        // Calculate the time-based penalty using the core penalty algorithm
+        // This accounts for time elapsed, first-time seller checks, and parameter limits
         uint256 penaltyFee = calculatePenaltyFee(seller);
         
+        // EVENT EMISSION FOR MONITORING:
+        // Only emit penalty events when a penalty is actually applied
+        // This helps with gas efficiency and event log clarity
         if (penaltyFee > 0) {
             uint256 hoursElapsed = _getHoursElapsed(seller);
             emit PenaltyApplied(seller, penaltyFee, hoursElapsed);
         }
         
-        // Return penalty as fee, no bonding token adjustment
+        // RETURN VALUES:
+        // fee: Penalty amount in basis points (0-1000)
+        // deltaBondingToken: Always 0 - we don't adjust token amounts, only apply fees
         return (penaltyFee, 0);
     }
     
@@ -108,28 +127,40 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @return penaltyFee Fee amount (0-1000 where 1000 = 100%)
      */
     function calculatePenaltyFee(address seller) public view override returns (uint256 penaltyFee) {
+        // EMERGENCY PAUSE CHECK:
+        // If penalty is deactivated, return zero regardless of time elapsed
         if (!penaltyActive) {
             return 0;
         }
         
         uint256 lastBuyTimestamp = buyerLastBuyTimestamp[seller];
         
-        // First-time seller without previous buy gets maximum penalty
+        // FIRST-TIME SELLER PROTECTION:
+        // Users who never bought tokens (airdrop recipients, transfers, etc.)
+        // receive maximum penalty to prevent gaming the system
+        // This ensures the penalty mechanism applies to all sellers
         if (lastBuyTimestamp == 0) {
-            return 1000;
+            return 1000; // 100% penalty
         }
         
         uint256 hoursElapsed = _getHoursElapsed(seller);
         
-        // No penalty after maximum duration
+        // 96-HOUR WINDOW IMPLEMENTATION:
+        // After the maximum penalty duration, no penalty is applied
+        // This creates a clear "safe window" for selling without penalty
         if (hoursElapsed >= maxPenaltyDurationHours) {
             return 0;
         }
         
-        // Calculate declining penalty: starts at 100% (1000), declines by penaltyDeclineRatePerHour per hour
+        // DECLINING PENALTY CALCULATION:
+        // Implements linear decay: penalty = max(0, 100% - (hours × decline_rate))
+        // Default: 100% - (hours × 1%) = penalty that reaches 0% at 100 hours
+        // Formula ensures penalty declines predictably and reaches zero at max duration
         uint256 penalty = 1000 - (hoursElapsed * penaltyDeclineRatePerHour);
         
-        // Ensure penalty doesn't underflow (though mathematically it shouldn't with proper maxDurationHours)
+        // UNDERFLOW PROTECTION:
+        // Mathematical safety check - with proper parameters this should never trigger
+        // But included for defensive programming against potential parameter misconfigurations
         return penalty > 1000 ? 0 : penalty;
     }
     
@@ -170,15 +201,25 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     function _getHoursElapsed(address seller) internal view returns (uint256 hoursElapsed) {
         uint256 lastBuyTimestamp = buyerLastBuyTimestamp[seller];
         
+        // FIRST-TIME SELLER HANDLING:
+        // If no timestamp exists, return 0 hours elapsed
+        // This will be handled by the calling function (usually triggers max penalty)
         if (lastBuyTimestamp == 0) {
             return 0;
         }
         
-        // Handle edge case where block.timestamp might be less than lastBuyTimestamp (should never happen in practice)
+        // TIMESTAMP VALIDATION:
+        // Defensive check against potential timestamp manipulation or clock skew
+        // In normal blockchain operation, block.timestamp should always increase
+        // Return 0 to prevent negative calculations if timestamps are somehow inconsistent
         if (block.timestamp < lastBuyTimestamp) {
             return 0;
         }
         
+        // TIME CONVERSION LOGIC:
+        // Convert seconds elapsed to complete hours (truncates partial hours)
+        // This creates clear hourly boundaries for penalty reductions
+        // Example: 3599 seconds = 0 hours, 3600 seconds = 1 hour, 7199 seconds = 1 hour
         uint256 timeElapsed = block.timestamp - lastBuyTimestamp;
         return timeElapsed / 3600; // 3600 seconds = 1 hour
     }

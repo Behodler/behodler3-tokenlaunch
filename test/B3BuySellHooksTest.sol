@@ -103,6 +103,9 @@ contract B3BuySellHooksTest is Test {
     
     function test_BuyHookCalledDuringAddLiquidity_ShouldFail() public {
         // Setup hook but this should fail because hook integration doesn't exist
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 initialBuyCallCount = buyHook.buyCallCount();
         
         vm.prank(user1);
@@ -114,6 +117,9 @@ contract B3BuySellHooksTest is Test {
     
     function test_BuyHookCallsAfterBaseCalculation_ShouldFail() public {
         // This should fail because hook integration doesn't exist
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         
         vm.prank(user1);
@@ -124,6 +130,9 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_BuyHookReceivesCorrectBuyerAddress_ShouldFail() public {
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         
@@ -132,6 +141,9 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_BuyHookReceivesCorrectBaseBondingAmount_ShouldFail() public {
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 expectedAmount = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         
         vm.prank(user1);
@@ -142,6 +154,9 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_BuyHookReceivesCorrectBaseInputAmount_ShouldFail() public {
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         
@@ -152,6 +167,10 @@ contract B3BuySellHooksTest is Test {
     // ============ SELL HOOK INTEGRATION TESTS (SHOULD FAIL) ============
     
     function test_SellHookCalledDuringRemoveLiquidity_ShouldFail() public {
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // First add liquidity
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -166,6 +185,10 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellHookCallsAfterBaseCalculation_ShouldFail() public {
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -180,6 +203,10 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellHookReceivesCorrectSellerAddress_ShouldFail() public {
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -192,6 +219,10 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellHookReceivesCorrectBaseBondingAmount_ShouldFail() public {
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -204,6 +235,10 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellHookReceivesCorrectBaseInputAmount_ShouldFail() public {
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -223,6 +258,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with 0.5% fee (5 out of 1000)
         buyHook.setBuyParams(5, 0);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000; // 0.5%
         uint256 expectedBondingTokensAfterFee = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
@@ -235,12 +274,16 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellHookFeeAppliedToBondingToken_ShouldFail() public {
+        // Configure hook with 1% fee (10 out of 1000)
+        sellHook.setSellParams(10, 0);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook with 1% fee (10 out of 1000)
-        sellHook.setSellParams(10, 0);
         
         uint256 expectedFee = (bondingTokens * 10) / 1000; // 1%
         uint256 expectedInputTokensAfterFee = b3.quoteRemoveLiquidity(bondingTokens - expectedFee);
@@ -256,6 +299,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with 0% fee
         zeroHook.resetCallCounts();
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(zeroHook)));
+        
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         
         vm.prank(user1);
@@ -270,6 +317,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with 100% fee (1000 out of 1000)
         buyHook.setBuyParams(1000, 0);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         vm.prank(user1);
         vm.expectRevert("B3: Insufficient output amount");
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 1);
@@ -281,6 +332,10 @@ contract B3BuySellHooksTest is Test {
     function test_FeeCalculationWithTypicalFee_ShouldFail() public {
         // Configure hook with 0.5% fee (5 out of 1000)
         buyHook.setBuyParams(5, 0);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
         
         uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
         uint256 expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
@@ -298,6 +353,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with +1000 bonus
         buyHook.setBuyParams(0, 1000);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         uint256 expectedBondingTokens = baseBondingTokens + 1000;
         
@@ -312,6 +371,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with -500 penalty
         buyHook.setBuyParams(0, -500);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         uint256 expectedBondingTokens = baseBondingTokens - 500;
         
@@ -323,12 +386,16 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_PositiveDeltaBondingTokenIncreasesRequiredTokensOnSell_ShouldFail() public {
+        // Configure hook with +300 penalty (acts like fee)
+        sellHook.setSellParams(0, 300);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook with +300 penalty (acts like fee)
-        sellHook.setSellParams(0, 300);
         
         uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
         uint256 adjustedBondingTokensNeeded = bondingTokens + 300;
@@ -342,12 +409,16 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_NegativeDeltaBondingTokenDecreasesRequiredTokensOnSell_ShouldFail() public {
+        // Configure hook with -200 discount
+        sellHook.setSellParams(0, -200);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook with -200 discount
-        sellHook.setSellParams(0, -200);
         
         uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
         uint256 adjustedBondingTokensNeeded = bondingTokens - 200;
@@ -368,20 +439,28 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with negative delta larger than base minting
         buyHook.setBuyParams(0, -int256(baseBondingTokens + 1));
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         vm.prank(user1);
-        vm.expectRevert("B3: Delta adjustment too large");
+        vm.expectRevert("B3: Negative bonding token result");
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         
         // Should fail because validation doesn't exist
     }
     
     function test_SellRevertsWhenAdjustmentsResultInZeroOrNegative_ShouldFail() public {
+        // Configure hook to make net bonding tokens zero or negative
+        sellHook.setSellParams(0, 1000000); // Large positive value
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook to make net bonding tokens zero or negative
-        sellHook.setSellParams(0, int256(bondingTokens + 1));
         
         vm.prank(user1);
         vm.expectRevert("B3: Invalid bonding token amount after adjustment");
@@ -396,8 +475,12 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with delta exactly equal to negative base amount
         buyHook.setBuyParams(0, -int256(baseBondingTokens));
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         vm.prank(user1);
-        vm.expectRevert("B3: Delta adjustment results in zero tokens");
+        vm.expectRevert("B3: Negative bonding token result");
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         
         // Should fail because validation doesn't exist
@@ -450,6 +533,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with fee and delta
         buyHook.setBuyParams(5, 1000); // 0.5% fee, +1000 bonus
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
         uint256 expectedBondingTokens = baseBondingTokens + 1000;
@@ -463,12 +550,16 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_CompleteSellFlow_ShouldFail() public {
+        // Configure hook with fee and delta
+        sellHook.setSellParams(8, -200); // 0.8% fee, -200 discount
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook with fee and delta
-        sellHook.setSellParams(8, -200); // 0.8% fee, -200 discount
         
         uint256 expectedFee = (bondingTokens * 8) / 1000;
         uint256 adjustedBondingTokens = bondingTokens - expectedFee - 200;
@@ -486,6 +577,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook with large positive delta (bonus)
         buyHook.setBuyParams(0, 5000);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
         uint256 expectedBondingTokens = baseBondingTokens + 5000;
         
@@ -497,12 +592,16 @@ contract B3BuySellHooksTest is Test {
     }
     
     function test_SellWithNegativeDeltaBondingTokenDiscount_ShouldFail() public {
+        // Configure hook with negative delta (discount)
+        sellHook.setSellParams(0, -1000);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(sellHook)));
+        
         // Add liquidity first
         vm.prank(user1);
         uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Configure hook with negative delta (discount)
-        sellHook.setSellParams(0, -1000);
         
         uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
         uint256 adjustedInputTokens = b3.quoteRemoveLiquidity(bondingTokens - 1000);
@@ -520,6 +619,10 @@ contract B3BuySellHooksTest is Test {
         // Configure hook
         buyHook.setBuyParams(5, 1000);
         
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
+        
         // Should fail because events don't exist
         vm.expectEmit(true, true, true, true);
         emit HookCalled(address(buyHook), user1, "buy", 5, 1000);
@@ -531,6 +634,10 @@ contract B3BuySellHooksTest is Test {
     function test_FeeApplicationEventsEmitted_ShouldFail() public {
         // Configure hook with fee
         buyHook.setBuyParams(10, 0);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
         
         uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 10) / 1000;
         
@@ -545,6 +652,10 @@ contract B3BuySellHooksTest is Test {
     function test_DeltaBondingTokenAdjustmentEventsEmitted_ShouldFail() public {
         // Configure hook with delta adjustment
         buyHook.setBuyParams(0, 2000);
+        
+        // Set the hook
+        vm.prank(owner);
+        b3.setHook(IBondingCurveHook(address(buyHook)));
         
         // Should fail because events don't exist
         vm.expectEmit(true, true, true, true);

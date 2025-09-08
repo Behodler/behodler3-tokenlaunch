@@ -40,7 +40,7 @@ contract B3RemoveLiquidityTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -51,6 +51,9 @@ contract B3RemoveLiquidityTest is Test {
         
         vm.stopPrank();
         
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
+        
         // Setup test tokens and add initial liquidity
         inputToken.mint(user1, 1000000 * 1e18);
         inputToken.mint(user2, 1000000 * 1e18);
@@ -58,9 +61,7 @@ contract B3RemoveLiquidityTest is Test {
         // Add some liquidity first so we can test removal
         vm.startPrank(user1);
         inputToken.approve(address(b3), 10000 * 1e18);
-        inputToken.approve(address(vault), 10000 * 1e18);
-        vault.deposit(address(inputToken), 10000 * 1e18, address(b3)); // Simulate vault having tokens
-        bondingToken.mint(user1, 50000); // Give user some bonding tokens
+        b3.addLiquidity(10000 * 1e18, 0); // This will handle the vault deposit internally
         vm.stopPrank();
     }
     
@@ -256,9 +257,9 @@ contract B3RemoveLiquidityTest is Test {
     }
     
     function testRemoveLiquidityInsufficientBondingTokens() public {
-        uint256 bondingTokenAmount = 100000; // More than user has
+        uint256 bondingTokenAmount = 100000; // More than user2 has
         
-        vm.startPrank(user1);
+        vm.startPrank(user2); // user2 doesn't have any bonding tokens
         
         vm.expectRevert("B3: Insufficient bonding tokens");
         b3.removeLiquidity(bondingTokenAmount, 0);

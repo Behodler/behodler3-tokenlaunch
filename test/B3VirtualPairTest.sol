@@ -39,7 +39,7 @@ contract B3VirtualPairTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -49,6 +49,9 @@ contract B3VirtualPairTest is Test {
         );
         
         vm.stopPrank();
+        
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);
@@ -102,18 +105,25 @@ contract B3VirtualPairTest is Test {
     
     function testVirtualPairIndependentFromActualBalances() public {
         // Test that virtual pair state is independent from actual token balances
+        
+        // Set bonding curve to user1 to allow direct deposit for this test
+        vault.setBondingCurve(user1);
+        
         vm.startPrank(user1);
         inputToken.approve(address(vault), 1000 * 1e18);
         
         // Even after deposits to vault, virtual pair should maintain its state
         vault.deposit(address(inputToken), 1000 * 1e18, user1);
         
+        vm.stopPrank();
+        
         (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
         assertEq(inputTokens, INITIAL_VIRTUAL_INPUT, "Virtual input tokens should remain unchanged");
         assertEq(lTokens, INITIAL_VIRTUAL_L, "Virtual L tokens should remain unchanged");
         assertEq(k, K, "K should remain unchanged");
         
-        vm.stopPrank();
+        // Restore bonding curve to B3 contract
+        vault.setBondingCurve(address(b3));
     }
     
     function testVirtualPairStateAfterBondingTokenMinting() public {

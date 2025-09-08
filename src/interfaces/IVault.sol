@@ -29,4 +29,18 @@ interface IVault {
      * @return The token balance
      */
     function balanceOf(address token, address account) external view returns (uint256);
+
+    /**
+     * @notice Set the bonding curve address that is authorized to call deposit/withdraw
+     * @param _bondingCurve The address of the bonding curve contract
+     * @dev This function should be restricted to the contract owner
+     */
+    function setBondingCurve(address _bondingCurve) external;
+
+    /**
+     * @notice Emergency withdraw function for owner to withdraw funds
+     * @param amount The amount of tokens to withdraw
+     * @dev This function should be restricted to the contract owner
+     */
+    function emergencyWithdraw(uint256 amount) external;
 }

@@ -39,7 +39,7 @@ contract B3BuySellHooksTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         vm.startPrank(owner);
@@ -49,6 +49,9 @@ contract B3BuySellHooksTest is Test {
             IVault(address(vault))
         );
         vm.stopPrank();
+        
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
         
         // Deploy mock hooks
         buyHook = new MockBuyHook(5, 1000, 10, -500);  // 0.5% buy fee, +1000 bonus, 1% sell fee, -500 discount

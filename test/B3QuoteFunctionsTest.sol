@@ -38,7 +38,7 @@ contract B3QuoteFunctionsTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -48,6 +48,9 @@ contract B3QuoteFunctionsTest is Test {
         );
         
         vm.stopPrank();
+        
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);
@@ -223,8 +226,6 @@ contract B3QuoteFunctionsTest is Test {
         // First add some liquidity to get bonding tokens
         vm.startPrank(user1);
         inputToken.approve(address(b3), 1000 * 1e18);
-        inputToken.approve(address(vault), 1000 * 1e18);
-        vault.deposit(address(inputToken), 1000 * 1e18, address(b3));
         uint256 bondingTokens = b3.addLiquidity(1000 * 1e18, 0);
         vm.stopPrank();
         

@@ -40,7 +40,7 @@ contract B3AddLiquidityTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -50,6 +50,9 @@ contract B3AddLiquidityTest is Test {
         );
         
         vm.stopPrank();
+        
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);

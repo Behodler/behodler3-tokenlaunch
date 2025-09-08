@@ -37,7 +37,7 @@ contract B3SecurityIntegrationTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault();
+        vault = new MockVault(address(this));
         
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -47,6 +47,9 @@ contract B3SecurityIntegrationTest is Test {
         );
         
         vm.stopPrank();
+        
+        // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
+        vault.setBondingCurve(address(b3));
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);
@@ -77,9 +80,7 @@ contract B3SecurityIntegrationTest is Test {
         // First add some liquidity
         vm.startPrank(user1);
         inputToken.approve(address(b3), 1000 * 1e18);
-        inputToken.approve(address(vault), 1000 * 1e18);
-        vault.deposit(address(inputToken), 1000 * 1e18, address(b3));
-        bondingToken.mint(user1, 10000);
+        b3.addLiquidity(1000 * 1e18, 0);
         vm.stopPrank();
         
         // Lock the contract
@@ -192,9 +193,8 @@ contract B3SecurityIntegrationTest is Test {
     function testRemoveLiquidityReentrancyProtection() public {
         // Setup liquidity first
         vm.startPrank(user1);
-        inputToken.approve(address(vault), 1000 * 1e18);
-        vault.deposit(address(inputToken), 1000 * 1e18, address(b3));
-        bondingToken.mint(user1, 10000);
+        inputToken.approve(address(b3), 1000 * 1e18);
+        b3.addLiquidity(1000 * 1e18, 0);
         
         // Call should succeed normally
         uint256 inputTokensOut = b3.removeLiquidity(10000, 0);
@@ -378,9 +378,8 @@ contract B3SecurityIntegrationTest is Test {
     function testGasUsageRemoveLiquidity() public {
         // Setup
         vm.startPrank(user1);
-        inputToken.approve(address(vault), 1000 * 1e18);
-        vault.deposit(address(inputToken), 1000 * 1e18, address(b3));
-        bondingToken.mint(user1, 10000);
+        inputToken.approve(address(b3), 1000 * 1e18);
+        b3.addLiquidity(1000 * 1e18, 0);
         
         uint256 gasBefore = gasleft();
         b3.removeLiquidity(10000, 0);

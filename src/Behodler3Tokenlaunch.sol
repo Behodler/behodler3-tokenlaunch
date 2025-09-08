@@ -276,7 +276,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
                 emit FeeApplied(msg.sender, feeAmount, "sell");
                 
                 // Recalculate input tokens with reduced bonding tokens
-                inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
+                // Handle edge case where fee is 100% (effectiveBondingAmount = 0)
+                if (effectiveBondingAmount > 0) {
+                    inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
+                } else {
+                    inputTokensOut = 0;
+                }
             }
             
             // Apply delta bonding token adjustment
@@ -284,7 +289,13 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
                 int256 adjustedBondingAmount = int256(effectiveBondingAmount) + deltaBondingToken;
                 require(adjustedBondingAmount > 0, "B3: Invalid bonding token amount after adjustment");
                 effectiveBondingAmount = uint256(adjustedBondingAmount);
-                inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
+                
+                // Handle edge case where adjusted amount might be 0
+                if (effectiveBondingAmount > 0) {
+                    inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
+                } else {
+                    inputTokensOut = 0;
+                }
                 emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "sell");
             }
         }
@@ -295,11 +306,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Burn bonding tokens from user
         bondingToken.burn(msg.sender, bondingTokenAmount);
         
-        // Withdraw input tokens from vault
-        vault.withdraw(address(inputToken), inputTokensOut, address(this));
-        
-        // Transfer input tokens to user
-        require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
+        // Withdraw and transfer input tokens to user (only if amount > 0)
+        if (inputTokensOut > 0) {
+            vault.withdraw(address(inputToken), inputTokensOut, address(this));
+            require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
+        }
         
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)  
         uint256 newVirtualInputTokens = K / (virtualL + bondingTokenAmount);

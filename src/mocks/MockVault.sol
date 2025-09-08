@@ -38,8 +38,8 @@ contract MockVault is Vault {
         // Transfer tokens from sender to vault
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         
-        // Update internal accounting
-        balances[token][recipient] += amount;
+        // Update internal accounting - balance tracked under the bonding curve (caller), not recipient
+        balances[token][msg.sender] += amount;
         totalDeposits[token] += amount;
     }
 
@@ -55,7 +55,7 @@ contract MockVault is Vault {
         require(recipient != address(0), "MockVault: recipient is zero address");
         require(balances[token][msg.sender] >= amount, "MockVault: insufficient balance");
         
-        // Update internal accounting
+        // Update internal accounting - balance tracked under the bonding curve (caller)
         balances[token][msg.sender] -= amount;
         totalDeposits[token] -= amount;
         

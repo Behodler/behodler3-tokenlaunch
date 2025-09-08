@@ -220,8 +220,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Deposit input tokens to vault
         vault.deposit(address(inputToken), inputAmount, address(this));
         
-        // Mint bonding tokens to user
-        bondingToken.mint(msg.sender, bondingTokensOut);
+        // Mint bonding tokens to user (only if amount > 0)
+        if (bondingTokensOut > 0) {
+            bondingToken.mint(msg.sender, bondingTokensOut);
+        }
         
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
         virtualInputTokens += effectiveInputAmount;

@@ -161,21 +161,31 @@ contract B3RemoveLiquidityTest is Test {
     }
     
     function testRemoveLiquidityPreservesK() public {
+        // Create fresh B3 contract for this test to avoid saturated state from setup
+        Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
+            IERC20(address(inputToken)),
+            IBondingToken(address(bondingToken)),
+            IVault(address(vault))
+        );
+        
+        // Set vault bonding curve for fresh contract
+        vault.setBondingCurve(address(freshB3));
+        
         // First add liquidity to get bonding tokens and update virtual pair
-        uint256 inputAmount = 100; // Use appropriate amount for virtual pair scale
+        uint256 inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
         
         vm.startPrank(user1);
-        inputToken.approve(address(b3), inputAmount);
-        uint256 bondingTokensReceived = b3.addLiquidity(inputAmount, 0);
+        inputToken.approve(address(freshB3), inputAmount);
+        uint256 bondingTokensReceived = freshB3.addLiquidity(inputAmount, 0);
         
         // Capture K after adding liquidity
-        uint256 initialK = b3.K();
+        uint256 initialK = freshB3.K();
         
         // Now remove some liquidity (less than we added)
         uint256 bondingTokenAmount = bondingTokensReceived / 2;
-        b3.removeLiquidity(bondingTokenAmount, 0);
+        freshB3.removeLiquidity(bondingTokenAmount, 0);
         
-        (uint256 finalVInput, uint256 finalVL, uint256 k) = b3.getVirtualPair();
+        (uint256 finalVInput, uint256 finalVL, uint256 k) = freshB3.getVirtualPair();
         
         // K should be preserved (allowing for small rounding in integer math)
         assertApproxEqRel(k, initialK, 1e15, "K should remain approximately constant"); // 0.1% tolerance
@@ -185,29 +195,36 @@ contract B3RemoveLiquidityTest is Test {
     }
     
     function testRemoveLiquidityWithDifferentAmounts() public {
-        // First add liquidity properly to have tokens to remove
         vm.startPrank(user1);
-        inputToken.approve(address(b3), 400); // Approve enough for multiple adds
         
-        // Add liquidity multiple times with different amounts 
-        uint256[] memory addAmounts = new uint256[](4);
-        addAmounts[0] = 50;
-        addAmounts[1] = 75;
-        addAmounts[2] = 100;
-        addAmounts[3] = 175;
+        // Test with different amounts using fresh contracts for each to avoid saturation
+        uint256[] memory testAmounts = new uint256[](4);
+        testAmounts[0] = 10 * 1e18;
+        testAmounts[1] = 50 * 1e18;
+        testAmounts[2] = 100 * 1e18;
+        testAmounts[3] = 200 * 1e18;
         
-        uint256[] memory bondingReceived = new uint256[](4);
-        
-        for (uint i = 0; i < addAmounts.length; i++) {
-            bondingReceived[i] = b3.addLiquidity(addAmounts[i], 0);
-            assertTrue(bondingReceived[i] > 0, string(abi.encodePacked("Add ", vm.toString(i), " should produce bonding tokens")));
-        }
-        
-        // Now remove liquidity with the bonding tokens we received
-        for (uint i = 0; i < bondingReceived.length; i++) {
-            uint256 bondingAmount = bondingReceived[i] / 2; // Remove half of what we got
+        for (uint i = 0; i < testAmounts.length; i++) {
+            // Create fresh B3 contract for each test to avoid saturation
+            Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
+                IERC20(address(inputToken)),
+                IBondingToken(address(bondingToken)),
+                IVault(address(vault))
+            );
             
-            uint256 actualOut = b3.removeLiquidity(bondingAmount, 0);
+            // Set vault bonding curve for fresh contract (need to do this outside of prank)
+            vm.stopPrank();
+            vault.setBondingCurve(address(freshB3));
+            vm.startPrank(user1);
+            
+            // Add liquidity
+            inputToken.approve(address(freshB3), testAmounts[i]);
+            uint256 bondingReceived = freshB3.addLiquidity(testAmounts[i], 0);
+            assertTrue(bondingReceived > 0, string(abi.encodePacked("Add ", vm.toString(i), " should produce bonding tokens")));
+            
+            // Remove half of the liquidity
+            uint256 bondingAmount = bondingReceived / 2;
+            uint256 actualOut = freshB3.removeLiquidity(bondingAmount, 0);
             assertTrue(actualOut > 0, string(abi.encodePacked("Remove ", vm.toString(i), " should return input tokens")));
         }
         
@@ -351,17 +368,27 @@ contract B3RemoveLiquidityTest is Test {
     // ============ ROUND TRIP TESTS ============
     
     function testAddThenRemoveLiquidity() public {
+        // Create fresh B3 contract for this test to avoid saturated state from setup
+        Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
+            IERC20(address(inputToken)),
+            IBondingToken(address(bondingToken)),
+            IVault(address(vault))
+        );
+        
+        // Set vault bonding curve for fresh contract
+        vault.setBondingCurve(address(freshB3));
+        
         uint256 initialBalance = inputToken.balanceOf(user1);
-        uint256 inputAmount = 100; // Use appropriate amount for virtual pair scale to show rounding effects
+        uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair
         
         vm.startPrank(user1);
         
         // Add liquidity
-        inputToken.approve(address(b3), inputAmount);
-        uint256 bondingTokensOut = b3.addLiquidity(inputAmount, 0);
+        inputToken.approve(address(freshB3), inputAmount);
+        uint256 bondingTokensOut = freshB3.addLiquidity(inputAmount, 0);
         
         // Remove liquidity
-        uint256 inputTokensOut = b3.removeLiquidity(bondingTokensOut, 0);
+        uint256 inputTokensOut = freshB3.removeLiquidity(bondingTokensOut, 0);
         
         // Due to virtual pair math and integer division, might not get exactly the same amount back
         assertTrue(inputTokensOut > 0, "Should get some tokens back");

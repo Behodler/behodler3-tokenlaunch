@@ -16,6 +16,10 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     /// @notice Mapping of buyer addresses to their last buy timestamps
     mapping(address => uint256) private buyerLastBuyTimestamp;
     
+    ///@notice buyers who push the price to an all time high can sell without penalty
+    uint public allTimeHigh=0;
+
+
     /// @notice Rate at which penalty declines per hour (1% = 10 in fee units)
     uint256 public penaltyDeclineRatePerHour = 10;
     
@@ -52,9 +56,19 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // 2. Existing buyers: RESETS timestamp to current block time
         // 3. Timestamp reset prevents gaming through multiple small buys
         // 4. Each buy operation starts a new 96-hour penalty countdown
-        buyerLastBuyTimestamp[buyer] = block.timestamp;
+        // 5. All time high buyers are exempty from penalty
+
+        uint timestamp = block.timestamp;       
+        uint currentPrice = (baseInputToken*(1 ether))/baseBondingToken;
+        if(currentPrice>allTimeHigh){
+            allTimeHigh = currentPrice;
+            //timestamps higher than current block time are exempt from fees
+            timestamp = type(uint).max;
+        }
         
-        emit BuyerTimestampRecorded(buyer, block.timestamp);
+        buyerLastBuyTimestamp[buyer] = timestamp;
+        
+        emit BuyerTimestampRecorded(buyer, timestamp);
         
         // Buy operations never apply fees or adjust bonding token amounts
         // The penalty mechanism only applies to sell operations
@@ -208,12 +222,9 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
             return 0;
         }
         
-        // TIMESTAMP VALIDATION:
-        // Defensive check against potential timestamp manipulation or clock skew
-        // In normal blockchain operation, block.timestamp should always increase
-        // Return 0 to prevent negative calculations if timestamps are somehow inconsistent
+        //Future proof: allow rules for disabling fees for certain users based on other conditions
         if (block.timestamp < lastBuyTimestamp) {
-            return 0;
+            return type(uint).max;
         }
         
         // TIME CONVERSION LOGIC:

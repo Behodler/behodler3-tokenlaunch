@@ -59,12 +59,18 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // 5. All time high buyers are exempty from penalty
 
         uint timestamp = block.timestamp;       
-        uint currentPrice = (baseInputToken*(1 ether))/baseBondingToken;
-        if(currentPrice>allTimeHigh){
-            allTimeHigh = currentPrice;
-            //timestamps higher than current block time are exempt from fees
-            timestamp = type(uint).max;
+        
+        // Only calculate price and check all-time high if baseBondingToken > 0
+        // to avoid division by zero
+        if (baseBondingToken > 0) {
+            uint currentPrice = (baseInputToken*(1 ether))/baseBondingToken;
+            if(currentPrice>allTimeHigh){
+                allTimeHigh = currentPrice;
+                //timestamps higher than current block time are exempt from fees
+                timestamp = type(uint).max;
+            }
         }
+        // If baseBondingToken is 0, user gets normal timestamp (no all-time high exemption)
         
         buyerLastBuyTimestamp[buyer] = timestamp;
         

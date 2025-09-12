@@ -31,11 +31,12 @@ interface IVault {
     function balanceOf(address token, address account) external view returns (uint256);
 
     /**
-     * @notice Set the bonding curve address that is authorized to call deposit/withdraw
-     * @param _bondingCurve The address of the bonding curve contract
+     * @notice Set client authorization for deposit/withdraw operations
+     * @param client The address of the client contract
+     * @param _auth Whether to authorize (true) or deauthorize (false) the client
      * @dev This function should be restricted to the contract owner
      */
-    function setBondingCurve(address _bondingCurve) external;
+    function setClient(address client, bool _auth) external;
 
     /**
      * @notice Emergency withdraw function for owner to withdraw funds

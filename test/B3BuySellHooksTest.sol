@@ -51,7 +51,7 @@ contract B3BuySellHooksTest is Test {
         vm.stopPrank();
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
         
         // Deploy mock hooks
         buyHook = new MockBuyHook(5, 1000, 10, -500);  // 0.5% buy fee, +1000 bonus, 1% sell fee, -500 discount

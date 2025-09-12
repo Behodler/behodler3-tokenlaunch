@@ -33,9 +33,9 @@ contract VaultSecurityTest is Test {
         token.mint(attacker, 1000000 * 1e18);
         token.mint(bondingCurve, 10000000 * 1e18); // Give tokens to bonding curve for tests
         
-        // Set bonding curve address as owner
+        // Set bonding curve address as authorized client
         vm.prank(owner);
-        vault.setBondingCurve(bondingCurve);
+        vault.setClient(bondingCurve, true);
         
         // Give bonding curve approval for its own tokens
         vm.prank(bondingCurve);
@@ -64,17 +64,17 @@ contract VaultSecurityTest is Test {
         
         // Act & Assert - User cannot deposit directly
         vm.prank(user1);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.deposit(address(token), amount, user1);
         
         // Act & Assert - Attacker cannot deposit
         vm.prank(attacker);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.deposit(address(token), amount, user1);
         
-        // Act & Assert - Owner cannot deposit (unless they are also bonding curve)
+        // Act & Assert - Owner cannot deposit (unless they are also authorized client)
         vm.prank(owner);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.deposit(address(token), amount, user1);
     }
     
@@ -106,55 +106,57 @@ contract VaultSecurityTest is Test {
         
         // Act & Assert - User cannot withdraw directly
         vm.prank(user1);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.withdraw(address(token), withdrawAmount, user1);
         
         // Act & Assert - Attacker cannot withdraw
         vm.prank(attacker);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.withdraw(address(token), withdrawAmount, attacker);
         
         // Act & Assert - Owner cannot withdraw (unless they are also bonding curve)
         vm.prank(owner);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.withdraw(address(token), withdrawAmount, owner);
     }
     
     // ============ OWNER ACCESS CONTROL TESTS ============
     
-    function testOnlyOwnerCanSetBondingCurve() public {
-        address newBondingCurve = makeAddr("newBondingCurve");
+    function testOnlyOwnerCanSetClient() public {
+        address newClient = makeAddr("newClient");
         
-        // Act & Assert - Owner can set bonding curve
+        // Act & Assert - Owner can set client authorization
         vm.prank(owner);
-        vm.expectEmit(true, true, false, false);
-        emit Vault.BondingCurveSet(bondingCurve, newBondingCurve);
-        vault.setBondingCurve(newBondingCurve);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(newClient, true);
+        vault.setClient(newClient, true);
         
         // Verify change
-        assertEq(vault.bondingCurve(), newBondingCurve);
+        assertTrue(vault.authorizedClients(newClient));
     }
     
-    function testUnauthorizedSetBondingCurveReverts() public {
-        address newBondingCurve = makeAddr("newBondingCurve");
+    function testUnauthorizedSetClientReverts() public {
+        address newClient = makeAddr("newClient");
         
-        // Act & Assert - User cannot set bonding curve
+        // Act & Assert - User cannot set client authorization
         vm.prank(user1);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user1));
-        vault.setBondingCurve(newBondingCurve);
+        vault.setClient(newClient, true);
         
-        // Act & Assert - Attacker cannot set bonding curve
+        // Act & Assert - Attacker cannot set client authorization
         vm.prank(attacker);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, attacker));
-        vault.setBondingCurve(newBondingCurve);
+        vault.setClient(newClient, true);
         
         // Act & Assert - Bonding curve itself cannot change the setting
         vm.prank(bondingCurve);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, bondingCurve));
-        vault.setBondingCurve(newBondingCurve);
+        vault.setClient(newClient, true);
         
-        // Verify no change occurred
-        assertEq(vault.bondingCurve(), bondingCurve);
+        // Verify no change occurred for new client
+        assertFalse(vault.authorizedClients(newClient));
+        // Original client should still be authorized
+        assertTrue(vault.authorizedClients(bondingCurve));
     }
     
     function testOnlyOwnerCanEmergencyWithdraw() public {
@@ -188,10 +190,10 @@ contract VaultSecurityTest is Test {
     
     // ============ INPUT VALIDATION TESTS ============
     
-    function testSetBondingCurveZeroAddressReverts() public {
+    function testSetClientZeroAddressReverts() public {
         vm.prank(owner);
-        vm.expectRevert("Vault: bonding curve cannot be zero address");
-        vault.setBondingCurve(address(0));
+        vm.expectRevert("Vault: client cannot be zero address");
+        vault.setClient(address(0), true);
     }
     
     function testEmergencyWithdrawZeroAmountReverts() public {
@@ -250,36 +252,38 @@ contract VaultSecurityTest is Test {
     
     // ============ EDGE CASE AND INTEGRATION TESTS ============
     
-    function testBondingCurveCanBeChanged() public {
-        address newBondingCurve = makeAddr("newBondingCurve");
+    function testClientAuthorizationCanBeChanged() public {
+        address newClient = makeAddr("newClient");
         
-        // Setup initial deposit with old bonding curve
+        // Setup initial deposit with old client
         uint256 amount = 1000 * 1e18;
         
         vm.prank(bondingCurve);
         vault.deposit(address(token), amount, user1);
         
-        // Change bonding curve
+        // Change client authorization - deauthorize old, authorize new
         vm.prank(owner);
-        vault.setBondingCurve(newBondingCurve);
+        vault.setClient(bondingCurve, false);
+        vm.prank(owner);
+        vault.setClient(newClient, true);
         
-        // Give new bonding curve tokens and approval
-        token.mint(newBondingCurve, 1000000 * 1e18);
-        vm.prank(newBondingCurve);
+        // Give new client tokens and approval
+        token.mint(newClient, 1000000 * 1e18);
+        vm.prank(newClient);
         token.approve(address(vault), type(uint256).max);
         
-        // Old bonding curve should no longer work for new deposits
+        // Old client should no longer work for new deposits
         vm.prank(bondingCurve);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.deposit(address(token), 100 * 1e18, bondingCurve);
         
-        // New bonding curve should work for new deposits
-        vm.prank(newBondingCurve);
-        vault.deposit(address(token), 100 * 1e18, newBondingCurve);
+        // New client should work for new deposits
+        vm.prank(newClient);
+        vault.deposit(address(token), 100 * 1e18, newClient);
         
         // Verify state
         assertEq(vault.balanceOf(address(token), bondingCurve), amount); // Old balance unchanged
-        assertEq(vault.balanceOf(address(token), newBondingCurve), 100 * 1e18); // New deposit
+        assertEq(vault.balanceOf(address(token), newClient), 100 * 1e18); // New deposit
     }
     
     function testOwnershipTransferMaintainsAccessControl() public {
@@ -289,17 +293,17 @@ contract VaultSecurityTest is Test {
         vm.prank(owner);
         vault.transferOwnership(newOwner);
         
-        // Old owner should no longer be able to set bonding curve
+        // Old owner should no longer be able to set client authorization
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, owner));
-        vault.setBondingCurve(makeAddr("anotherCurve"));
+        vault.setClient(makeAddr("anotherClient"), true);
         
-        // New owner should be able to set bonding curve
-        address anotherCurve = makeAddr("anotherCurve");
+        // New owner should be able to set client authorization
+        address anotherClient = makeAddr("anotherClient");
         vm.prank(newOwner);
-        vault.setBondingCurve(anotherCurve);
+        vault.setClient(anotherClient, true);
         
-        assertEq(vault.bondingCurve(), anotherCurve);
+        assertTrue(vault.authorizedClients(anotherClient));
     }
     
     function testMultipleTokensAccessControl() public {
@@ -327,23 +331,23 @@ contract VaultSecurityTest is Test {
         
         // Users still cannot access directly for either token
         vm.prank(user1);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.withdraw(address(token), 100 * 1e18, user1);
         
         vm.prank(user1);
-        vm.expectRevert("Vault: unauthorized, only bonding curve");
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
         vault.withdraw(address(token2), 100 * 1e18, user1);
     }
     
     // ============ EVENTS TESTING ============
     
-    function testBondingCurveSetEventEmission() public {
-        address newCurve = makeAddr("newCurve");
+    function testClientAuthorizationSetEventEmission() public {
+        address newClient = makeAddr("newClient");
         
         vm.prank(owner);
-        vm.expectEmit(true, true, false, false);
-        emit Vault.BondingCurveSet(bondingCurve, newCurve);
-        vault.setBondingCurve(newCurve);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(newClient, true);
+        vault.setClient(newClient, true);
     }
     
     function testEmergencyWithdrawEventEmission() public {
@@ -375,5 +379,158 @@ contract VaultSecurityTest is Test {
         assertEq(vault.balanceOf(address(token), bondingCurve), amount - withdrawAmount);
         assertEq(token.balanceOf(user2), 1000000 * 1e18 + withdrawAmount);
         assertEq(vault.getTotalDeposits(address(token)), amount - withdrawAmount);
+    }
+
+    // ============ MULTIPLE CLIENT AUTHORIZATION TESTS ============
+    
+    function testMultipleClientsCanBeAuthorized() public {
+        address client1 = makeAddr("client1");
+        address client2 = makeAddr("client2");
+        address client3 = makeAddr("client3");
+        
+        // Authorize multiple clients
+        vm.prank(owner);
+        vault.setClient(client1, true);
+        vm.prank(owner);
+        vault.setClient(client2, true);
+        vm.prank(owner);
+        vault.setClient(client3, true);
+        
+        // Verify all are authorized
+        assertTrue(vault.authorizedClients(client1));
+        assertTrue(vault.authorizedClients(client2));
+        assertTrue(vault.authorizedClients(client3));
+        assertTrue(vault.authorizedClients(bondingCurve)); // Original should still be authorized
+    }
+    
+    function testMultipleClientsCanDepositAndWithdraw() public {
+        address client1 = makeAddr("client1");
+        address client2 = makeAddr("client2");
+        uint256 amount = 500 * 1e18;
+        
+        // Authorize additional clients
+        vm.prank(owner);
+        vault.setClient(client1, true);
+        vm.prank(owner);
+        vault.setClient(client2, true);
+        
+        // Give clients tokens and approvals
+        token.mint(client1, 1000000 * 1e18);
+        token.mint(client2, 1000000 * 1e18);
+        vm.prank(client1);
+        token.approve(address(vault), type(uint256).max);
+        vm.prank(client2);
+        token.approve(address(vault), type(uint256).max);
+        
+        // All clients should be able to deposit
+        vm.prank(bondingCurve);
+        vault.deposit(address(token), amount, bondingCurve);
+        vm.prank(client1);
+        vault.deposit(address(token), amount, client1);
+        vm.prank(client2);
+        vault.deposit(address(token), amount, client2);
+        
+        // Verify balances
+        assertEq(vault.balanceOf(address(token), bondingCurve), amount);
+        assertEq(vault.balanceOf(address(token), client1), amount);
+        assertEq(vault.balanceOf(address(token), client2), amount);
+        
+        // All clients should be able to withdraw their own deposits
+        vm.prank(bondingCurve);
+        vault.withdraw(address(token), amount / 2, user1);
+        vm.prank(client1);
+        vault.withdraw(address(token), amount / 2, user2);
+        vm.prank(client2);
+        vault.withdraw(address(token), amount / 2, attacker);
+        
+        // Verify remaining balances
+        assertEq(vault.balanceOf(address(token), bondingCurve), amount - amount / 2);
+        assertEq(vault.balanceOf(address(token), client1), amount - amount / 2);
+        assertEq(vault.balanceOf(address(token), client2), amount - amount / 2);
+    }
+    
+    function testClientAuthorizationCanBeRevoked() public {
+        address client1 = makeAddr("client1");
+        uint256 amount = 500 * 1e18;
+        
+        // Authorize client
+        vm.prank(owner);
+        vault.setClient(client1, true);
+        assertTrue(vault.authorizedClients(client1));
+        
+        // Give client tokens and approval
+        token.mint(client1, 1000000 * 1e18);
+        vm.prank(client1);
+        token.approve(address(vault), type(uint256).max);
+        
+        // Client can deposit
+        vm.prank(client1);
+        vault.deposit(address(token), amount, client1);
+        assertEq(vault.balanceOf(address(token), client1), amount);
+        
+        // Revoke authorization
+        vm.prank(owner);
+        vault.setClient(client1, false);
+        assertFalse(vault.authorizedClients(client1));
+        
+        // Client should no longer be able to deposit
+        vm.prank(client1);
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vault.deposit(address(token), amount, client1);
+        
+        // Client should no longer be able to withdraw
+        vm.prank(client1);
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vault.withdraw(address(token), amount, client1);
+    }
+    
+    function testUnauthorizedClientCannotDepositOrWithdraw() public {
+        address unauthorizedClient = makeAddr("unauthorizedClient");
+        uint256 amount = 500 * 1e18;
+        
+        // Give client tokens and approval
+        token.mint(unauthorizedClient, 1000000 * 1e18);
+        vm.prank(unauthorizedClient);
+        token.approve(address(vault), type(uint256).max);
+        
+        // Unauthorized client cannot deposit
+        vm.prank(unauthorizedClient);
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vault.deposit(address(token), amount, unauthorizedClient);
+        
+        // Unauthorized client cannot withdraw
+        vm.prank(unauthorizedClient);
+        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vault.withdraw(address(token), amount, unauthorizedClient);
+        
+        // Verify client is not authorized
+        assertFalse(vault.authorizedClients(unauthorizedClient));
+    }
+    
+    function testMultipleClientAuthorizationEvents() public {
+        address client1 = makeAddr("client1");
+        address client2 = makeAddr("client2");
+        
+        // Test authorization events
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(client1, true);
+        vault.setClient(client1, true);
+        
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(client2, true);
+        vault.setClient(client2, true);
+        
+        // Test revocation events
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(client1, false);
+        vault.setClient(client1, false);
+        
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit Vault.ClientAuthorizationSet(client2, false);
+        vault.setClient(client2, false);
     }
 }

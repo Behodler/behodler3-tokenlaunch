@@ -50,7 +50,7 @@ contract B3QuoteFunctionsTest is Test {
         vm.stopPrank();
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);

@@ -52,7 +52,7 @@ contract B3RemoveLiquidityTest is Test {
         vm.stopPrank();
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
         
         // Setup test tokens and add initial liquidity
         inputToken.mint(user1, 1000000 * 1e18);
@@ -169,7 +169,7 @@ contract B3RemoveLiquidityTest is Test {
         );
         
         // Set vault bonding curve for fresh contract
-        vault.setBondingCurve(address(freshB3));
+        vault.setClient(address(freshB3), true);
         
         // First add liquidity to get bonding tokens and update virtual pair
         uint256 inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
@@ -214,7 +214,7 @@ contract B3RemoveLiquidityTest is Test {
             
             // Set vault bonding curve for fresh contract (need to do this outside of prank)
             vm.stopPrank();
-            vault.setBondingCurve(address(freshB3));
+            vault.setClient(address(freshB3), true);
             vm.startPrank(user1);
             
             // Add liquidity
@@ -376,7 +376,7 @@ contract B3RemoveLiquidityTest is Test {
         );
         
         // Set vault bonding curve for fresh contract
-        vault.setBondingCurve(address(freshB3));
+        vault.setClient(address(freshB3), true);
         
         uint256 initialBalance = inputToken.balanceOf(user1);
         uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair

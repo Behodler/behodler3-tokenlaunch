@@ -8,23 +8,23 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /**
  * @title Vault
  * @notice Abstract vault contract with security features and access control
- * @dev Provides base implementation for vault contracts with owner and bonding curve access control
+ * @dev Provides base implementation for vault contracts with owner and multiple client access control
  */
 abstract contract Vault is IVault, Ownable {
     
     // ============ STATE VARIABLES ============
     
-    /// @notice The address of the bonding curve contract authorized to deposit/withdraw
-    address public bondingCurve;
+    /// @notice Mapping of addresses authorized to deposit/withdraw
+    mapping(address => bool) public authorizedClients;
     
     // ============ EVENTS ============
     
     /**
-     * @notice Emitted when the bonding curve address is updated
-     * @param oldBondingCurve The previous bonding curve address
-     * @param newBondingCurve The new bonding curve address
+     * @notice Emitted when client authorization is updated
+     * @param client The client address whose authorization was changed
+     * @param authorized Whether the client is now authorized (true) or not (false)
      */
-    event BondingCurveSet(address indexed oldBondingCurve, address indexed newBondingCurve);
+    event ClientAuthorizationSet(address indexed client, bool authorized);
     
     /**
      * @notice Emitted when an emergency withdrawal is performed
@@ -36,11 +36,11 @@ abstract contract Vault is IVault, Ownable {
     // ============ MODIFIERS ============
     
     /**
-     * @notice Restricts access to only the bonding curve contract
-     * @dev Reverts if the caller is not the designated bonding curve address
+     * @notice Restricts access to only authorized client contracts
+     * @dev Reverts if the caller is not an authorized client address
      */
-    modifier onlyBondingCurve() {
-        require(msg.sender == bondingCurve, "Vault: unauthorized, only bonding curve");
+    modifier onlyAuthorizedClient() {
+        require(authorizedClients[msg.sender], "Vault: unauthorized, only authorized clients");
         _;
     }
     
@@ -57,17 +57,17 @@ abstract contract Vault is IVault, Ownable {
     // ============ OWNER FUNCTIONS ============
     
     /**
-     * @notice Set the bonding curve address that is authorized to call deposit/withdraw
-     * @param _bondingCurve The address of the bonding curve contract
+     * @notice Set client authorization for deposit/withdraw operations
+     * @param client The address of the client contract
+     * @param _auth Whether to authorize (true) or deauthorize (false) the client
      * @dev Only the contract owner can call this function
      */
-    function setBondingCurve(address _bondingCurve) external override onlyOwner {
-        require(_bondingCurve != address(0), "Vault: bonding curve cannot be zero address");
+    function setClient(address client, bool _auth) external override onlyOwner {
+        require(client != address(0), "Vault: client cannot be zero address");
         
-        address oldBondingCurve = bondingCurve;
-        bondingCurve = _bondingCurve;
+        authorizedClients[client] = _auth;
         
-        emit BondingCurveSet(oldBondingCurve, _bondingCurve);
+        emit ClientAuthorizationSet(client, _auth);
     }
     
     /**
@@ -99,7 +99,7 @@ abstract contract Vault is IVault, Ownable {
      * @param token The token address to deposit
      * @param amount The amount of tokens to deposit
      * @param recipient The address that will own the deposited tokens
-     * @dev Must be overridden by concrete contracts - implement onlyBondingCurve access control
+     * @dev Must be overridden by concrete contracts - implement onlyAuthorizedClient access control
      */
     function deposit(address token, uint256 amount, address recipient) external virtual override;
     
@@ -108,7 +108,7 @@ abstract contract Vault is IVault, Ownable {
      * @param token The token address to withdraw
      * @param amount The amount of tokens to withdraw
      * @param recipient The address that will receive the tokens
-     * @dev Must be overridden by concrete contracts - implement onlyBondingCurve access control
+     * @dev Must be overridden by concrete contracts - implement onlyAuthorizedClient access control
      */
     function withdraw(address token, uint256 amount, address recipient) external virtual override;
 }

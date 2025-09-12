@@ -51,7 +51,7 @@ contract B3VirtualPairTest is Test {
         vm.stopPrank();
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
         
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);
@@ -107,7 +107,7 @@ contract B3VirtualPairTest is Test {
         // Test that virtual pair state is independent from actual token balances
         
         // Set bonding curve to user1 to allow direct deposit for this test
-        vault.setBondingCurve(user1);
+        vault.setClient(user1, true);
         
         vm.startPrank(user1);
         inputToken.approve(address(vault), 1000 * 1e18);
@@ -123,7 +123,7 @@ contract B3VirtualPairTest is Test {
         assertEq(k, K, "K should remain unchanged");
         
         // Restore bonding curve to B3 contract
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
     }
     
     function testVirtualPairStateAfterBondingTokenMinting() public {

@@ -46,7 +46,7 @@ contract EarlySellPenaltyHookTest is Test {
         vm.stopPrank();
         
         // Set the bonding curve address in the vault
-        vault.setBondingCurve(address(b3));
+        vault.setClient(address(b3), true);
         
         // Deploy mock penalty hook
         mockPenaltyHook = new MockEarlySellPenaltyHook();

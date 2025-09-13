@@ -9,7 +9,7 @@ import "../src/mocks/MockSellHook.sol";
 import "../src/mocks/MockFailingHook.sol";
 import "../src/mocks/MockZeroHook.sol";
 import "../src/mocks/MockERC20.sol";
-import "../src/mocks/MockVault.sol";
+import "@vault/mocks/MockVault.sol";
 import "../src/mocks/MockBondingToken.sol";
 
 /**

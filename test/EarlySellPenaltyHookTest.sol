@@ -6,7 +6,7 @@ import "../src/Behodler3Tokenlaunch.sol";
 import "../src/interfaces/IEarlySellPenaltyHook.sol";
 import "../src/mocks/MockEarlySellPenaltyHook.sol";
 import "../src/mocks/MockERC20.sol";
-import "../src/mocks/MockVault.sol";
+import "@vault/mocks/MockVault.sol";
 import "../src/mocks/MockBondingToken.sol";
 
 /**

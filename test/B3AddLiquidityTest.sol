@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Behodler3Tokenlaunch.sol";
-import "../src/mocks/MockVault.sol";
+import "@vault/mocks/MockVault.sol";
 import "../src/mocks/MockBondingToken.sol";
 import "../src/mocks/MockERC20.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";

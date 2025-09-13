@@ -1,1 +1,4 @@
 @openzeppelin=lib/openzeppelin-contracts
+@vault/=lib/vault/src/
+vault-contracts/=lib/vault/src/contracts/
+vault-interfaces/=lib/vault/src/interfaces/

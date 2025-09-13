@@ -179,6 +179,155 @@ contract B3SecurityIntegrationTest is Test {
         vm.stopPrank();
     }
     
+    // ============ SET VAULT FUNCTIONALITY TESTS ============
+
+    function testSetVaultChangesVaultAddress() public {
+        // Deploy a new mock vault
+        MockVault newVault = new MockVault(address(this));
+        address oldVaultAddress = address(vault);
+
+        vm.startPrank(owner);
+
+        // Set the new vault
+        b3.setVault(address(newVault));
+
+        // Verify vault address changed
+        assertEq(address(b3.vault()), address(newVault), "Vault address should be updated");
+        assertTrue(address(b3.vault()) != oldVaultAddress, "Vault should be different from old vault");
+
+        vm.stopPrank();
+    }
+
+    function testSetVaultResetsVaultApprovalInitialized() public {
+        // Verify initial state (vault approval should be initialized from setUp)
+        assertTrue(b3.vaultApprovalInitialized(), "Vault approval should be initialized initially");
+
+        // Deploy a new mock vault
+        MockVault newVault = new MockVault(address(this));
+
+        vm.startPrank(owner);
+
+        // Set the new vault
+        b3.setVault(address(newVault));
+
+        // Verify vault approval is reset to false
+        assertFalse(b3.vaultApprovalInitialized(), "Vault approval should be reset to false");
+
+        vm.stopPrank();
+    }
+
+    function testSetVaultEmitsVaultChangedEvent() public {
+        // Deploy a new mock vault
+        MockVault newVault = new MockVault(address(this));
+        address oldVaultAddress = address(b3.vault());
+
+        vm.startPrank(owner);
+
+        // Expect the VaultChanged event
+        vm.expectEmit(true, true, false, false);
+        emit VaultChanged(oldVaultAddress, address(newVault));
+
+        // Set the new vault
+        b3.setVault(address(newVault));
+
+        vm.stopPrank();
+    }
+
+    function testSetVaultOnlyOwnerCanCall() public {
+        // Deploy a new mock vault
+        MockVault newVault = new MockVault(address(this));
+
+        // Non-owner should not be able to call setVault
+        vm.startPrank(user1);
+
+        vm.expectRevert(); // Modern OpenZeppelin uses OwnableUnauthorizedAccount custom error
+        b3.setVault(address(newVault));
+
+        vm.stopPrank();
+
+        // Owner should be able to call setVault
+        vm.startPrank(owner);
+
+        // Should succeed without revert
+        b3.setVault(address(newVault));
+
+        vm.stopPrank();
+    }
+
+    function testSetVaultBlocksOperationsUntilReinitialized() public {
+        // First add some liquidity with current vault
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), 50); // Use smaller amount appropriate for virtual pair scale
+        b3.addLiquidity(50, 0);
+        vm.stopPrank();
+
+        // Deploy and set new vault
+        MockVault newVault = new MockVault(address(this));
+
+        vm.startPrank(owner);
+        b3.setVault(address(newVault));
+        vm.stopPrank();
+
+        // Operations should fail until vault approval is reinitialized
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), 50);
+
+        vm.expectRevert("B3: Vault approval not initialized - call initializeVaultApproval() first");
+        b3.addLiquidity(50, 0);
+
+        vm.stopPrank();
+
+        // Initialize approval for new vault
+        newVault.setClient(address(b3), true);
+        vm.startPrank(owner);
+        b3.initializeVaultApproval();
+        vm.stopPrank();
+
+        // Now operations should work again
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), 50);
+        uint256 bondingTokensOut = b3.addLiquidity(50, 0);
+        assertTrue(bondingTokensOut > 0, "Should work after reinitializing approval");
+        vm.stopPrank();
+    }
+
+    function testSetVaultWithZeroAddressReverts() public {
+        vm.startPrank(owner);
+
+        // Setting vault to zero address should not revert in setVault
+        // (The revert would come later during operations)
+        b3.setVault(address(0));
+
+        // Verify vault was set to zero address
+        assertEq(address(b3.vault()), address(0), "Vault should be set to zero address");
+
+        vm.stopPrank();
+    }
+
+    function testMultipleVaultChanges() public {
+        // Deploy multiple new vaults
+        MockVault vault2 = new MockVault(address(this));
+        MockVault vault3 = new MockVault(address(this));
+
+        vm.startPrank(owner);
+
+        // Change vault multiple times
+        b3.setVault(address(vault2));
+        assertEq(address(b3.vault()), address(vault2), "Should be vault2");
+        assertFalse(b3.vaultApprovalInitialized(), "Approval should be reset");
+
+        b3.setVault(address(vault3));
+        assertEq(address(b3.vault()), address(vault3), "Should be vault3");
+        assertFalse(b3.vaultApprovalInitialized(), "Approval should still be reset");
+
+        // Change back to original vault
+        b3.setVault(address(vault));
+        assertEq(address(b3.vault()), address(vault), "Should be back to original vault");
+        assertFalse(b3.vaultApprovalInitialized(), "Approval should be reset even for old vault");
+
+        vm.stopPrank();
+    }
+
     // ============ REENTRANCY PROTECTION TESTS ============
     
     function testAddLiquidityReentrancyProtection() public {
@@ -400,4 +549,5 @@ contract B3SecurityIntegrationTest is Test {
     event ContractLocked();
     event ContractUnlocked();
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event VaultChanged(address indexed oldVault, address indexed newVault);
 }

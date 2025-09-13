@@ -77,6 +77,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event HookCalled(address indexed hook, address indexed user, string operation, uint256 fee, int256 delta);
     event FeeApplied(address indexed user, uint256 fee, string operation);
     event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
+    event VaultChanged(address indexed oldVault, address indexed newVault);
     
     // ============ MODIFIERS ============
     
@@ -176,6 +177,31 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(inputToken.approve(address(vault), 0), "B3: Approval revocation failed");
 
         vaultApprovalInitialized = false;
+    }
+
+    /**
+     * @notice Set the vault address for the contract
+     * @dev Owner-only function to update the vault contract address
+     * @param _vault The new vault contract address
+     */
+    function setVault(address _vault) external onlyOwner {
+        _setVault(IVault(_vault));
+    }
+
+    /**
+     * @notice Internal function to set the vault address
+     * @dev Sets vault address and resets approval state for security
+     * @param _vault The new vault contract address
+     */
+    function _setVault(IVault _vault) internal {
+        address oldVault = address(vault);
+        vault = _vault;
+
+        // Reset vault approval initialization to false when vault changes
+        // This ensures the new vault must be properly authorized before operations
+        vaultApprovalInitialized = false;
+
+        emit VaultChanged(oldVault, address(_vault));
     }
 
 

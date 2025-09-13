@@ -82,7 +82,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         IVault _vault
     ) Ownable(msg.sender){
         // STUB: This should initialize but will cause test failures
-        inputToken = _inputToken;
+        _setInputToken(_inputToken);
         bondingToken = _bondingToken;
         vault = _vault;
         
@@ -118,6 +118,21 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         
         return outputAmount;
     }
+
+    /**
+     * @dev Once off approve on vault to save gas
+     * @param _token new input token address
+     */
+    function setInputToken(address _token) external onlyOwner{
+      _setInputToken(IERC20(_token));
+    }
+
+    function _setInputToken(IERC20 _token) internal{
+        inputToken = _token;
+        //once off approve to save gas
+        require(inputToken.approve(address(vault), type(uint).max), "B3: Approve failed");
+    }
+
 
     /**
      * @notice Calculate bonding tokens output for a given input amount using virtual pair math
@@ -213,9 +228,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         
         // Transfer input tokens from user to contract
         require(inputToken.transferFrom(msg.sender, address(this), inputAmount), "B3: Transfer failed");
-        
-        // Approve vault to spend input tokens
-        require(inputToken.approve(address(vault), inputAmount), "B3: Approve failed");
         
         // Deposit input tokens to vault
         vault.deposit(address(inputToken), inputAmount, address(this));

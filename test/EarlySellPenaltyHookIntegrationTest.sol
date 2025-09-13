@@ -50,7 +50,12 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         
         // Set the bonding curve address in the vault
         vault.setClient(address(b3), true);
-        
+
+        // Initialize vault approval after vault authorizes B3
+        vm.startPrank(owner);
+        b3.initializeVaultApproval();
+        vm.stopPrank();
+
         // Setup user balances
         inputToken.mint(user1, INITIAL_INPUT_SUPPLY);
         inputToken.mint(user2, INITIAL_INPUT_SUPPLY);

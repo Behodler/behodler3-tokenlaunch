@@ -53,7 +53,12 @@ contract B3RemoveLiquidityTest is Test {
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
         vault.setClient(address(b3), true);
-        
+
+        // Initialize vault approval after vault authorizes B3
+        vm.startPrank(owner);
+        b3.initializeVaultApproval();
+        vm.stopPrank();
+
         // Setup test tokens and add initial liquidity
         inputToken.mint(user1, 1000000 * 1e18);
         inputToken.mint(user2, 1000000 * 1e18);
@@ -170,7 +175,11 @@ contract B3RemoveLiquidityTest is Test {
         
         // Set vault bonding curve for fresh contract
         vault.setClient(address(freshB3), true);
-        
+
+        // Initialize vault approval for fresh contract
+        // Note: test contract is the owner of freshB3, so call directly
+        freshB3.initializeVaultApproval();
+
         // First add liquidity to get bonding tokens and update virtual pair
         uint256 inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
         
@@ -205,16 +214,23 @@ contract B3RemoveLiquidityTest is Test {
         testAmounts[3] = 200 * 1e18;
         
         for (uint i = 0; i < testAmounts.length; i++) {
+            // Set vault bonding curve for fresh contract (need to do this outside of prank)
+            vm.stopPrank();
+
             // Create fresh B3 contract for each test to avoid saturation
+            // Deploy outside of prank so test contract is the owner
             Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
                 IERC20(address(inputToken)),
                 IBondingToken(address(bondingToken)),
                 IVault(address(vault))
             );
-            
-            // Set vault bonding curve for fresh contract (need to do this outside of prank)
-            vm.stopPrank();
+
             vault.setClient(address(freshB3), true);
+
+            // Initialize vault approval for fresh contract
+            // Note: test contract is the owner of freshB3, so call directly
+            freshB3.initializeVaultApproval();
+
             vm.startPrank(user1);
             
             // Add liquidity
@@ -377,7 +393,11 @@ contract B3RemoveLiquidityTest is Test {
         
         // Set vault bonding curve for fresh contract
         vault.setClient(address(freshB3), true);
-        
+
+        // Initialize vault approval for fresh contract
+        // Note: test contract is the owner of freshB3, so call directly
+        freshB3.initializeVaultApproval();
+
         uint256 initialBalance = inputToken.balanceOf(user1);
         uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair
         

@@ -47,7 +47,12 @@ contract EarlySellPenaltyHookTest is Test {
         
         // Set the bonding curve address in the vault
         vault.setClient(address(b3), true);
-        
+
+        // Initialize vault approval after vault authorizes B3
+        vm.startPrank(owner);
+        b3.initializeVaultApproval();
+        vm.stopPrank();
+
         // Deploy mock penalty hook
         mockPenaltyHook = new MockEarlySellPenaltyHook();
         

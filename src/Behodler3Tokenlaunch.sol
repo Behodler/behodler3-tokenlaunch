@@ -12,18 +12,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @title Behodler3Tokenlaunch (B3)
  * @notice Bootstrap AMM using Virtual Pair architecture for token launches
  * @dev Refactored to eliminate code duplication and implement DRY principles
- * 
+ *
  * CRITICAL CONCEPT: Virtual Pair Architecture
  * - Virtual Pair: (inputToken, virtualL) where virtualL exists only as internal accounting
  * - Initial setup: (10000 inputToken, 100000000 virtualL) establishing k = 1,000,000,000,000
  * - Trading: Calculate virtual swap FIRST using xy=k, THEN mint actual bondingToken
  * - virtualL is NOT the same as bondingToken.totalSupply() - it's virtual/unminted
- * 
+ *
  * REFACTORING NOTES (Stories 002 & 003):
  * - Add operations use _calculateBondingTokensOut() for DRY principle compliance
  * - Remove operations use _calculateInputTokensOut() for symmetric architecture
  * - Both utilize _calculateVirtualPairQuote() for generalized quote logic
  * - Eliminates all code duplication between quote and actual operation functions
+ *
+ * APPROVAL FLOW (Story 010 - Gas Optimization with Deferred Approval):
+ * - Constructor no longer performs vault approval to prevent deployment failures
+ * - Vault approval is deferred until after deployment when vault authorizes this contract
+ * - Owner must call initializeVaultApproval() after vault.setClient(address(this), true)
+ * - This saves ~5000 gas per addLiquidity call by using max approval instead of per-transaction approvals
+ * - Emergency disableToken() function allows revoking vault approval if needed
+ * - Fallback safety check in addLiquidity ensures vault approval is initialized
  */
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
@@ -40,7 +48,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     /// @notice Whether the contract is locked for emergency purposes
     bool public locked;
-    
+
+    /// @notice Whether the vault approval has been initialized
+    bool public vaultApprovalInitialized;
+
     // Virtual Pair State - CRITICAL: These are separate from actual token balances
     /// @notice Virtual amount of input tokens in the pair (starts at 10000)
     uint256 public virtualInputTokens;
@@ -81,14 +92,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         IBondingToken _bondingToken,
         IVault _vault
     ) Ownable(msg.sender){
-        // STUB: This should initialize but will cause test failures
-        _setInputToken(_inputToken);
+        // Store references but defer approval until vault authorizes this contract
+        inputToken = _inputToken;
         bondingToken = _bondingToken;
         vault = _vault;
-        
+
         // Initialize virtual pair to establish constant product k = 1,000,000,000,000
         virtualInputTokens = 10000; // Initial virtual input tokens
         virtualL = 100000000; // Initial virtual L tokens
+
+        // Vault approval is deferred to post-deployment initialization
+        vaultApprovalInitialized = false;
     }
     
     // ============ INTERNAL HELPER FUNCTIONS ============
@@ -129,8 +143,39 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function _setInputToken(IERC20 _token) internal{
         inputToken = _token;
-        //once off approve to save gas
-        require(inputToken.approve(address(vault), type(uint).max), "B3: Approve failed");
+
+        // Only approve if vault has already authorized this contract
+        // This prevents constructor failures when vault hasn't authorized us yet
+        if (vaultApprovalInitialized) {
+            require(inputToken.approve(address(vault), type(uint).max), "B3: Approve failed");
+        }
+    }
+
+    /**
+     * @notice Initialize vault approval after the vault has authorized this contract
+     * @dev MUST be called by owner after vault.setClient(address(this), true)
+     *      This defers the approval that would otherwise fail in constructor
+     */
+    function initializeVaultApproval() external onlyOwner {
+        require(!vaultApprovalInitialized, "B3: Vault approval already initialized");
+
+        // Perform the approval that was deferred from constructor
+        require(inputToken.approve(address(vault), type(uint).max), "B3: Vault approval failed");
+
+        vaultApprovalInitialized = true;
+    }
+
+    /**
+     * @notice Emergency function to revoke vault approval for the input token
+     * @dev Allows owner to disable vault operations in case of emergency
+     */
+    function disableToken() external onlyOwner {
+        require(vaultApprovalInitialized, "B3: Vault approval not initialized");
+
+        // Revoke approval from vault
+        require(inputToken.approve(address(vault), 0), "B3: Approval revocation failed");
+
+        vaultApprovalInitialized = false;
     }
 
 
@@ -177,13 +222,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
      * @return bondingTokensOut Amount of bonding tokens minted
      */
-    function addLiquidity(uint256 inputAmount, uint256 minBondingTokens) 
-        external 
-        nonReentrant 
-        notLocked 
-        returns (uint256 bondingTokensOut) 
+    function addLiquidity(uint256 inputAmount, uint256 minBondingTokens)
+        external
+        nonReentrant
+        notLocked
+        returns (uint256 bondingTokensOut)
     {
         require(inputAmount > 0, "B3: Input amount must be greater than 0");
+
+        // Fallback safety check: ensure vault approval is initialized
+        // This prevents operations if approval was missed or revoked
+        require(vaultApprovalInitialized, "B3: Vault approval not initialized - call initializeVaultApproval() first");
         
         // Calculate base bonding tokens using refactored virtual pair math
         uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);

@@ -50,7 +50,12 @@ contract B3SecurityIntegrationTest is Test {
         
         // Set the bonding curve address in the vault to allow B3 to call deposit/withdraw
         vault.setClient(address(b3), true);
-        
+
+        // Initialize vault approval after vault authorizes B3
+        vm.startPrank(owner);
+        b3.initializeVaultApproval();
+        vm.stopPrank();
+
         // Setup test tokens
         inputToken.mint(user1, 1000000 * 1e18);
         inputToken.mint(user2, 1000000 * 1e18);

@@ -51,6 +51,13 @@ contract EarlySellPenaltyHookTest is Test {
         // Initialize vault approval after vault authorizes B3
         vm.startPrank(owner);
         b3.initializeVaultApproval();
+
+        // Set virtual liquidity goals
+        uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
+        uint256 seedInput = 1000 * 1e18; // 1K tokens
+        uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
+        b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
+
         vm.stopPrank();
 
         // Deploy mock penalty hook

@@ -224,12 +224,18 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
         
-        // User2 gets tokens from elsewhere (simulate)
-        bondingToken.mint(user2, 1000);
-        
+        uint user1BalanceBefore = bondingToken.balanceOf(user1);
+        vm.prank(user1);
+        b3.addLiquidity(1000, 1000);
+        uint bondingTokensMinted = bondingToken.balanceOf(user1) - user1BalanceBefore;
+        assertGt(bondingTokensMinted,0);
+
+        vm.prank(user1);
+        bondingToken.transfer(user2, bondingTokensMinted);
+
         // User2 sells without ever buying (should get max penalty)
         vm.prank(user2);
-        b3.removeLiquidity(1000, 0);
+        b3.removeLiquidity(bondingTokensMinted, 0);
         
         // Should fail because real hook doesn't handle first-time sellers
         uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();

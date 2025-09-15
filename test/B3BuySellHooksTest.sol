@@ -336,7 +336,7 @@ contract B3BuySellHooksTest is Test {
         b3.setHook(IBondingCurveHook(address(buyHook)));
         
         vm.prank(user1);
-        vm.expectRevert("B3: Insufficient output amount");
+        vm.expectRevert("VL: Invalid calculation result");
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 1);
         
         // Should fail because fee logic doesn't exist

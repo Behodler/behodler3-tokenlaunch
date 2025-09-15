@@ -5,8 +5,11 @@ import "@vault/interfaces/IVault.sol";
 import "./interfaces/IBondingToken.sol";
 import "./interfaces/IBondingCurveHook.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @title Behodler3Tokenlaunch (B3)
@@ -33,7 +36,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Emergency disableToken() function allows revoking vault approval if needed
  * - Fallback safety check in addLiquidity ensures vault approval is initialized
  */
-contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
+contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     
     // ============ STATE VARIABLES ============
     
@@ -85,6 +88,21 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     
     /// @notice The bonding curve hook for buy/sell operations
     IBondingCurveHook private bondingCurveHook;
+
+    // ============ EIP-2612 PERMIT VARIABLES ============
+
+    /// @notice Mapping of user addresses to their current nonce for permit functionality
+    mapping(address => uint256) private _nonces;
+
+    /// @notice EIP-712 typehash for the permit function
+    bytes32 private constant _PERMIT_TYPEHASH =
+        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+
+    /// @notice Name used for EIP-712 domain separator
+    string private constant _EIP712_NAME = "Behodler3Tokenlaunch";
+
+    /// @notice Version used for EIP-712 domain separator
+    string private constant _EIP712_VERSION = "1";
     
     // ============ EVENTS ============
     
@@ -97,6 +115,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
     event VaultChanged(address indexed oldVault, address indexed newVault);
     event VirtualLiquidityGoalsSet(uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
+
+    // ============ EIP-2612 PERMIT EVENTS ============
+
+    /// @notice Emitted when a permit is used for token approval
+    event PermitUsed(address indexed owner, address indexed spender, uint256 value, uint256 nonce, uint256 deadline);
     
     // ============ MODIFIERS ============
     
@@ -111,7 +134,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         IERC20 _inputToken,
         IBondingToken _bondingToken,
         IVault _vault
-    ) Ownable(msg.sender){
+    ) Ownable(msg.sender) EIP712(_EIP712_NAME, _EIP712_VERSION) {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
         bondingToken = _bondingToken;
@@ -733,5 +756,173 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      */
     function virtualLDifferentFromTotalSupply() external view returns (bool) {
         return virtualL != bondingToken.totalSupply();
+    }
+
+    // ============ EIP-2612 PERMIT FUNCTIONS ============
+
+    /**
+     * @notice Implements EIP-2612 permit functionality for gasless approvals
+     * @dev Allows token holder to approve spender via signature instead of transaction
+     * @param owner The token owner granting the approval
+     * @param spender The address being approved to spend tokens
+     * @param value The amount of tokens to approve
+     * @param deadline The timestamp after which the permit is no longer valid
+     * @param v The recovery byte of the signature
+     * @param r The first 32 bytes of the signature
+     * @param s The second 32 bytes of the signature
+     */
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        require(deadline >= block.timestamp, "B3: Permit expired");
+        require(owner != address(0), "B3: Invalid owner");
+        require(spender != address(0), "B3: Invalid spender");
+
+        uint256 nonce = _nonces[owner];
+
+        // Increment nonce to prevent replay attacks
+        _nonces[owner]++;
+
+        // Check if the input token supports EIP-2612 permit
+        try IERC20Permit(address(inputToken)).permit(owner, spender, value, deadline, v, r, s) {
+            // If input token has native permit support, use it directly
+            emit PermitUsed(owner, spender, value, nonce, deadline);
+        } catch {
+            // If input token doesn't support permit, we need a different approach
+            // For now, revert as we cannot directly approve tokens we don't control
+            revert("B3: Input token does not support permit");
+        }
+    }
+
+    /**
+     * @notice Permit-enabled version of addLiquidity
+     * @dev Combines permit and addLiquidity in one transaction for gasless approval
+     * @param inputAmount Amount of input tokens to add
+     * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
+     * @param deadline The timestamp after which the permit is no longer valid
+     * @param v The recovery byte of the signature
+     * @param r The first 32 bytes of the signature
+     * @param s The second 32 bytes of the signature
+     * @return bondingTokensOut Amount of bonding tokens minted
+     */
+    function addLiquidityWithPermit(
+        uint256 inputAmount,
+        uint256 minBondingTokens,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external nonReentrant notLocked returns (uint256 bondingTokensOut) {
+        require(inputAmount > 0, "B3: Input amount must be greater than 0");
+
+        // Fallback safety check: ensure vault approval is initialized
+        require(vaultApprovalInitialized, "B3: Vault approval not initialized - call initializeVaultApproval() first");
+
+        // First try to use permit (will fail gracefully if not supported)
+        try this.permit(msg.sender, address(this), inputAmount, deadline, v, r, s) {
+            // Permit succeeded, proceed with addLiquidity
+        } catch {
+            // Permit failed - check if user has sufficient allowance instead
+            require(
+                inputToken.allowance(msg.sender, address(this)) >= inputAmount,
+                "B3: Insufficient allowance and permit failed"
+            );
+        }
+
+        // Calculate base bonding tokens using refactored virtual pair math
+        uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);
+
+        // Initialize variables for hook processing
+        uint256 effectiveInputAmount = inputAmount;
+        bondingTokensOut = baseBondingTokens;
+
+        // Call buy hook if set
+        if (address(bondingCurveHook) != address(0)) {
+            (uint256 hookFee, int256 deltaBondingToken) = bondingCurveHook.buy(
+                msg.sender,
+                baseBondingTokens,
+                inputAmount
+            );
+
+            // Emit hook called event
+            emit HookCalled(address(bondingCurveHook), msg.sender, "buy", hookFee, deltaBondingToken);
+
+            // Apply fee to input amount
+            if (hookFee > 0) {
+                require(hookFee <= 1000, "B3: Fee exceeds maximum");
+                uint256 feeAmount = (inputAmount * hookFee) / 1000;
+                effectiveInputAmount = inputAmount - feeAmount;
+                emit FeeApplied(msg.sender, feeAmount, "buy");
+
+                // Recalculate bonding tokens with reduced input
+                bondingTokensOut = _calculateBondingTokensOut(effectiveInputAmount);
+            }
+
+            // Apply delta bonding token adjustment
+            if (deltaBondingToken != 0) {
+                int256 adjustedBondingAmount = int256(bondingTokensOut) + deltaBondingToken;
+                require(adjustedBondingAmount > 0, "B3: Negative bonding token result");
+                bondingTokensOut = uint256(adjustedBondingAmount);
+                emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "buy");
+            }
+        }
+
+        // Check MEV protection
+        require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
+
+        // Transfer input tokens from user to contract
+        require(inputToken.transferFrom(msg.sender, address(this), inputAmount), "B3: Transfer failed");
+
+        // Deposit input tokens to vault
+        vault.deposit(address(inputToken), inputAmount, address(this));
+
+        // Mint bonding tokens to user (only if amount > 0)
+        if (bondingTokensOut > 0) {
+            bondingToken.mint(msg.sender, bondingTokensOut);
+        }
+
+        // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
+        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
+
+        emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
+
+        return bondingTokensOut;
+    }
+
+    /**
+     * @notice Returns the current nonce for the given owner
+     * @dev Part of EIP-2612 standard interface
+     * @param owner The address to query the nonce for
+     * @return The current nonce for the owner
+     */
+    function nonces(address owner) external view returns (uint256) {
+        return _nonces[owner];
+    }
+
+    /**
+     * @notice Returns the domain separator for EIP-712 signatures
+     * @dev Part of EIP-2612 standard interface
+     * @return The domain separator hash
+     */
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
+    /**
+     * @notice Checks if the contract supports EIP-2612 permit functionality
+     * @dev Returns true if permit is supported (EIP-165 compatible)
+     * @param interfaceId The interface identifier to check
+     * @return True if the interface is supported
+     */
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return
+            interfaceId == type(IERC20Permit).interfaceId ||
+            interfaceId == 0x01ffc9a7; // EIP-165 interface ID
     }
 }

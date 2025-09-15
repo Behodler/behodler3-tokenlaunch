@@ -75,109 +75,80 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     }
     
     /**
-     * @notice Helper function to set up a non-all-time-high scenario
-     * @dev First buyer pushes to all-time high and gets exemption, then sells everything.
-     *      Second buyer purchases at lower price (not all-time high) and gets normal penalty.
-     * @param testUser The user that should have normal penalty behavior
+     * @notice Helper function to set up a test scenario with penalty hook
+     * @dev Sets up penalty hook and has test user purchase tokens to trigger timestamp recording.
+     * @param testUser The user that should make a purchase
      * @return bondingTokens The amount of bonding tokens the test user received
      */
-    function _setupNonAllTimeHighScenario(address testUser) internal returns (uint256 bondingTokens) {
+    function _setupTestScenario(address testUser) internal returns (uint256 bondingTokens) {
         // Set penalty hook
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
-        
-        // First user buys to establish all-time high and verify zero penalty
-        vm.prank(user1);
-        uint256 user1Tokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Verify user1 got all-time high exemption (timestamp = type(uint).max)
-        uint256 user1Timestamp = penaltyHook.getBuyerTimestamp(user1);
-        assertEq(user1Timestamp, type(uint).max, "First buyer should get all-time high exemption");
-        
-        // Verify user1 has zero penalty
-        uint256 user1Penalty = penaltyHook.calculatePenaltyFee(user1);
-        assertEq(user1Penalty, 0, "All-time high buyer should have zero penalty");
-        
-        // User1 sells only half to keep some liquidity and avoid division by zero
-        vm.prank(user1);
-        b3.removeLiquidity(user1Tokens / 2, 0);
-        
-        // Now test user buys a smaller amount that doesn't reach the remaining all-time high
+
+        // Test user buys tokens
         vm.prank(testUser);
-        bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT / 4, 0); // Smaller amount to avoid all-time high
-        
-        // Verify test user got normal timestamp (not type(uint).max)
+        bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+
+        // Verify test user got normal timestamp
         uint256 testUserTimestamp = penaltyHook.getBuyerTimestamp(testUser);
-        assertLt(testUserTimestamp, type(uint).max, "Non-all-time-high buyer should get normal timestamp");
         assertGt(testUserTimestamp, 0, "Buyer should have non-zero timestamp");
-        
+
         return bondingTokens;
     }
 
     // ============ TIMESTAMP TRACKING TESTS ============
     
     function test_BuyerTimestampRecordedOnPurchase() public {
-        // Setup non-all-time-high scenario to get normal timestamp behavior
-        _setupNonAllTimeHighScenario(user2);
-        
+        // Setup test scenario to get normal timestamp behavior
+        _setupTestScenario(user2);
+
         // Test user2 should have a normal timestamp recorded
         uint256 recordedTimestamp = penaltyHook.getBuyerTimestamp(user2);
-        
+
         assertGt(recordedTimestamp, 0, "Timestamp should be recorded for buyer");
-        assertLt(recordedTimestamp, type(uint).max, "Timestamp should not be all-time high exemption");
+        assertLe(recordedTimestamp, block.timestamp, "Timestamp should not be in the future");
     }
     
     function test_TimestampUpdatedOnSubsequentBuy() public {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
-        
-        // First user establishes all-time high but only sells half
-        vm.prank(user1);
-        uint256 user1Tokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        vm.prank(user1);
-        b3.removeLiquidity(user1Tokens / 2, 0); // Only sell half
-        
-        // User2 first buy at lower price
+
+        // User2 first buy
         vm.prank(user2);
-        b3.addLiquidity(TYPICAL_INPUT_AMOUNT / 8, 0); // Small amount
+        b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
-        
-        // Wait some time and buy again with smaller amount
+
+        // Wait some time and buy again
         vm.warp(block.timestamp + ONE_HOUR);
-        
+
         vm.prank(user2);
-        b3.addLiquidity(TYPICAL_INPUT_AMOUNT / 16, 0); // Even smaller amount to avoid all-time high
+        b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
-        
+
         assertGt(secondTimestamp, firstTimestamp, "Timestamp should be updated on subsequent buy");
-        assertLt(secondTimestamp, type(uint).max, "Second buy should not trigger all-time high exemption");
+        assertLe(secondTimestamp, block.timestamp, "Timestamp should not be in the future");
     }
     
     function test_DifferentBuyersHaveDifferentTimestamps() public {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
-        
-        // User1 buys first (gets all-time high exemption)
+
+        // User1 buys first
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 timestamp1 = penaltyHook.getBuyerTimestamp(user1);
-        
-        // User1 sells to lower price
-        uint256 user1Tokens = bondingToken.balanceOf(user1);
-        vm.prank(user1);
-        b3.removeLiquidity(user1Tokens, 0);
-        
-        // Wait and then user2 buys at lower price (not all-time high)
+
+        // Wait and then user2 buys
         vm.warp(block.timestamp + ONE_HOUR);
-        
+
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 timestamp2 = penaltyHook.getBuyerTimestamp(user2);
-        
-        // User1 should have all-time high exemption, user2 should have normal timestamp
-        assertEq(timestamp1, type(uint).max, "First buyer should get all-time high exemption");
-        assertLt(timestamp2, type(uint).max, "Second buyer should have normal timestamp");
+
+        // Both users should have valid timestamps, with user2's being later
+        assertGt(timestamp1, 0, "First buyer should have valid timestamp");
         assertGt(timestamp2, 0, "Second buyer should have valid timestamp");
+        assertLt(timestamp1, timestamp2, "Different buyers should have different timestamps");
     }
     
     function test_FirstTimeBuyerHasZeroTimestamp() public {
@@ -188,8 +159,8 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     // ============ FEE CALCULATION TESTS ============
     
     function test_ImmediateSellHasMaximumPenalty() public {
-        // Setup non-all-time-high scenario
-        uint256 bondingTokens = _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        uint256 bondingTokens = _setupTestScenario(user2);
         
         uint256 baseOutputWithoutHook = b3.quoteRemoveLiquidity(bondingTokens);
         
@@ -206,8 +177,8 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     }
     
     function test_PenaltyDeclinesOverTime() public {
-        // Setup non-all-time-high scenario
-        _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        _setupTestScenario(user2);
         
         // Wait 10 hours and check penalty (should have 90% penalty)
         vm.warp(block.timestamp + (10 * ONE_HOUR));
@@ -293,9 +264,9 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Set custom rate: 20 = 2% per hour, 50 hour max
         vm.prank(owner);
         penaltyHook.setPenaltyParameters(20, 50);
-        
-        // Setup non-all-time-high scenario with custom parameters
-        _setupNonAllTimeHighScenario(user2);
+
+        // Setup test scenario with custom parameters
+        _setupTestScenario(user2);
         
         // Wait 5 hours and check penalty (should have 90% penalty with 2% decline rate)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
@@ -313,8 +284,8 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     // ============ INTEGRATION TESTS ============
     
     function test_PenaltyHookIntegratesWithBehodler3() public {
-        // Setup non-all-time-high scenario
-        uint256 bondingTokens = _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        uint256 bondingTokens = _setupTestScenario(user2);
         
         // Verify hook is set
         assertEq(address(b3.getHook()), address(penaltyHook), "Hook should be set");
@@ -322,7 +293,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Verify timestamp was recorded
         uint256 timestamp = penaltyHook.getBuyerTimestamp(user2);
         assertGt(timestamp, 0, "Timestamp should be recorded");
-        assertLt(timestamp, type(uint).max, "Should not be all-time high exemption");
+        assertLe(timestamp, block.timestamp, "Timestamp should not be in the future");
         
         // Sell tokens immediately and verify penalty is applied
         uint256 baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
@@ -336,28 +307,22 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     function test_MultipleBuysSingleSell() public {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
-        
-        // First user establishes all-time high but only sells half
-        vm.prank(user1);
-        uint256 user1Tokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        vm.prank(user1);
-        b3.removeLiquidity(user1Tokens / 2, 0); // Only sell half
-        
-        // User2 first buy at lower price
+
+        // User2 first buy
         vm.prank(user2);
-        b3.addLiquidity(TYPICAL_INPUT_AMOUNT / 8, 0); // Small amount
+        b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
-        
+
         // Wait and second buy (should reset timestamp)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
-        
+
         vm.prank(user2);
-        b3.addLiquidity(TYPICAL_INPUT_AMOUNT / 16, 0); // Even smaller amount to avoid all-time high
+        b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
         uint256 secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
-        
+
         assertGt(secondTimestamp, firstTimestamp, "Timestamp should be updated on second buy");
-        assertLt(secondTimestamp, type(uint).max, "Second buy should not trigger all-time high exemption");
-        
+        assertLe(secondTimestamp, block.timestamp, "Timestamp should not be in the future");
+
         // Immediately sell (penalty should be based on second buy)
         uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 1000, "Penalty should be based on most recent buy");
@@ -382,8 +347,8 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     }
     
     function test_PenaltyAtExactHourBoundaries() public {
-        // Setup non-all-time-high scenario
-        _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        _setupTestScenario(user2);
         
         // Wait exactly 1 hour
         vm.warp(block.timestamp + ONE_HOUR);
@@ -451,29 +416,18 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     function test_BuyerTimestampRecordedEventEmitted() public {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
-        
-        // First buyer will get all-time high exemption
-        vm.expectEmit(true, false, false, true);
-        emit BuyerTimestampRecorded(user1, type(uint).max);
-        
-        vm.prank(user1);
-        uint256 user1Tokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        
-        // Sell to lower price
-        vm.prank(user1);
-        b3.removeLiquidity(user1Tokens, 0);
-        
-        // Second buyer gets normal timestamp
+
+        // First buyer gets normal timestamp
         vm.expectEmit(true, false, false, false); // Don't check timestamp value since it's block.timestamp
-        emit BuyerTimestampRecorded(user2, 0); // Placeholder value, actual event will have block.timestamp
-        
-        vm.prank(user2);
+        emit BuyerTimestampRecorded(user1, 0); // Placeholder value, actual event will have block.timestamp
+
+        vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
     }
     
     function test_PenaltyAppliedEventEmitted() public {
-        // Setup non-all-time-high scenario
-        uint256 bondingTokens = _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        uint256 bondingTokens = _setupTestScenario(user2);
         
         // Wait 2 hours
         vm.warp(block.timestamp + (2 * ONE_HOUR));
@@ -507,8 +461,8 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Record balance before any operations
         uint256 initialBalance = inputToken.balanceOf(user2);
         
-        // Setup non-all-time-high scenario
-        uint256 bondingTokens = _setupNonAllTimeHighScenario(user2);
+        // Setup test scenario
+        uint256 bondingTokens = _setupTestScenario(user2);
         
         // Record balance after setup (to know how much was spent)
         uint256 balanceAfterBuy = inputToken.balanceOf(user2);

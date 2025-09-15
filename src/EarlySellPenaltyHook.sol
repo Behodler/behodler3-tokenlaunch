@@ -16,8 +16,6 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     /// @notice Mapping of buyer addresses to their last buy timestamps
     mapping(address => uint256) private buyerLastBuyTimestamp;
     
-    ///@notice buyers who push the price to an all time high can sell without penalty
-    uint public allTimeHigh=0;
 
 
     /// @notice Rate at which penalty declines per hour (1% = 10 in fee units)
@@ -55,26 +53,11 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // 1. First-time buyers: Creates new timestamp entry
         // 2. Existing buyers: RESETS timestamp to current block time
         // 3. Timestamp reset prevents gaming through multiple small buys
-        // 4. Each buy operation starts a new 96-hour penalty countdown
-        // 5. All time high buyers are exempty from penalty
+        // 4. Each buy operation starts a new penalty countdown based on maxPenaltyDurationHours
 
-        uint timestamp = block.timestamp;       
-        
-        // Only calculate price and check all-time high if baseBondingToken > 0
-        // to avoid division by zero
-        if (baseBondingToken > 0) {
-            uint currentPrice = (baseInputToken*(1 ether))/baseBondingToken;
-            if(currentPrice>allTimeHigh){
-                allTimeHigh = currentPrice;
-                //timestamps higher than current block time are exempt from fees
-                timestamp = type(uint).max;
-            }
-        }
-        // If baseBondingToken is 0, user gets normal timestamp (no all-time high exemption)
-        
-        buyerLastBuyTimestamp[buyer] = timestamp;
-        
-        emit BuyerTimestampRecorded(buyer, timestamp);
+        buyerLastBuyTimestamp[buyer] = block.timestamp;
+
+        emit BuyerTimestampRecorded(buyer, block.timestamp);
         
         // Buy operations never apply fees or adjust bonding token amounts
         // The penalty mechanism only applies to sell operations
@@ -228,10 +211,6 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
             return 0;
         }
         
-        //Future proof: allow rules for disabling fees for certain users based on other conditions
-        if (block.timestamp < lastBuyTimestamp) {
-            return type(uint).max;
-        }
         
         // TIME CONVERSION LOGIC:
         // Convert seconds elapsed to complete hours (truncates partial hours)

@@ -33,7 +33,6 @@ contract VirtualLiquidityTest is Test {
     uint256 public expectedInitialPrice;
 
     event VirtualLiquidityGoalsSet(uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
-    event VirtualLiquidityToggled(bool enabled);
 
     function setUp() public {
         vm.startPrank(owner);
@@ -51,12 +50,12 @@ contract VirtualLiquidityTest is Test {
         b3.initializeVaultApproval();
 
         // Calculate expected values for tests
-        // α = (P_ave * x_fin - x_0) / (1 - P_ave)
+        // alpha = (P_ave * x_fin - x_0) / (1 - P_ave)
         uint256 numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
         uint256 denominator = 1e18 - DESIRED_AVG_PRICE;
         expectedAlpha = (numerator * 1e18) / denominator;
 
-        // k = (x_fin + α)^2
+        // k = (x_fin + alpha)^2
         uint256 xFinPlusAlpha = FUNDING_GOAL + expectedAlpha;
         expectedVirtualK = (xFinPlusAlpha * xFinPlusAlpha) / 1e18;
 
@@ -85,15 +84,15 @@ contract VirtualLiquidityTest is Test {
         uint256 actualVirtualK = b3.virtualK();
 
         assertEq(actualBeta, actualAlpha, "Beta should equal alpha");
-        assertTrue(b3.virtualLiquidityEnabled(), "Virtual liquidity should be enabled");
+        assertTrue(b3.isVirtualPairInitialized(), "Virtual liquidity should be initialized");
 
-        // Verify alpha calculation: α = (P_ave * x_fin - x_0) / (1 - P_ave)
+        // Verify alpha calculation: alpha = (P_ave * x_fin - x_0) / (1 - P_ave)
         uint256 numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
         uint256 denominator = 1e18 - DESIRED_AVG_PRICE;
         uint256 expectedAlphaCalculated = (numerator * 1e18) / denominator;
         assertEq(actualAlpha, expectedAlphaCalculated, "Alpha should be calculated correctly");
 
-        // Verify K calculation: k = (x_fin + α)^2
+        // Verify K calculation: k = (x_fin + alpha)^2
         uint256 xFinPlusAlpha = FUNDING_GOAL + actualAlpha;
         uint256 expectedVirtualKCalculated = xFinPlusAlpha * xFinPlusAlpha;
         assertEq(actualVirtualK, expectedVirtualKCalculated, "Virtual K should be calculated correctly");
@@ -161,50 +160,36 @@ contract VirtualLiquidityTest is Test {
     }
 
     /**
-     * @notice Test virtual liquidity can be toggled on/off
+     * @notice Test virtual liquidity is always enabled (no toggle)
      */
-    function test_VirtualLiquidityToggle() public {
-        vm.startPrank(owner);
+    function test_VirtualLiquidityAlwaysEnabled() public {
+        // Virtual liquidity is always enabled after setGoals
+        vm.prank(owner);
+        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
-        // Initially disabled
-        assertFalse(b3.virtualLiquidityEnabled(), "Should start disabled");
-
-        // Enable
-        vm.expectEmit(true, true, true, true);
-        emit VirtualLiquidityToggled(true);
-        b3.setVirtualLiquidityEnabled(true);
-        assertTrue(b3.virtualLiquidityEnabled(), "Should be enabled");
-
-        // Disable
-        vm.expectEmit(true, true, true, true);
-        emit VirtualLiquidityToggled(false);
-        b3.setVirtualLiquidityEnabled(false);
-        assertFalse(b3.virtualLiquidityEnabled(), "Should be disabled");
-
-        vm.stopPrank();
+        assertTrue(b3.isVirtualPairInitialized(), "Virtual liquidity should be initialized");
+        assertGt(b3.virtualK(), 0, "Virtual K should be positive");
+        assertGt(b3.alpha(), 0, "Alpha should be positive");
+        assertGt(b3.beta(), 0, "Beta should be positive");
     }
 
     /**
-     * @notice Test virtual liquidity quote calculation vs traditional
+     * @notice Test virtual liquidity quote calculation returns reasonable values
      */
-    function test_VirtualLiquidityQuote_DiffersFromTraditional() public {
+    function test_VirtualLiquidityQuote_ReturnsReasonableValues() public {
         vm.startPrank(owner);
+        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        vm.stopPrank();
 
         uint256 inputAmount = 10000 * 1e18;
-
-        // Get traditional quote (virtual liquidity disabled)
-        uint256 traditionalQuote = b3.quoteAddLiquidity(inputAmount);
-
-        // Enable virtual liquidity
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Get virtual liquidity quote
         uint256 virtualQuote = b3.quoteAddLiquidity(inputAmount);
 
-        vm.stopPrank();
-
-        // They should be different
-        assertNotEq(traditionalQuote, virtualQuote, "Virtual and traditional quotes should differ");
+        // Quote should be positive and reasonable
+        assertGt(virtualQuote, 0, "Quote should be positive");
+        // Since initial price is less than 1, we can get more bonding tokens than input tokens
+        assertGt(virtualQuote, inputAmount / 2, "Quote should be reasonably sized");
     }
 
     /**
@@ -370,7 +355,7 @@ contract VirtualLiquidityTest is Test {
     }
 
     /**
-     * @notice Test mathematical invariant (x+α)(y+β)=k holds
+     * @notice Test mathematical invariant (x+alpha)(y+beta)=k holds
      */
     function test_MathematicalInvariant_Holds() public {
         vm.prank(owner);

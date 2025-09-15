@@ -54,6 +54,9 @@ contract B3SecurityIntegrationTest is Test {
         // Initialize vault approval after vault authorizes B3
         vm.startPrank(owner);
         b3.initializeVaultApproval();
+
+        // Set virtual liquidity goals
+        b3.setGoals(1_000_000 * 1e18, 1000 * 1e18, 0.9e18);
         vm.stopPrank();
 
         // Setup test tokens
@@ -502,7 +505,12 @@ contract B3SecurityIntegrationTest is Test {
             assertEq(k, vInput * vL, "K should always equal vInput * vL");
             
             // K should be approximately the constant (allowing for rounding)
-            assertApproxEqRel(k, b3.K(), 1e15, "K should approximately match constant"); // 0.1% tolerance
+            // Check virtual liquidity invariant instead of old K
+            uint256 alpha = b3.alpha();
+            uint256 beta = b3.beta();
+            uint256 virtualK = b3.virtualK();
+            uint256 leftSide = (vInput + alpha) * (vL + beta);
+            assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold"); // 0.1% tolerance
             
             // Virtual L should be different from bonding token supply
             assertTrue(vL != bondingToken.totalSupply(), "VirtualL should differ from total supply");

@@ -59,8 +59,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Virtual amount of L tokens in the pair (starts at 100000000)
     uint256 public virtualL;
 
-    /// @notice The constant product k = virtualInputTokens * virtualL
-    uint256 public constant K = 1_000_000_000_000; // 10000 * 100000000
 
     // Virtual Liquidity Parameters for (x+α)(y+β)=k formula
     /// @notice Virtual liquidity offset for input tokens (α)
@@ -72,8 +70,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Virtual liquidity constant product k for (x+α)(y+β)=k
     uint256 public virtualK;
 
-    /// @notice Whether virtual liquidity mode is enabled
-    bool public virtualLiquidityEnabled;
 
     /// @notice Funding goal for virtual liquidity mode
     uint256 public fundingGoal;
@@ -101,7 +97,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
     event VaultChanged(address indexed oldVault, address indexed newVault);
     event VirtualLiquidityGoalsSet(uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
-    event VirtualLiquidityToggled(bool enabled);
     
     // ============ MODIFIERS ============
     
@@ -122,15 +117,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         bondingToken = _bondingToken;
         vault = _vault;
 
-        // Initialize virtual pair to establish constant product k = 1,000,000,000,000
-        virtualInputTokens = 10000; // Initial virtual input tokens
-        virtualL = 100000000; // Initial virtual L tokens
-
         // Vault approval is deferred to post-deployment initialization
         vaultApprovalInitialized = false;
 
-        // Initialize virtual liquidity as disabled
-        virtualLiquidityEnabled = false;
+        // Virtual liquidity parameters will be set via setGoals()
+        // No default initialization - must call setGoals() before operations
     }
 
     // ============ VIRTUAL LIQUIDITY FUNCTIONS ============
@@ -172,21 +163,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Set virtual input tokens to seed amount
         virtualInputTokens = _seedInput;
 
-        // Enable virtual liquidity mode
-        virtualLiquidityEnabled = true;
+        // Virtual liquidity is now always enabled - no toggle needed
 
         emit VirtualLiquidityGoalsSet(_fundingGoal, _seedInput, _desiredAveragePrice, alpha, beta, virtualK);
     }
 
-    /**
-     * @notice Toggle virtual liquidity mode on/off
-     * @dev Allows switching between xy=k and (x+α)(y+β)=k formulas
-     * @param _enabled Whether to enable virtual liquidity mode
-     */
-    function setVirtualLiquidityEnabled(bool _enabled) external onlyOwner {
-        virtualLiquidityEnabled = _enabled;
-        emit VirtualLiquidityToggled(_enabled);
-    }
 
     /**
      * @notice Get current marginal price using virtual liquidity formula
@@ -217,9 +198,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @return totalRaised Total input tokens raised
      */
     function getTotalRaised() public view returns (uint256 totalRaised) {
-        if (!virtualLiquidityEnabled) {
-            return virtualInputTokens - 10000; // Default initial amount
-        }
+        require(seedInput > 0, "VL: Goals not set - call setGoals first");
         return virtualInputTokens - seedInput;
     }
 
@@ -260,18 +239,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         view
         returns (uint256 outputAmount)
     {
-        if (virtualLiquidityEnabled) {
-            // Use virtual liquidity formula: (x+α)(y+β)=k
-            return _calculateVirtualLiquidityQuote(virtualFrom, virtualTo, inputAmount);
-        } else {
-            // Traditional xy=k formula: newVirtualFrom = K / (virtualTo + inputAmount)
-            uint256 newVirtualFrom = K / (virtualTo + inputAmount);
-
-            // Output amount = reduction in virtualFrom
-            outputAmount = virtualFrom - newVirtualFrom;
-
-            return outputAmount;
-        }
+        // Always use virtual liquidity formula: (x+α)(y+β)=k
+        require(virtualK > 0, "VL: Goals not set - call setGoals first");
+        return _calculateVirtualLiquidityQuote(virtualFrom, virtualTo, inputAmount);
     }
 
     /**
@@ -324,7 +294,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @dev Ensures price doesn't go below initial or above final bounds
      */
     function _checkPriceBounds() internal view {
-        if (!virtualLiquidityEnabled) return;
+        require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
         uint256 currentPrice = _getCurrentMarginalPriceInternal();
         uint256 initialPrice = _getInitialMarginalPriceInternal();
@@ -339,9 +309,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @dev Used internally to avoid external call issues
      */
     function _getCurrentMarginalPriceInternal() internal view returns (uint256 price) {
-        if (!virtualLiquidityEnabled) {
-            return (virtualInputTokens * 1e18) / virtualL;
-        }
+        require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
         uint256 xPlusAlpha = virtualInputTokens + alpha;
         // Calculate (x+α)²/k with proper scaling
@@ -354,7 +322,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @dev Used internally to avoid external call issues
      */
     function _getInitialMarginalPriceInternal() internal view returns (uint256 initialPrice) {
-        if (!virtualLiquidityEnabled) return 0;
+        require(desiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
         initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
         return initialPrice;
     }
@@ -366,7 +334,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @param bondingTokenDelta Change in bonding tokens (negative for add, positive for remove)
      */
     function _updateVirtualLiquidityState(int256 inputTokenDelta, int256 bondingTokenDelta) internal {
-        if (!virtualLiquidityEnabled) return;
+        require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
         // Update virtual input tokens
         if (inputTokenDelta >= 0) {
@@ -565,12 +533,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         }
         
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        if (virtualLiquidityEnabled) {
-            _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
-        } else {
-            virtualInputTokens += effectiveInputAmount;
-            virtualL -= baseBondingTokens;
-        }
+        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
         
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
         
@@ -656,13 +619,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         }
         
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        if (virtualLiquidityEnabled) {
-            _updateVirtualLiquidityState(-int256(baseInputTokens), int256(bondingTokenAmount));
-        } else {
-            uint256 newVirtualInputTokens = K / (virtualL + bondingTokenAmount);
-            virtualInputTokens = newVirtualInputTokens;
-            virtualL += bondingTokenAmount;
-        }
+        _updateVirtualLiquidityState(-int256(baseInputTokens), int256(bondingTokenAmount));
         
         emit LiquidityRemoved(msg.sender, bondingTokenAmount, inputTokensOut);
         
@@ -767,7 +724,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @return True if initialized correctly
      */
     function isVirtualPairInitialized() external view returns (bool) {
-        return virtualInputTokens == 10000 && virtualL == 100000000;
+        return virtualK > 0 && alpha > 0 && beta > 0;
     }
     
     /**

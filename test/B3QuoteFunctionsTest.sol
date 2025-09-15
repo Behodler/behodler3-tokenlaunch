@@ -27,10 +27,10 @@ contract B3QuoteFunctionsTest is Test {
     address public owner = address(0x1);
     address public user1 = address(0x2);
     
-    // Virtual Pair Constants
-    uint256 public constant INITIAL_VIRTUAL_INPUT = 10000;
-    uint256 public constant INITIAL_VIRTUAL_L = 100000000;
-    uint256 public constant K = 1_000_000_000_000;
+    // Virtual Liquidity Test Parameters
+    uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
+    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
     
     function setUp() public {
         vm.startPrank(owner);
@@ -55,6 +55,9 @@ contract B3QuoteFunctionsTest is Test {
         // Initialize vault approval after vault authorizes B3
         vm.startPrank(owner);
         b3.initializeVaultApproval();
+
+        // Set virtual liquidity goals
+        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
         // Setup test tokens

@@ -1,0 +1,3003 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Slither",
+          "informationUri": "https://github.com/crytic/slither",
+          "version": "0.11.3",
+          "rules": [
+            {
+              "id": "0-1-incorrect-exp",
+              "name": "incorrect-exp",
+              "properties": {
+                "precision": "high",
+                "security-severity": "8.0"
+              },
+              "shortDescription": {
+                "text": "Incorrect exponentiation"
+              },
+              "help": {
+                "text": "Use the correct operator `**` for exponentiation."
+              }
+            },
+            {
+              "id": "1-1-divide-before-multiply",
+              "name": "divide-before-multiply",
+              "properties": {
+                "precision": "high",
+                "security-severity": "4.0"
+              },
+              "shortDescription": {
+                "text": "Divide before multiply"
+              },
+              "help": {
+                "text": "Consider ordering multiplication before division."
+              }
+            },
+            {
+              "id": "1-0-incorrect-equality",
+              "name": "incorrect-equality",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "4.0"
+              },
+              "shortDescription": {
+                "text": "Dangerous strict equalities"
+              },
+              "help": {
+                "text": "Don't use strict equality to determine if an account has enough Ether or tokens."
+              }
+            },
+            {
+              "id": "1-1-reentrancy-no-eth",
+              "name": "reentrancy-no-eth",
+              "properties": {
+                "precision": "high",
+                "security-severity": "4.0"
+              },
+              "shortDescription": {
+                "text": "Reentrancy vulnerabilities"
+              },
+              "help": {
+                "text": "Apply the [`check-effects-interactions` pattern](http://solidity.readthedocs.io/en/v0.4.21/security-considerations.html#re-entrancy)."
+              }
+            },
+            {
+              "id": "2-0-shadowing-local",
+              "name": "shadowing-local",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "3.0"
+              },
+              "shortDescription": {
+                "text": "Local variable shadowing"
+              },
+              "help": {
+                "text": "Rename the local variables that shadow another component."
+              }
+            },
+            {
+              "id": "2-1-missing-zero-check",
+              "name": "missing-zero-check",
+              "properties": {
+                "precision": "high",
+                "security-severity": "3.0"
+              },
+              "shortDescription": {
+                "text": "Missing zero address validation"
+              },
+              "help": {
+                "text": "Check that the address is not zero."
+              }
+            },
+            {
+              "id": "2-1-reentrancy-events",
+              "name": "reentrancy-events",
+              "properties": {
+                "precision": "high",
+                "security-severity": "3.0"
+              },
+              "shortDescription": {
+                "text": "Reentrancy vulnerabilities"
+              },
+              "help": {
+                "text": "Apply the [`check-effects-interactions` pattern](https://docs.soliditylang.org/en/latest/security-considerations.html#re-entrancy)."
+              }
+            },
+            {
+              "id": "2-1-timestamp",
+              "name": "timestamp",
+              "properties": {
+                "precision": "high",
+                "security-severity": "3.0"
+              },
+              "shortDescription": {
+                "text": "Block timestamp"
+              },
+              "help": {
+                "text": "Avoid relying on `block.timestamp`."
+              }
+            },
+            {
+              "id": "3-0-assembly",
+              "name": "assembly",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Assembly usage"
+              },
+              "help": {
+                "text": "Do not use `evm` assembly."
+              }
+            },
+            {
+              "id": "3-0-pragma",
+              "name": "pragma",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Different pragma directives are used"
+              },
+              "help": {
+                "text": "Use one Solidity version."
+              }
+            },
+            {
+              "id": "3-0-solc-version",
+              "name": "solc-version",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Incorrect versions of Solidity"
+              },
+              "help": {
+                "text": "\nDeploy with a recent version of Solidity (at least 0.8.0) with no known severe issues.\n\nUse a simple pragma version that allows any of these versions.\nConsider using the latest version of Solidity for testing."
+              }
+            },
+            {
+              "id": "3-0-missing-inheritance",
+              "name": "missing-inheritance",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Missing inheritance"
+              },
+              "help": {
+                "text": "Inherit from the missing interface or contract."
+              }
+            },
+            {
+              "id": "3-0-naming-convention",
+              "name": "naming-convention",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Conformance to Solidity naming conventions"
+              },
+              "help": {
+                "text": "Follow the Solidity [naming convention](https://solidity.readthedocs.io/en/v0.4.25/style-guide.html#naming-conventions)."
+              }
+            },
+            {
+              "id": "3-1-too-many-digits",
+              "name": "too-many-digits",
+              "properties": {
+                "precision": "high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Too many digits"
+              },
+              "help": {
+                "text": "\nUse:\n- [Ether suffix](https://solidity.readthedocs.io/en/latest/units-and-global-variables.html#ether-units),\n- [Time suffix](https://solidity.readthedocs.io/en/latest/units-and-global-variables.html#time-units), or\n- [The scientific notation](https://solidity.readthedocs.io/en/latest/types.html#rational-and-integer-literals)\n"
+              }
+            },
+            {
+              "id": "3-0-unused-state",
+              "name": "unused-state",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "Unused state variable"
+              },
+              "help": {
+                "text": "Remove unused state variables."
+              }
+            },
+            {
+              "id": "4-0-immutable-states",
+              "name": "immutable-states",
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "0.0"
+              },
+              "shortDescription": {
+                "text": "State variables that could be declared immutable"
+              },
+              "help": {
+                "text": "Add the `immutable` attribute to state variables that never change or are set only in the constructor."
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "0-1-incorrect-exp",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) has bitwise-xor operator ^ instead of the exponentiation operator **: \n\t - inverse = (3 * denominator) ^ 2 (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#257)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) has bitwise-xor operator ^ instead of the exponentiation operator **: \n\t - [inverse = (3 * denominator) ^ 2](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L257)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "fa559838d85a5e0ffb35e13dc1a95222d8c8c0eb91cd766551222241743fdc88"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#265)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L265)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "1751aa053dc37b831e3519b0f0d874b898367ae23d538d0dcec8bbff3bd1e136"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.calculatePenaltyFee(address) (src/mocks/MockEarlySellPenaltyHook.sol#104-126) performs a multiplication on the result of a division:\n\t- hoursElapsed = timeElapsed / 3600 (src/mocks/MockEarlySellPenaltyHook.sol#115)\n\t- penalty = 1000 - (hoursElapsed * penaltyDeclineRatePerHour) (src/mocks/MockEarlySellPenaltyHook.sol#122)\n",
+            "markdown": "[MockEarlySellPenaltyHook.calculatePenaltyFee(address)](src/mocks/MockEarlySellPenaltyHook.sol#L104-L126) performs a multiplication on the result of a division:\n\t- [hoursElapsed = timeElapsed / 3600](src/mocks/MockEarlySellPenaltyHook.sol#L115)\n\t- [penalty = 1000 - (hoursElapsed * penaltyDeclineRatePerHour)](src/mocks/MockEarlySellPenaltyHook.sol#L122)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 104,
+                  "endLine": 126
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "2ec8e81f496d37ef403269cdb9c34e973c60a3cd58f88f219cc2edcff38e1752"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse = (3 * denominator) ^ 2 (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#257)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse = (3 * denominator) ^ 2](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L257)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "602686c39c340cba0f0f6452681cb8294f031eb1966bbdf7749f45e000dc25b1"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- low = low / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#245)\n\t- result = low * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#272)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [low = low / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L245)\n\t- [result = low * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L272)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6dc8da0b560aeb8d9bbef2c9c46001283289715559c70b44929196343aa84bb8"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.invMod(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#315-361) performs a multiplication on the result of a division:\n\t- quotient = gcd / remainder (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#337)\n\t- (gcd,remainder) = (remainder,gcd - remainder * quotient) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#339-346)\n",
+            "markdown": "[Math.invMod(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L315-L361) performs a multiplication on the result of a division:\n\t- [quotient = gcd / remainder](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L337)\n\t- [(gcd,remainder) = (remainder,gcd - remainder * quotient)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L339-L346)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 315,
+                  "endLine": 361
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "7d324837f002ca8d69da59346220daf47a284f2b9c9b20b95fa6f3aedf0ea498"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#263)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L263)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9cfd0dd2b34ee2bc85034dff19f0cb40a18c65f00c5a8eff3fa8c4ec6c3e45bc"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#261)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L261)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9d18947e973b20a39e6077d41fb698675046886b7f09680445118a7d998b8393"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#266)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L266)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9e5ada402dfb451ce4de934a30ad850f752fa4f690f2891e401126f0ae1f712e"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#264)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L264)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "bc50d69a04f7897c7c31b40fcad43993c2622747177635b6d108ece9cc631f49"
+          }
+        },
+        {
+          "ruleId": "1-1-divide-before-multiply",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) performs a multiplication on the result of a division:\n\t- denominator = denominator / twos (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#242)\n\t- inverse *= 2 - denominator * inverse (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#262)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) performs a multiplication on the result of a division:\n\t- [denominator = denominator / twos](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L242)\n\t- [inverse *= 2 - denominator * inverse](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L262)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f5cb3423a82bf661e0fc6b94689567fe23f1f540a8fd2366e71c86b284dfe526"
+          }
+        },
+        {
+          "ruleId": "1-0-incorrect-equality",
+          "message": {
+            "text": "EarlySellPenaltyHook._getHoursElapsed(address) (src/EarlySellPenaltyHook.sol#204-221) uses a dangerous strict equality:\n\t- lastBuyTimestamp == 0 (src/EarlySellPenaltyHook.sol#210)\n",
+            "markdown": "[EarlySellPenaltyHook._getHoursElapsed(address)](src/EarlySellPenaltyHook.sol#L204-L221) uses a dangerous strict equality:\n\t- [lastBuyTimestamp == 0](src/EarlySellPenaltyHook.sol#L210)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 221
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "55a503cacd68372ed43ff0682cfcba4277558d262e0b823b709bad342fb95f6a"
+          }
+        },
+        {
+          "ruleId": "1-0-incorrect-equality",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.getHoursElapsed(address) (src/mocks/MockEarlySellPenaltyHook.sol#129-135) uses a dangerous strict equality:\n\t- lastBuyTimestamp == 0 (src/mocks/MockEarlySellPenaltyHook.sol#131)\n",
+            "markdown": "[MockEarlySellPenaltyHook.getHoursElapsed(address)](src/mocks/MockEarlySellPenaltyHook.sol#L129-L135) uses a dangerous strict equality:\n\t- [lastBuyTimestamp == 0](src/mocks/MockEarlySellPenaltyHook.sol#L131)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 129,
+                  "endLine": 135
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "5a97e4b68d335c36f60d43923b76bc7c4b169e21ee42957c383d2f4dd78b853f"
+          }
+        },
+        {
+          "ruleId": "1-0-incorrect-equality",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.calculatePenaltyFee(address) (src/mocks/MockEarlySellPenaltyHook.sol#104-126) uses a dangerous strict equality:\n\t- lastBuyTimestamp == 0 (src/mocks/MockEarlySellPenaltyHook.sol#108)\n",
+            "markdown": "[MockEarlySellPenaltyHook.calculatePenaltyFee(address)](src/mocks/MockEarlySellPenaltyHook.sol#L104-L126) uses a dangerous strict equality:\n\t- [lastBuyTimestamp == 0](src/mocks/MockEarlySellPenaltyHook.sol#L108)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 104,
+                  "endLine": 126
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "958a85ad703ea25f9d8d1c73ff3b3cc55ebd7a7d062310f2e5bf8aaa8f1eef78"
+          }
+        },
+        {
+          "ruleId": "1-0-incorrect-equality",
+          "message": {
+            "text": "EarlySellPenaltyHook.calculatePenaltyFee(address) (src/EarlySellPenaltyHook.sol#132-168) uses a dangerous strict equality:\n\t- lastBuyTimestamp == 0 (src/EarlySellPenaltyHook.sol#145)\n",
+            "markdown": "[EarlySellPenaltyHook.calculatePenaltyFee(address)](src/EarlySellPenaltyHook.sol#L132-L168) uses a dangerous strict equality:\n\t- [lastBuyTimestamp == 0](src/EarlySellPenaltyHook.sol#L145)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 132,
+                  "endLine": 168
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "ae7f3e36d2c097f94433108a1e51803ad4de7d43a382b014bc0ef784c6bd0877"
+          }
+        },
+        {
+          "ruleId": "1-1-reentrancy-no-eth",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.removeLiquidity(uint256,uint256) (src/Behodler3Tokenlaunch.sol#573-650):\n\tExternal calls:\n\t- (hookFee,deltaBondingToken) = bondingCurveHook.sell(msg.sender,bondingTokenAmount,baseInputTokens) (src/Behodler3Tokenlaunch.sol#591-595)\n\t- bondingToken.burn(msg.sender,bondingTokenAmount) (src/Behodler3Tokenlaunch.sol#636)\n\t- vault.withdraw(address(inputToken),inputTokensOut,address(this)) (src/Behodler3Tokenlaunch.sol#640)\n\t- require(bool,string)(inputToken.transfer(msg.sender,inputTokensOut),B3: Transfer failed) (src/Behodler3Tokenlaunch.sol#641)\n\tState variables written after the call(s):\n\t- _updateVirtualLiquidityState(- int256(baseInputTokens),int256(bondingTokenAmount)) (src/Behodler3Tokenlaunch.sol#645)\n\t\t- virtualInputTokens += uint256(inputTokenDelta) (src/Behodler3Tokenlaunch.sol#364)\n\t\t- virtualInputTokens -= uint256(- inputTokenDelta) (src/Behodler3Tokenlaunch.sol#366)\n\tBehodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#278-313)\n\t- Behodler3Tokenlaunch._getCurrentMarginalPriceInternal() (src/Behodler3Tokenlaunch.sol#334-341)\n\t- Behodler3Tokenlaunch.getTotalRaised() (src/Behodler3Tokenlaunch.sol#223-226)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60)\n\t- _updateVirtualLiquidityState(- int256(baseInputTokens),int256(bondingTokenAmount)) (src/Behodler3Tokenlaunch.sol#645)\n\t\t- virtualL += uint256(bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#371)\n\t\t- virtualL -= uint256(- bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#373)\n\tBehodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63)\n\t- Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply() (src/Behodler3Tokenlaunch.sol#757-759)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.removeLiquidity(uint256,uint256)](src/Behodler3Tokenlaunch.sol#L573-L650):\n\tExternal calls:\n\t- [(hookFee,deltaBondingToken) = bondingCurveHook.sell(msg.sender,bondingTokenAmount,baseInputTokens)](src/Behodler3Tokenlaunch.sol#L591-L595)\n\t- [bondingToken.burn(msg.sender,bondingTokenAmount)](src/Behodler3Tokenlaunch.sol#L636)\n\t- [vault.withdraw(address(inputToken),inputTokensOut,address(this))](src/Behodler3Tokenlaunch.sol#L640)\n\t- [require(bool,string)(inputToken.transfer(msg.sender,inputTokensOut),B3: Transfer failed)](src/Behodler3Tokenlaunch.sol#L641)\n\tState variables written after the call(s):\n\t- [_updateVirtualLiquidityState(- int256(baseInputTokens),int256(bondingTokenAmount))](src/Behodler3Tokenlaunch.sol#L645)\n\t\t- [virtualInputTokens += uint256(inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L364)\n\t\t- [virtualInputTokens -= uint256(- inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L366)\n\t[Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L278-L313)\n\t- [Behodler3Tokenlaunch._getCurrentMarginalPriceInternal()](src/Behodler3Tokenlaunch.sol#L334-L341)\n\t- [Behodler3Tokenlaunch.getTotalRaised()](src/Behodler3Tokenlaunch.sol#L223-L226)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60)\n\t- [_updateVirtualLiquidityState(- int256(baseInputTokens),int256(bondingTokenAmount))](src/Behodler3Tokenlaunch.sol#L645)\n\t\t- [virtualL += uint256(bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L371)\n\t\t- [virtualL -= uint256(- bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L373)\n\t[Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63)\n\t- [Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply()](src/Behodler3Tokenlaunch.sol#L757-L759)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 573,
+                  "endLine": 650
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "2e17ef4dcac09fcae1ef723ef1a84d6b4b5b207443a9b4153c060510b61fb6b2"
+          }
+        },
+        {
+          "ruleId": "1-1-reentrancy-no-eth",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.addLiquidityWithPermit(uint256,uint256,uint256,uint8,bytes32,bytes32) (src/Behodler3Tokenlaunch.sol#814-896):\n\tExternal calls:\n\t- this.permit(msg.sender,address(this),inputAmount,deadline,v,r,s) (src/Behodler3Tokenlaunch.sol#828-836)\n\t- (hookFee,deltaBondingToken) = bondingCurveHook.buy(msg.sender,baseBondingTokens,inputAmount) (src/Behodler3Tokenlaunch.sol#847-851)\n\t- require(bool,string)(inputToken.transferFrom(msg.sender,address(this),inputAmount),B3: Transfer failed) (src/Behodler3Tokenlaunch.sol#880)\n\t- vault.deposit(address(inputToken),inputAmount,address(this)) (src/Behodler3Tokenlaunch.sol#883)\n\t- bondingToken.mint(msg.sender,bondingTokensOut) (src/Behodler3Tokenlaunch.sol#887)\n\tState variables written after the call(s):\n\t- _updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens)) (src/Behodler3Tokenlaunch.sol#891)\n\t\t- virtualInputTokens += uint256(inputTokenDelta) (src/Behodler3Tokenlaunch.sol#364)\n\t\t- virtualInputTokens -= uint256(- inputTokenDelta) (src/Behodler3Tokenlaunch.sol#366)\n\tBehodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#278-313)\n\t- Behodler3Tokenlaunch._getCurrentMarginalPriceInternal() (src/Behodler3Tokenlaunch.sol#334-341)\n\t- Behodler3Tokenlaunch.getTotalRaised() (src/Behodler3Tokenlaunch.sol#223-226)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60)\n\t- _updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens)) (src/Behodler3Tokenlaunch.sol#891)\n\t\t- virtualL += uint256(bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#371)\n\t\t- virtualL -= uint256(- bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#373)\n\tBehodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63)\n\t- Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply() (src/Behodler3Tokenlaunch.sol#757-759)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.addLiquidityWithPermit(uint256,uint256,uint256,uint8,bytes32,bytes32)](src/Behodler3Tokenlaunch.sol#L814-L896):\n\tExternal calls:\n\t- [this.permit(msg.sender,address(this),inputAmount,deadline,v,r,s)](src/Behodler3Tokenlaunch.sol#L828-L836)\n\t- [(hookFee,deltaBondingToken) = bondingCurveHook.buy(msg.sender,baseBondingTokens,inputAmount)](src/Behodler3Tokenlaunch.sol#L847-L851)\n\t- [require(bool,string)(inputToken.transferFrom(msg.sender,address(this),inputAmount),B3: Transfer failed)](src/Behodler3Tokenlaunch.sol#L880)\n\t- [vault.deposit(address(inputToken),inputAmount,address(this))](src/Behodler3Tokenlaunch.sol#L883)\n\t- [bondingToken.mint(msg.sender,bondingTokensOut)](src/Behodler3Tokenlaunch.sol#L887)\n\tState variables written after the call(s):\n\t- [_updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens))](src/Behodler3Tokenlaunch.sol#L891)\n\t\t- [virtualInputTokens += uint256(inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L364)\n\t\t- [virtualInputTokens -= uint256(- inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L366)\n\t[Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L278-L313)\n\t- [Behodler3Tokenlaunch._getCurrentMarginalPriceInternal()](src/Behodler3Tokenlaunch.sol#L334-L341)\n\t- [Behodler3Tokenlaunch.getTotalRaised()](src/Behodler3Tokenlaunch.sol#L223-L226)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60)\n\t- [_updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens))](src/Behodler3Tokenlaunch.sol#L891)\n\t\t- [virtualL += uint256(bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L371)\n\t\t- [virtualL -= uint256(- bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L373)\n\t[Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63)\n\t- [Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply()](src/Behodler3Tokenlaunch.sol#L757-L759)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 814,
+                  "endLine": 896
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "36e97ad08cbedca743a13d91c5c087150a3c931c149bef58cbcfdec2a214e36e"
+          }
+        },
+        {
+          "ruleId": "1-1-reentrancy-no-eth",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.addLiquidity(uint256,uint256) (src/Behodler3Tokenlaunch.sol#494-564):\n\tExternal calls:\n\t- (hookFee,deltaBondingToken) = bondingCurveHook.buy(msg.sender,baseBondingTokens,inputAmount) (src/Behodler3Tokenlaunch.sol#515-519)\n\t- require(bool,string)(inputToken.transferFrom(msg.sender,address(this),inputAmount),B3: Transfer failed) (src/Behodler3Tokenlaunch.sol#548)\n\t- vault.deposit(address(inputToken),inputAmount,address(this)) (src/Behodler3Tokenlaunch.sol#551)\n\t- bondingToken.mint(msg.sender,bondingTokensOut) (src/Behodler3Tokenlaunch.sol#555)\n\tState variables written after the call(s):\n\t- _updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens)) (src/Behodler3Tokenlaunch.sol#559)\n\t\t- virtualInputTokens += uint256(inputTokenDelta) (src/Behodler3Tokenlaunch.sol#364)\n\t\t- virtualInputTokens -= uint256(- inputTokenDelta) (src/Behodler3Tokenlaunch.sol#366)\n\tBehodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#278-313)\n\t- Behodler3Tokenlaunch._getCurrentMarginalPriceInternal() (src/Behodler3Tokenlaunch.sol#334-341)\n\t- Behodler3Tokenlaunch.getTotalRaised() (src/Behodler3Tokenlaunch.sol#223-226)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualInputTokens (src/Behodler3Tokenlaunch.sol#60)\n\t- _updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens)) (src/Behodler3Tokenlaunch.sol#559)\n\t\t- virtualL += uint256(bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#371)\n\t\t- virtualL -= uint256(- bondingTokenDelta) (src/Behodler3Tokenlaunch.sol#373)\n\tBehodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._calculateBondingTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#457-466)\n\t- Behodler3Tokenlaunch._calculateInputTokensOut(uint256) (src/Behodler3Tokenlaunch.sol#474-483)\n\t- Behodler3Tokenlaunch.getVirtualPair() (src/Behodler3Tokenlaunch.sol#741-743)\n\t- Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256) (src/Behodler3Tokenlaunch.sol#159-192)\n\t- Behodler3Tokenlaunch.virtualL (src/Behodler3Tokenlaunch.sol#63)\n\t- Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply() (src/Behodler3Tokenlaunch.sol#757-759)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.addLiquidity(uint256,uint256)](src/Behodler3Tokenlaunch.sol#L494-L564):\n\tExternal calls:\n\t- [(hookFee,deltaBondingToken) = bondingCurveHook.buy(msg.sender,baseBondingTokens,inputAmount)](src/Behodler3Tokenlaunch.sol#L515-L519)\n\t- [require(bool,string)(inputToken.transferFrom(msg.sender,address(this),inputAmount),B3: Transfer failed)](src/Behodler3Tokenlaunch.sol#L548)\n\t- [vault.deposit(address(inputToken),inputAmount,address(this))](src/Behodler3Tokenlaunch.sol#L551)\n\t- [bondingToken.mint(msg.sender,bondingTokensOut)](src/Behodler3Tokenlaunch.sol#L555)\n\tState variables written after the call(s):\n\t- [_updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens))](src/Behodler3Tokenlaunch.sol#L559)\n\t\t- [virtualInputTokens += uint256(inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L364)\n\t\t- [virtualInputTokens -= uint256(- inputTokenDelta)](src/Behodler3Tokenlaunch.sol#L366)\n\t[Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch._calculateVirtualLiquidityQuote(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L278-L313)\n\t- [Behodler3Tokenlaunch._getCurrentMarginalPriceInternal()](src/Behodler3Tokenlaunch.sol#L334-L341)\n\t- [Behodler3Tokenlaunch.getTotalRaised()](src/Behodler3Tokenlaunch.sol#L223-L226)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualInputTokens](src/Behodler3Tokenlaunch.sol#L60)\n\t- [_updateVirtualLiquidityState(int256(effectiveInputAmount),- int256(baseBondingTokens))](src/Behodler3Tokenlaunch.sol#L559)\n\t\t- [virtualL += uint256(bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L371)\n\t\t- [virtualL -= uint256(- bondingTokenDelta)](src/Behodler3Tokenlaunch.sol#L373)\n\t[Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._calculateBondingTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L457-L466)\n\t- [Behodler3Tokenlaunch._calculateInputTokensOut(uint256)](src/Behodler3Tokenlaunch.sol#L474-L483)\n\t- [Behodler3Tokenlaunch.getVirtualPair()](src/Behodler3Tokenlaunch.sol#L741-L743)\n\t- [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)](src/Behodler3Tokenlaunch.sol#L159-L192)\n\t- [Behodler3Tokenlaunch.virtualL](src/Behodler3Tokenlaunch.sol#L63)\n\t- [Behodler3Tokenlaunch.virtualLDifferentFromTotalSupply()](src/Behodler3Tokenlaunch.sol#L757-L759)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 494,
+                  "endLine": 564
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6c9084b5abfefbf5571ab8357b75e65f4e2e4bb803288b16712f92b2fbbfcc55"
+          }
+        },
+        {
+          "ruleId": "1-1-reentrancy-no-eth",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.disableToken() (src/Behodler3Tokenlaunch.sol#416-423):\n\tExternal calls:\n\t- require(bool,string)(inputToken.approve(address(vault),0),B3: Approval revocation failed) (src/Behodler3Tokenlaunch.sol#420)\n\tState variables written after the call(s):\n\t- vaultApprovalInitialized = false (src/Behodler3Tokenlaunch.sol#422)\n\tBehodler3Tokenlaunch.vaultApprovalInitialized (src/Behodler3Tokenlaunch.sol#56) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._setInputToken(IERC20) (src/Behodler3Tokenlaunch.sol#388-396)\n\t- Behodler3Tokenlaunch._setVault(IVault) (src/Behodler3Tokenlaunch.sol#439-448)\n\t- Behodler3Tokenlaunch.constructor(IERC20,IBondingToken,IVault) (src/Behodler3Tokenlaunch.sol#133-148)\n\t- Behodler3Tokenlaunch.disableToken() (src/Behodler3Tokenlaunch.sol#416-423)\n\t- Behodler3Tokenlaunch.initializeVaultApproval() (src/Behodler3Tokenlaunch.sol#403-410)\n\t- Behodler3Tokenlaunch.vaultApprovalInitialized (src/Behodler3Tokenlaunch.sol#56)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.disableToken()](src/Behodler3Tokenlaunch.sol#L416-L423):\n\tExternal calls:\n\t- [require(bool,string)(inputToken.approve(address(vault),0),B3: Approval revocation failed)](src/Behodler3Tokenlaunch.sol#L420)\n\tState variables written after the call(s):\n\t- [vaultApprovalInitialized = false](src/Behodler3Tokenlaunch.sol#L422)\n\t[Behodler3Tokenlaunch.vaultApprovalInitialized](src/Behodler3Tokenlaunch.sol#L56) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._setInputToken(IERC20)](src/Behodler3Tokenlaunch.sol#L388-L396)\n\t- [Behodler3Tokenlaunch._setVault(IVault)](src/Behodler3Tokenlaunch.sol#L439-L448)\n\t- [Behodler3Tokenlaunch.constructor(IERC20,IBondingToken,IVault)](src/Behodler3Tokenlaunch.sol#L133-L148)\n\t- [Behodler3Tokenlaunch.disableToken()](src/Behodler3Tokenlaunch.sol#L416-L423)\n\t- [Behodler3Tokenlaunch.initializeVaultApproval()](src/Behodler3Tokenlaunch.sol#L403-L410)\n\t- [Behodler3Tokenlaunch.vaultApprovalInitialized](src/Behodler3Tokenlaunch.sol#L56)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 416,
+                  "endLine": 423
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "d1bb9bea811b4806dd616f8aa0a0cc0c218c96c0e2d43041f706eeecf170f3a8"
+          }
+        },
+        {
+          "ruleId": "1-1-reentrancy-no-eth",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.initializeVaultApproval() (src/Behodler3Tokenlaunch.sol#403-410):\n\tExternal calls:\n\t- require(bool,string)(inputToken.approve(address(vault),type()(uint256).max),B3: Vault approval failed) (src/Behodler3Tokenlaunch.sol#407)\n\tState variables written after the call(s):\n\t- vaultApprovalInitialized = true (src/Behodler3Tokenlaunch.sol#409)\n\tBehodler3Tokenlaunch.vaultApprovalInitialized (src/Behodler3Tokenlaunch.sol#56) can be used in cross function reentrancies:\n\t- Behodler3Tokenlaunch._setInputToken(IERC20) (src/Behodler3Tokenlaunch.sol#388-396)\n\t- Behodler3Tokenlaunch._setVault(IVault) (src/Behodler3Tokenlaunch.sol#439-448)\n\t- Behodler3Tokenlaunch.constructor(IERC20,IBondingToken,IVault) (src/Behodler3Tokenlaunch.sol#133-148)\n\t- Behodler3Tokenlaunch.disableToken() (src/Behodler3Tokenlaunch.sol#416-423)\n\t- Behodler3Tokenlaunch.initializeVaultApproval() (src/Behodler3Tokenlaunch.sol#403-410)\n\t- Behodler3Tokenlaunch.vaultApprovalInitialized (src/Behodler3Tokenlaunch.sol#56)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.initializeVaultApproval()](src/Behodler3Tokenlaunch.sol#L403-L410):\n\tExternal calls:\n\t- [require(bool,string)(inputToken.approve(address(vault),type()(uint256).max),B3: Vault approval failed)](src/Behodler3Tokenlaunch.sol#L407)\n\tState variables written after the call(s):\n\t- [vaultApprovalInitialized = true](src/Behodler3Tokenlaunch.sol#L409)\n\t[Behodler3Tokenlaunch.vaultApprovalInitialized](src/Behodler3Tokenlaunch.sol#L56) can be used in cross function reentrancies:\n\t- [Behodler3Tokenlaunch._setInputToken(IERC20)](src/Behodler3Tokenlaunch.sol#L388-L396)\n\t- [Behodler3Tokenlaunch._setVault(IVault)](src/Behodler3Tokenlaunch.sol#L439-L448)\n\t- [Behodler3Tokenlaunch.constructor(IERC20,IBondingToken,IVault)](src/Behodler3Tokenlaunch.sol#L133-L148)\n\t- [Behodler3Tokenlaunch.disableToken()](src/Behodler3Tokenlaunch.sol#L416-L423)\n\t- [Behodler3Tokenlaunch.initializeVaultApproval()](src/Behodler3Tokenlaunch.sol#L403-L410)\n\t- [Behodler3Tokenlaunch.vaultApprovalInitialized](src/Behodler3Tokenlaunch.sol#L56)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 403,
+                  "endLine": 410
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "dca7c652dd64b14b3f6e9f56220e1fe315fe2a7293126f06a7716434d110d487"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "MockBondingToken.constructor(string,string).name (src/mocks/MockBondingToken.sol#14) shadows:\n\t- ERC20.name() (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#52-54) (function)\n\t- IERC20Metadata.name() (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#15) (function)\n",
+            "markdown": "[MockBondingToken.constructor(string,string).name](src/mocks/MockBondingToken.sol#L14) shadows:\n\t- [ERC20.name()](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L52-L54) (function)\n\t- [IERC20Metadata.name()](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L15) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBondingToken.sol"
+                },
+                "region": {
+                  "startLine": 14,
+                  "endLine": 14
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "23fa9e2616ae2632fd740645eb3d4b3c097af08401b9f8053987b4e8e0a50caa"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "MockERC20.constructor(string,string,uint8).symbol (src/mocks/MockERC20.sol#16) shadows:\n\t- ERC20.symbol() (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#60-62) (function)\n\t- IERC20Metadata.symbol() (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#20) (function)\n",
+            "markdown": "[MockERC20.constructor(string,string,uint8).symbol](src/mocks/MockERC20.sol#L16) shadows:\n\t- [ERC20.symbol()](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L60-L62) (function)\n\t- [IERC20Metadata.symbol()](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L20) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockERC20.sol"
+                },
+                "region": {
+                  "startLine": 16,
+                  "endLine": 16
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6522286aff9617cb8ce8c5c8efc6db712671e005f7decf5e02931a38b46f61cf"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "MockERC20.constructor(string,string,uint8).name (src/mocks/MockERC20.sol#15) shadows:\n\t- ERC20.name() (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#52-54) (function)\n\t- IERC20Metadata.name() (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#15) (function)\n",
+            "markdown": "[MockERC20.constructor(string,string,uint8).name](src/mocks/MockERC20.sol#L15) shadows:\n\t- [ERC20.name()](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L52-L54) (function)\n\t- [IERC20Metadata.name()](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L15) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockERC20.sol"
+                },
+                "region": {
+                  "startLine": 15,
+                  "endLine": 15
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9912beeaa129b65cc7d48206ccd8d66e9f0fbcbf5ac48a20992f9099225e5f0c"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "Behodler3Tokenlaunch.nonces(address).owner (src/Behodler3Tokenlaunch.sol#904) shadows:\n\t- Ownable.owner() (lib/openzeppelin-contracts/contracts/access/Ownable.sol#56-58) (function)\n",
+            "markdown": "[Behodler3Tokenlaunch.nonces(address).owner](src/Behodler3Tokenlaunch.sol#L904) shadows:\n\t- [Ownable.owner()](lib/openzeppelin-contracts/contracts/access/Ownable.sol#L56-L58) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 904,
+                  "endLine": 904
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b7f28d67ce7334300cf6d13b0d9f22457eff88f42a65c6f4618feb95f6dd3f5b"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32).owner (src/Behodler3Tokenlaunch.sol#775) shadows:\n\t- Ownable.owner() (lib/openzeppelin-contracts/contracts/access/Ownable.sol#56-58) (function)\n",
+            "markdown": "[Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32).owner](src/Behodler3Tokenlaunch.sol#L775) shadows:\n\t- [Ownable.owner()](lib/openzeppelin-contracts/contracts/access/Ownable.sol#L56-L58) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 775,
+                  "endLine": 775
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "bac796e376dd63e9a5f68b4d772ed44923ac85d6d4fcb2561e87143e16eb93ec"
+          }
+        },
+        {
+          "ruleId": "2-0-shadowing-local",
+          "message": {
+            "text": "MockBondingToken.constructor(string,string).symbol (src/mocks/MockBondingToken.sol#14) shadows:\n\t- ERC20.symbol() (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#60-62) (function)\n\t- IERC20Metadata.symbol() (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#20) (function)\n",
+            "markdown": "[MockBondingToken.constructor(string,string).symbol](src/mocks/MockBondingToken.sol#L14) shadows:\n\t- [ERC20.symbol()](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L60-L62) (function)\n\t- [IERC20Metadata.symbol()](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L20) (function)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBondingToken.sol"
+                },
+                "region": {
+                  "startLine": 14,
+                  "endLine": 14
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "ec4d63be353a4c680dbce5b63f6bb60b53dc1676d0db70c5bff1978ec1dbe96a"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockSellHook.sell(address,uint256,uint256).seller (src/mocks/MockSellHook.sol#51) lacks a zero-check on :\n\t\t- lastSeller = seller (src/mocks/MockSellHook.sol#56)\n",
+            "markdown": "[MockSellHook.sell(address,uint256,uint256).seller](src/mocks/MockSellHook.sol#L51) lacks a zero-check on :\n\t\t- [lastSeller = seller](src/mocks/MockSellHook.sol#L56)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 51,
+                  "endLine": 51
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "371c0724fd4f79304403a6cb03d202b55695f06c7dfd96d35558a7f208e55d27"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockBuyHook.sell(address,uint256,uint256).seller (src/mocks/MockBuyHook.sol#51) lacks a zero-check on :\n\t\t- lastSeller = seller (src/mocks/MockBuyHook.sol#56)\n",
+            "markdown": "[MockBuyHook.sell(address,uint256,uint256).seller](src/mocks/MockBuyHook.sol#L51) lacks a zero-check on :\n\t\t- [lastSeller = seller](src/mocks/MockBuyHook.sol#L56)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 51,
+                  "endLine": 51
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "3d6df3b0d60989d679b22d2e77541a95e6810fb178070dbf5fc11235a924583f"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.sell(address,uint256,uint256).seller (src/mocks/MockEarlySellPenaltyHook.sol#59) lacks a zero-check on :\n\t\t- lastSeller = seller (src/mocks/MockEarlySellPenaltyHook.sol#68)\n",
+            "markdown": "[MockEarlySellPenaltyHook.sell(address,uint256,uint256).seller](src/mocks/MockEarlySellPenaltyHook.sol#L59) lacks a zero-check on :\n\t\t- [lastSeller = seller](src/mocks/MockEarlySellPenaltyHook.sol#L68)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 59,
+                  "endLine": 59
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "69553ea1f6806d3fe2cf34a1c890deeba138063042b12c3be604bd6704955d31"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockZeroHook.buy(address,uint256,uint256).buyer (src/mocks/MockZeroHook.sol#21) lacks a zero-check on :\n\t\t- lastBuyer = buyer (src/mocks/MockZeroHook.sol#26)\n",
+            "markdown": "[MockZeroHook.buy(address,uint256,uint256).buyer](src/mocks/MockZeroHook.sol#L21) lacks a zero-check on :\n\t\t- [lastBuyer = buyer](src/mocks/MockZeroHook.sol#L26)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockZeroHook.sol"
+                },
+                "region": {
+                  "startLine": 21,
+                  "endLine": 21
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6ebc5a2a3bd246596a90c4d909387663966a6ec627d8d154eb7a90a48443a693"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.buy(address,uint256,uint256).buyer (src/mocks/MockEarlySellPenaltyHook.sol#35) lacks a zero-check on :\n\t\t- lastBuyer = buyer (src/mocks/MockEarlySellPenaltyHook.sol#44)\n",
+            "markdown": "[MockEarlySellPenaltyHook.buy(address,uint256,uint256).buyer](src/mocks/MockEarlySellPenaltyHook.sol#L35) lacks a zero-check on :\n\t\t- [lastBuyer = buyer](src/mocks/MockEarlySellPenaltyHook.sol#L44)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 35,
+                  "endLine": 35
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "a44c3bf41ddbf41de1da7a10f700805771414a4c44cd1bf19a14ae572dcca6bb"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockSellHook.buy(address,uint256,uint256).buyer (src/mocks/MockSellHook.sol#38) lacks a zero-check on :\n\t\t- lastBuyer = buyer (src/mocks/MockSellHook.sol#43)\n",
+            "markdown": "[MockSellHook.buy(address,uint256,uint256).buyer](src/mocks/MockSellHook.sol#L38) lacks a zero-check on :\n\t\t- [lastBuyer = buyer](src/mocks/MockSellHook.sol#L43)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 38,
+                  "endLine": 38
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b21c19066d594e4fe36c05b69646f964d689b1c1b17badcab4e8a2fa7dd022e1"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockBuyHook.buy(address,uint256,uint256).buyer (src/mocks/MockBuyHook.sol#38) lacks a zero-check on :\n\t\t- lastBuyer = buyer (src/mocks/MockBuyHook.sol#43)\n",
+            "markdown": "[MockBuyHook.buy(address,uint256,uint256).buyer](src/mocks/MockBuyHook.sol#L38) lacks a zero-check on :\n\t\t- [lastBuyer = buyer](src/mocks/MockBuyHook.sol#L43)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 38,
+                  "endLine": 38
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b34f485d4c01bafbe4395ef5c4a87d5f0ada63b43c90f17e50969c7c0155d28c"
+          }
+        },
+        {
+          "ruleId": "2-1-missing-zero-check",
+          "message": {
+            "text": "MockZeroHook.sell(address,uint256,uint256).seller (src/mocks/MockZeroHook.sol#34) lacks a zero-check on :\n\t\t- lastSeller = seller (src/mocks/MockZeroHook.sol#39)\n",
+            "markdown": "[MockZeroHook.sell(address,uint256,uint256).seller](src/mocks/MockZeroHook.sol#L34) lacks a zero-check on :\n\t\t- [lastSeller = seller](src/mocks/MockZeroHook.sol#L39)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockZeroHook.sol"
+                },
+                "region": {
+                  "startLine": 34,
+                  "endLine": 34
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f0d00ab369726b371f1cb8d8c5f29eeaae4c05e674503c4018345f579565dc22"
+          }
+        },
+        {
+          "ruleId": "2-1-reentrancy-events",
+          "message": {
+            "text": "Reentrancy in Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32) (src/Behodler3Tokenlaunch.sol#774-801):\n\tExternal calls:\n\t- IERC20Permit(address(inputToken)).permit(owner,spender,value,deadline,v,r,s) (src/Behodler3Tokenlaunch.sol#793-800)\n\tEvent emitted after the call(s):\n\t- PermitUsed(owner,spender,value,nonce,deadline) (src/Behodler3Tokenlaunch.sol#795)\n",
+            "markdown": "Reentrancy in [Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32)](src/Behodler3Tokenlaunch.sol#L774-L801):\n\tExternal calls:\n\t- [IERC20Permit(address(inputToken)).permit(owner,spender,value,deadline,v,r,s)](src/Behodler3Tokenlaunch.sol#L793-L800)\n\tEvent emitted after the call(s):\n\t- [PermitUsed(owner,spender,value,nonce,deadline)](src/Behodler3Tokenlaunch.sol#L795)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 774,
+                  "endLine": 801
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6d9d858651ef359505f27701b5a628525392bf3e1becd16913db5d3b90ae4372"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.getHoursElapsed(address) (src/mocks/MockEarlySellPenaltyHook.sol#129-135) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- lastBuyTimestamp == 0 (src/mocks/MockEarlySellPenaltyHook.sol#131)\n",
+            "markdown": "[MockEarlySellPenaltyHook.getHoursElapsed(address)](src/mocks/MockEarlySellPenaltyHook.sol#L129-L135) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [lastBuyTimestamp == 0](src/mocks/MockEarlySellPenaltyHook.sol#L131)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 129,
+                  "endLine": 135
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "23674037f938dd71291f86ae823c7b6ec4143cd75356f2a430670614e279a443"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "EarlySellPenaltyHook._getHoursElapsed(address) (src/EarlySellPenaltyHook.sol#204-221) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- lastBuyTimestamp == 0 (src/EarlySellPenaltyHook.sol#210)\n",
+            "markdown": "[EarlySellPenaltyHook._getHoursElapsed(address)](src/EarlySellPenaltyHook.sol#L204-L221) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [lastBuyTimestamp == 0](src/EarlySellPenaltyHook.sol#L210)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 221
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "45bb7a27e8425e86ff773811bda788b7a2450f48a43c8c96192e7477d88f5f88"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32) (src/Behodler3Tokenlaunch.sol#774-801) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- require(bool,string)(deadline >= block.timestamp,B3: Permit expired) (src/Behodler3Tokenlaunch.sol#783)\n",
+            "markdown": "[Behodler3Tokenlaunch.permit(address,address,uint256,uint256,uint8,bytes32,bytes32)](src/Behodler3Tokenlaunch.sol#L774-L801) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [require(bool,string)(deadline >= block.timestamp,B3: Permit expired)](src/Behodler3Tokenlaunch.sol#L783)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 774,
+                  "endLine": 801
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9a3f3d5d3458a8dedee90d97f808d57c9018f46985e59c1f3feac15d43eb901b"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "EarlySellPenaltyHook.calculatePenaltyFee(address) (src/EarlySellPenaltyHook.sol#132-168) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- lastBuyTimestamp == 0 (src/EarlySellPenaltyHook.sol#145)\n\t- hoursElapsed >= maxPenaltyDurationHours (src/EarlySellPenaltyHook.sol#154)\n\t- penalty > 1000 (src/EarlySellPenaltyHook.sol#167)\n",
+            "markdown": "[EarlySellPenaltyHook.calculatePenaltyFee(address)](src/EarlySellPenaltyHook.sol#L132-L168) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [lastBuyTimestamp == 0](src/EarlySellPenaltyHook.sol#L145)\n\t- [hoursElapsed >= maxPenaltyDurationHours](src/EarlySellPenaltyHook.sol#L154)\n\t- [penalty > 1000](src/EarlySellPenaltyHook.sol#L167)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 132,
+                  "endLine": 168
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "c9b204643faf6b10008383eacd6bb9ef58b06b9c24f73b5fef5a54c6ca275371"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "EarlySellPenaltyHook.sell(address,uint256,uint256) (src/EarlySellPenaltyHook.sol#75-104) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- penaltyFee > 0 (src/EarlySellPenaltyHook.sol#95)\n",
+            "markdown": "[EarlySellPenaltyHook.sell(address,uint256,uint256)](src/EarlySellPenaltyHook.sol#L75-L104) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [penaltyFee > 0](src/EarlySellPenaltyHook.sol#L95)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 75,
+                  "endLine": 104
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "e42a6d642278a05f68d7e9b30e5e6ed377513fefaca4e2a9984ff6b80f013ffa"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.calculatePenaltyFee(address) (src/mocks/MockEarlySellPenaltyHook.sol#104-126) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- lastBuyTimestamp == 0 (src/mocks/MockEarlySellPenaltyHook.sol#108)\n\t- hoursElapsed >= maxPenaltyDurationHours (src/mocks/MockEarlySellPenaltyHook.sol#117)\n\t- penalty > 1000 (src/mocks/MockEarlySellPenaltyHook.sol#125)\n",
+            "markdown": "[MockEarlySellPenaltyHook.calculatePenaltyFee(address)](src/mocks/MockEarlySellPenaltyHook.sol#L104-L126) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [lastBuyTimestamp == 0](src/mocks/MockEarlySellPenaltyHook.sol#L108)\n\t- [hoursElapsed >= maxPenaltyDurationHours](src/mocks/MockEarlySellPenaltyHook.sol#L117)\n\t- [penalty > 1000](src/mocks/MockEarlySellPenaltyHook.sol#L125)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 104,
+                  "endLine": 126
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f036d82120471d6f8c2c6aa20166f66321366b3fbfb2605120738210e37ab1cb"
+          }
+        },
+        {
+          "ruleId": "2-1-timestamp",
+          "message": {
+            "text": "MockEarlySellPenaltyHook.sell(address,uint256,uint256) (src/mocks/MockEarlySellPenaltyHook.sol#58-83) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- penaltyFee > 0 (src/mocks/MockEarlySellPenaltyHook.sol#76)\n",
+            "markdown": "[MockEarlySellPenaltyHook.sell(address,uint256,uint256)](src/mocks/MockEarlySellPenaltyHook.sol#L58-L83) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- [penaltyFee > 0](src/mocks/MockEarlySellPenaltyHook.sol#L76)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 58,
+                  "endLine": 83
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f05a4dea24cfaf5abd9e8c4e2e7e2a5203328dcad73efcddfbb3f6e894956821"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.tryMul(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#73-84) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#76-80)\n",
+            "markdown": "[Math.tryMul(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L73-L84) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L76-L80)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 73,
+                  "endLine": 84
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "0614eaa799c65c7a0dd915c72c766983762e740a48c1b88d4d9b80d132c5e1f7"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getAddressSlot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#66-70) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#67-69)\n",
+            "markdown": "[StorageSlot.getAddressSlot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L66-L70) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L67-L69)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 66,
+                  "endLine": 70
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "0cb0950f0a0659779cfbb710140755d3c77f5a3e0cd20665f14e2c29ffa77241"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.mul512(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#37-46) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#41-45)\n",
+            "markdown": "[Math.mul512(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L37-L46) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L41-L45)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 37,
+                  "endLine": 46
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "168b15c466213dab4f22538081a848ff5bb2677ed1f68f8a6e3c5cec40bb386c"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.add512(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#25-30) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#26-29)\n",
+            "markdown": "[Math.add512(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L25-L30) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L26-L29)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 25,
+                  "endLine": 30
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "28bdebcd76b79ef2976918aae40b2d93a0922c69961989873a3970a98b70bc7f"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "SafeCast.toUint(bool) (lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#1157-1161) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#1158-1160)\n",
+            "markdown": "[SafeCast.toUint(bool)](lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#L1157-L1161) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#L1158-L1160)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol"
+                },
+                "region": {
+                  "startLine": 1157,
+                  "endLine": 1161
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "34f9a9306e1110542216cbccf2fca90cca99dfbf63bb6c8f67872d4824c90459"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Strings._unsafeReadBytesOffset(bytes,uint256) (lib/openzeppelin-contracts/contracts/utils/Strings.sol#484-489) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Strings.sol#486-488)\n",
+            "markdown": "[Strings._unsafeReadBytesOffset(bytes,uint256)](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L484-L489) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L486-L488)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/Strings.sol"
+                },
+                "region": {
+                  "startLine": 484,
+                  "endLine": 489
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "3599f1690efeaf6995e28287b753ebedf48dd3da0c137c291eef8c27fc0d3233"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getInt256Slot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#102-106) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#103-105)\n",
+            "markdown": "[StorageSlot.getInt256Slot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L102-L106) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L103-L105)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 102,
+                  "endLine": 106
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "39b269e77ca4a55a660c8ff6fb0327594b7836943bf18153a5a3f415eaec6ee2"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.log2(uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#612-651) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#648-650)\n",
+            "markdown": "[Math.log2(uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L612-L651) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L648-L650)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 612,
+                  "endLine": 651
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4c9536b9faf03a8218f49a8737c79b548551266154dfaa88d0ecaa2dbff0dee0"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "ECDSA.tryRecover(bytes32,bytes) (lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#56-75) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#66-70)\n",
+            "markdown": "[ECDSA.tryRecover(bytes32,bytes)](lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#L56-L75) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#L66-L70)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol"
+                },
+                "region": {
+                  "startLine": 56,
+                  "endLine": 75
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4ca0b43bc8bd21c9c25fb7a73ebf3f1e21238df69e3cfddc919a0bca2a4e955c"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.mulDiv(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#204-275) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#227-234)\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#240-249)\n",
+            "markdown": "[Math.mulDiv(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L204-L275) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L227-L234)\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L240-L249)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 204,
+                  "endLine": 275
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4dc2b09a2a232ef941d73aec166b8a203d35630f4931ad288f59dad16b5ef6c5"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Panic.panic(uint256) (lib/openzeppelin-contracts/contracts/utils/Panic.sol#50-56) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Panic.sol#51-55)\n",
+            "markdown": "[Panic.panic(uint256)](lib/openzeppelin-contracts/contracts/utils/Panic.sol#L50-L56) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Panic.sol#L51-L55)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/Panic.sol"
+                },
+                "region": {
+                  "startLine": 50,
+                  "endLine": 56
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "514042b8e90a4f94cc8e124d087dd1ee57e83611d0d7143d6ea91f34a1a40c2b"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getBytesSlot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#129-133) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#130-132)\n",
+            "markdown": "[StorageSlot.getBytesSlot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L129-L133) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L130-L132)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 129,
+                  "endLine": 133
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "5312cebb2ab4b8c384cec1819b8568b6c3421d67d46e2d67394b702843826ee6"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Strings.escapeJSON(string) (lib/openzeppelin-contracts/contracts/utils/Strings.sol#446-476) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Strings.sol#470-473)\n",
+            "markdown": "[Strings.escapeJSON(string)](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L446-L476) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L470-L473)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/Strings.sol"
+                },
+                "region": {
+                  "startLine": 446,
+                  "endLine": 476
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "623dcb535ace5507679d3beed269268e0f8cb24c782dd2b7b290ad4102d5131c"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getStringSlot(string) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#120-124) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#121-123)\n",
+            "markdown": "[StorageSlot.getStringSlot(string)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L120-L124) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L121-L123)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 120,
+                  "endLine": 124
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6a9ae1f07a6a025e863e9db6b62be4f7010ba985b05c152e4f03dae1893353f7"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getBytes32Slot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#84-88) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#85-87)\n",
+            "markdown": "[StorageSlot.getBytes32Slot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L84-L88) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L85-L87)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 84,
+                  "endLine": 88
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6e227cedcd7e749e974202ff8de10aac20188eab08f34d87055eed0e201722d2"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.tryMod(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#102-110) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#105-108)\n",
+            "markdown": "[Math.tryMod(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L102-L110) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L105-L108)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 102,
+                  "endLine": 110
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "7313f74380b103670486dbd8cf457c4b4778807730acf647419c5b82c007e98d"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getBytesSlot(bytes) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#138-142) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#139-141)\n",
+            "markdown": "[StorageSlot.getBytesSlot(bytes)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L138-L142) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L139-L141)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 138,
+                  "endLine": 142
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "749137134693cf0304f52b590e5a47c5286e0c8814e75ef8be3f6159fd60f08c"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Strings.toString(uint256) (lib/openzeppelin-contracts/contracts/utils/Strings.sol#45-63) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Strings.sol#50-52)\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Strings.sol#55-57)\n",
+            "markdown": "[Strings.toString(uint256)](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L45-L63) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L50-L52)\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L55-L57)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/Strings.sol"
+                },
+                "region": {
+                  "startLine": 45,
+                  "endLine": 63
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "750399e830ec3d3343b0bac8dde2fd15ea760a0a2fd2df6366aa4ed5daf0f847"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.tryDiv(uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#89-97) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#92-95)\n",
+            "markdown": "[Math.tryDiv(uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L89-L97) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L92-L95)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 89,
+                  "endLine": 97
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "7d30224ad923fb46b530816990ce5e4fbe1512dd2fa9f27e469f40cae1573b3f"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Strings.toChecksumHexString(address) (lib/openzeppelin-contracts/contracts/utils/Strings.sol#111-129) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/Strings.sol#116-118)\n",
+            "markdown": "[Strings.toChecksumHexString(address)](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L111-L129) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L116-L118)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/Strings.sol"
+                },
+                "region": {
+                  "startLine": 111,
+                  "endLine": 129
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "8e22a213af9882b2dbd985391be91d03bc1921e2fd959971f3c34c111361546b"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getBooleanSlot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#75-79) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#76-78)\n",
+            "markdown": "[StorageSlot.getBooleanSlot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L75-L79) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L76-L78)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 75,
+                  "endLine": 79
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "983222c57c42f357d634e6a0307e308f2f0068150a399b605dcd74e034e93c8b"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.tryModExp(uint256,uint256,uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#409-433) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#411-432)\n",
+            "markdown": "[Math.tryModExp(uint256,uint256,uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L409-L433) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L411-L432)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 409,
+                  "endLine": 433
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "98b67111a4eb9f57d069285261087a3d7af73d5ce0a98ca10ff8c2dc466167ad"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getStringSlot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#111-115) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#112-114)\n",
+            "markdown": "[StorageSlot.getStringSlot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L111-L115) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L112-L114)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 111,
+                  "endLine": 115
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "a06128e1b1c97ee25c55d74dda6e1aaa0976f9d134f60bf4344ab3080b21abd2"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "ShortStrings.toString(ShortString) (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#63-72) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#67-70)\n",
+            "markdown": "[ShortStrings.toString(ShortString)](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L63-L72) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L67-L70)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol"
+                },
+                "region": {
+                  "startLine": 63,
+                  "endLine": 72
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "c883e75f7a7a67b5a268e9ab40a19cabc878999ebcb860cb9c154b26c6781120"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "MessageHashUtils.toDataWithIntendedValidatorHash(address,bytes32) (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#69-79) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#73-78)\n",
+            "markdown": "[MessageHashUtils.toDataWithIntendedValidatorHash(address,bytes32)](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L69-L79) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L73-L78)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 79
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "c9bdbebe35ba3ad06235d662e4efd202964b56d41772cde664569725bcab497f"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "StorageSlot.getUint256Slot(bytes32) (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#93-97) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#94-96)\n",
+            "markdown": "[StorageSlot.getUint256Slot(bytes32)](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L93-L97) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L94-L96)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol"
+                },
+                "region": {
+                  "startLine": 93,
+                  "endLine": 97
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "e0999a78e2a4800028a800b8f94e81bd4b1fcbb9c2c0021af31da78c22e747e4"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "MessageHashUtils.toEthSignedMessageHash(bytes32) (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#30-36) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#31-35)\n",
+            "markdown": "[MessageHashUtils.toEthSignedMessageHash(bytes32)](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L30-L36) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L31-L35)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol"
+                },
+                "region": {
+                  "startLine": 30,
+                  "endLine": 36
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "e64dff1d7a0a8565344587c467e88d65c880743aea3fc85b766d300e057a5ae7"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "MessageHashUtils.toTypedDataHash(bytes32,bytes32) (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#90-98) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#91-97)\n",
+            "markdown": "[MessageHashUtils.toTypedDataHash(bytes32,bytes32)](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L90-L98) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L91-L97)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol"
+                },
+                "region": {
+                  "startLine": 90,
+                  "endLine": 98
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "eeb437b50e02cda215154f8aa76c7bd8c704fb0ceb259d08b8ff69f8b1631bcf"
+          }
+        },
+        {
+          "ruleId": "3-0-assembly",
+          "message": {
+            "text": "Math.tryModExp(bytes,bytes,bytes) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#449-471) uses assembly\n\t- INLINE ASM (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#461-470)\n",
+            "markdown": "[Math.tryModExp(bytes,bytes,bytes)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L449-L471) uses assembly\n\t- [INLINE ASM](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L461-L470)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 449,
+                  "endLine": 471
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f01e5bbd62b99072c0bc5f31405ed82782603484a36820281191bfe33619b9d9"
+          }
+        },
+        {
+          "ruleId": "3-0-pragma",
+          "message": {
+            "text": "5 different versions of Solidity are used:\n\t- Version constraint ^0.8.20 is used by:\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/access/Ownable.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Context.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Panic.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#5)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Strings.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#4)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#5)\n\t\t-^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol#4)\n\t- Version constraint >=0.4.16 is used by:\n\t\t->=0.4.16 (lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol#4)\n\t\t->=0.4.16 (lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol#4)\n\t\t->=0.4.16 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#4)\n\t- Version constraint >=0.8.4 is used by:\n\t\t->=0.8.4 (lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol#3)\n\t- Version constraint >=0.6.2 is used by:\n\t\t->=0.6.2 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)\n\t- Version constraint ^0.8.13 is used by:\n\t\t-^0.8.13 (lib/vault/src/interfaces/IVault.sol#2)\n\t\t-^0.8.13 (src/Behodler3Tokenlaunch.sol#2)\n\t\t-^0.8.13 (src/EarlySellPenaltyHook.sol#2)\n\t\t-^0.8.13 (src/interfaces/IBondingCurveHook.sol#2)\n\t\t-^0.8.13 (src/interfaces/IBondingToken.sol#2)\n\t\t-^0.8.13 (src/interfaces/IEarlySellPenaltyHook.sol#2)\n\t\t-^0.8.13 (src/mocks/MockBondingToken.sol#2)\n\t\t-^0.8.13 (src/mocks/MockBuyHook.sol#2)\n\t\t-^0.8.13 (src/mocks/MockERC20.sol#2)\n\t\t-^0.8.13 (src/mocks/MockEarlySellPenaltyHook.sol#2)\n\t\t-^0.8.13 (src/mocks/MockFailingHook.sol#2)\n\t\t-^0.8.13 (src/mocks/MockSellHook.sol#2)\n\t\t-^0.8.13 (src/mocks/MockZeroHook.sol#2)\n",
+            "markdown": "5 different versions of Solidity are used:\n\t- Version constraint ^0.8.20 is used by:\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/access/Ownable.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/Context.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/Panic.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L5)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L4)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#L5)\n\t\t-[^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol#L4)\n\t- Version constraint >=0.4.16 is used by:\n\t\t-[>=0.4.16](lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol#L4)\n\t\t-[>=0.4.16](lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol#L4)\n\t\t-[>=0.4.16](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#L4)\n\t- Version constraint >=0.8.4 is used by:\n\t\t-[>=0.8.4](lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol#L3)\n\t- Version constraint >=0.6.2 is used by:\n\t\t-[>=0.6.2](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L4)\n\t- Version constraint ^0.8.13 is used by:\n\t\t-[^0.8.13](lib/vault/src/interfaces/IVault.sol#L2)\n\t\t-[^0.8.13](src/Behodler3Tokenlaunch.sol#L2)\n\t\t-[^0.8.13](src/EarlySellPenaltyHook.sol#L2)\n\t\t-[^0.8.13](src/interfaces/IBondingCurveHook.sol#L2)\n\t\t-[^0.8.13](src/interfaces/IBondingToken.sol#L2)\n\t\t-[^0.8.13](src/interfaces/IEarlySellPenaltyHook.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockBondingToken.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockBuyHook.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockERC20.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockEarlySellPenaltyHook.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockFailingHook.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockSellHook.sol#L2)\n\t\t-[^0.8.13](src/mocks/MockZeroHook.sol#L2)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/access/Ownable.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "48c26809f2b8533e2f4ebd2a9992e531c812233f1cf34940e85c19c06c9d5fc7"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Version constraint >=0.8.4 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- DataLocationChangeInInternalOverride\n\t- NestedCalldataArrayAbiReencodingSizeValidation\n\t- SignedImmutables.\nIt is used by:\n\t- >=0.8.4 (lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol#3)\n",
+            "markdown": "Version constraint >=0.8.4 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- DataLocationChangeInInternalOverride\n\t- NestedCalldataArrayAbiReencodingSizeValidation\n\t- SignedImmutables.\nIt is used by:\n\t- [>=0.8.4](lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol#L3)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol"
+                },
+                "region": {
+                  "startLine": 3,
+                  "endLine": 3
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "2813116b57f660ffb41958cb9b926f2faa1a9e9cc63a006172d107934868a1fb"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Version constraint >=0.6.2 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- MissingSideEffectsOnSelectorAccess\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- NestedCalldataArrayAbiReencodingSizeValidation\n\t- ABIDecodeTwoDimensionalArrayMemory\n\t- KeccakCaching\n\t- EmptyByteArrayCopy\n\t- DynamicArrayCleanup\n\t- MissingEscapingInFormatting\n\t- ArraySliceDynamicallyEncodedBaseType\n\t- ImplicitConstructorCallvalueCheck\n\t- TupleAssignmentMultiStackSlotComponents\n\t- MemoryArrayCreationOverflow.\nIt is used by:\n\t- >=0.6.2 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)\n",
+            "markdown": "Version constraint >=0.6.2 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- MissingSideEffectsOnSelectorAccess\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- NestedCalldataArrayAbiReencodingSizeValidation\n\t- ABIDecodeTwoDimensionalArrayMemory\n\t- KeccakCaching\n\t- EmptyByteArrayCopy\n\t- DynamicArrayCleanup\n\t- MissingEscapingInFormatting\n\t- ArraySliceDynamicallyEncodedBaseType\n\t- ImplicitConstructorCallvalueCheck\n\t- TupleAssignmentMultiStackSlotComponents\n\t- MemoryArrayCreationOverflow.\nIt is used by:\n\t- [>=0.6.2](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#L4)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4a3883cbb286e78f742ff4c14b0804c6a07b8fa55a98b5a60ac969143a5648df"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Version constraint ^0.8.20 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess.\nIt is used by:\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/access/Ownable.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Context.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Panic.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#5)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Strings.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#4)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#5)\n\t- ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol#4)\n",
+            "markdown": "Version constraint ^0.8.20 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess.\nIt is used by:\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/access/Ownable.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/Context.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/Panic.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol#L5)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/Strings.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L4)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol#L5)\n\t- [^0.8.20](lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol#L4)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/access/Ownable.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4b7be3534cc0d142c5efac48deae4ac118ee16931be131fabc995473024f0f0f"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Version constraint ^0.8.13 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess\n\t- StorageWriteRemovalBeforeConditionalTermination\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- InlineAssemblyMemorySideEffects\n\t- DataLocationChangeInInternalOverride\n\t- NestedCalldataArrayAbiReencodingSizeValidation.\nIt is used by:\n\t- ^0.8.13 (lib/vault/src/interfaces/IVault.sol#2)\n\t- ^0.8.13 (src/Behodler3Tokenlaunch.sol#2)\n\t- ^0.8.13 (src/EarlySellPenaltyHook.sol#2)\n\t- ^0.8.13 (src/interfaces/IBondingCurveHook.sol#2)\n\t- ^0.8.13 (src/interfaces/IBondingToken.sol#2)\n\t- ^0.8.13 (src/interfaces/IEarlySellPenaltyHook.sol#2)\n\t- ^0.8.13 (src/mocks/MockBondingToken.sol#2)\n\t- ^0.8.13 (src/mocks/MockBuyHook.sol#2)\n\t- ^0.8.13 (src/mocks/MockERC20.sol#2)\n\t- ^0.8.13 (src/mocks/MockEarlySellPenaltyHook.sol#2)\n\t- ^0.8.13 (src/mocks/MockFailingHook.sol#2)\n\t- ^0.8.13 (src/mocks/MockSellHook.sol#2)\n\t- ^0.8.13 (src/mocks/MockZeroHook.sol#2)\n",
+            "markdown": "Version constraint ^0.8.13 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- VerbatimInvalidDeduplication\n\t- FullInlinerNonExpressionSplitArgumentEvaluationOrder\n\t- MissingSideEffectsOnSelectorAccess\n\t- StorageWriteRemovalBeforeConditionalTermination\n\t- AbiReencodingHeadOverflowWithStaticArrayCleanup\n\t- DirtyBytesArrayToStorage\n\t- InlineAssemblyMemorySideEffects\n\t- DataLocationChangeInInternalOverride\n\t- NestedCalldataArrayAbiReencodingSizeValidation.\nIt is used by:\n\t- [^0.8.13](lib/vault/src/interfaces/IVault.sol#L2)\n\t- [^0.8.13](src/Behodler3Tokenlaunch.sol#L2)\n\t- [^0.8.13](src/EarlySellPenaltyHook.sol#L2)\n\t- [^0.8.13](src/interfaces/IBondingCurveHook.sol#L2)\n\t- [^0.8.13](src/interfaces/IBondingToken.sol#L2)\n\t- [^0.8.13](src/interfaces/IEarlySellPenaltyHook.sol#L2)\n\t- [^0.8.13](src/mocks/MockBondingToken.sol#L2)\n\t- [^0.8.13](src/mocks/MockBuyHook.sol#L2)\n\t- [^0.8.13](src/mocks/MockERC20.sol#L2)\n\t- [^0.8.13](src/mocks/MockEarlySellPenaltyHook.sol#L2)\n\t- [^0.8.13](src/mocks/MockFailingHook.sol#L2)\n\t- [^0.8.13](src/mocks/MockSellHook.sol#L2)\n\t- [^0.8.13](src/mocks/MockZeroHook.sol#L2)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/vault/src/interfaces/IVault.sol"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "88270eceabd8be0030a464e5c0076d006b88f65099891bcc6c366f71f10496aa"
+          }
+        },
+        {
+          "ruleId": "3-0-solc-version",
+          "message": {
+            "text": "Version constraint >=0.4.16 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- DirtyBytesArrayToStorage\n\t- ABIDecodeTwoDimensionalArrayMemory\n\t- KeccakCaching\n\t- EmptyByteArrayCopy\n\t- DynamicArrayCleanup\n\t- ImplicitConstructorCallvalueCheck\n\t- TupleAssignmentMultiStackSlotComponents\n\t- MemoryArrayCreationOverflow\n\t- privateCanBeOverridden\n\t- SignedArrayStorageCopy\n\t- ABIEncoderV2StorageArrayWithMultiSlotElement\n\t- DynamicConstructorArgumentsClippedABIV2\n\t- UninitializedFunctionPointerInConstructor_0.4.x\n\t- IncorrectEventSignatureInLibraries_0.4.x\n\t- ExpExponentCleanup\n\t- NestedArrayFunctionCallDecoder\n\t- ZeroFunctionSelector.\nIt is used by:\n\t- >=0.4.16 (lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol#4)\n\t- >=0.4.16 (lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol#4)\n\t- >=0.4.16 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#4)\n",
+            "markdown": "Version constraint >=0.4.16 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)\n\t- DirtyBytesArrayToStorage\n\t- ABIDecodeTwoDimensionalArrayMemory\n\t- KeccakCaching\n\t- EmptyByteArrayCopy\n\t- DynamicArrayCleanup\n\t- ImplicitConstructorCallvalueCheck\n\t- TupleAssignmentMultiStackSlotComponents\n\t- MemoryArrayCreationOverflow\n\t- privateCanBeOverridden\n\t- SignedArrayStorageCopy\n\t- ABIEncoderV2StorageArrayWithMultiSlotElement\n\t- DynamicConstructorArgumentsClippedABIV2\n\t- UninitializedFunctionPointerInConstructor_0.4.x\n\t- IncorrectEventSignatureInLibraries_0.4.x\n\t- ExpExponentCleanup\n\t- NestedArrayFunctionCallDecoder\n\t- ZeroFunctionSelector.\nIt is used by:\n\t- [>=0.4.16](lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol#L4)\n\t- [>=0.4.16](lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol#L4)\n\t- [>=0.4.16](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#L4)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/interfaces/IERC5267.sol"
+                },
+                "region": {
+                  "startLine": 4,
+                  "endLine": 4
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b4eb65a665fb2ed812bec3014bcb4cbd3a72eeb41f9fe5378b73f26518cad761"
+          }
+        },
+        {
+          "ruleId": "3-0-missing-inheritance",
+          "message": {
+            "text": "Behodler3Tokenlaunch (src/Behodler3Tokenlaunch.sol#39-929) should inherit from IERC20Permit (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#42-90)\n",
+            "markdown": "[Behodler3Tokenlaunch](src/Behodler3Tokenlaunch.sol#L39-L929) should inherit from [IERC20Permit](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#L42-L90)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 39,
+                  "endLine": 929
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "1e6bac6fd5333d9376f2699c2c0de30170c763fe8481eb9dc387c2013436c40f"
+          }
+        },
+        {
+          "ruleId": "3-0-missing-inheritance",
+          "message": {
+            "text": "MockERC20 (src/mocks/MockERC20.sol#11-34) should inherit from IBondingToken (src/interfaces/IBondingToken.sol#10-25)\n",
+            "markdown": "[MockERC20](src/mocks/MockERC20.sol#L11-L34) should inherit from [IBondingToken](src/interfaces/IBondingToken.sol#L10-L25)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockERC20.sol"
+                },
+                "region": {
+                  "startLine": 11,
+                  "endLine": 34
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "25cdfe4db2388c9200b500348bb44b5a22c3a0c0e7e0083d54b241a47514d3a1"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setHook(IBondingCurveHook)._hook (src/Behodler3Tokenlaunch.sol#721) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setHook(IBondingCurveHook)._hook](src/Behodler3Tokenlaunch.sol#L721) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 721,
+                  "endLine": 721
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "0940c53bc908932bedb38a56f1afbcf3431ae66f1140d313d3e648ced95fca76"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter EarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._maxDurationHours (src/EarlySellPenaltyHook.sol#177) is not in mixedCase\n",
+            "markdown": "Parameter [EarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._maxDurationHours](src/EarlySellPenaltyHook.sol#L177) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 177,
+                  "endLine": 177
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "1582378bb996bb84a1a7cc5034d77ef43a393ecf0af014e0b09356d5552d6681"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockBuyHook.setBuyParams(uint256,int256)._fee (src/mocks/MockBuyHook.sol#64) is not in mixedCase\n",
+            "markdown": "Parameter [MockBuyHook.setBuyParams(uint256,int256)._fee](src/mocks/MockBuyHook.sol#L64) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 64,
+                  "endLine": 64
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "21dd30eb1e277bec6a5927251302973bc7aa76340718ce3d1974590e4ecc226b"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter EarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._declineRatePerHour (src/EarlySellPenaltyHook.sol#177) is not in mixedCase\n",
+            "markdown": "Parameter [EarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._declineRatePerHour](src/EarlySellPenaltyHook.sol#L177) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 177,
+                  "endLine": 177
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "2830ff601aa7e5337b59f7f388353df3098bcfd6d2a0bbdca0bfb72871cb96f3"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockSellHook.setBuyParams(uint256,int256)._deltaBondingToken (src/mocks/MockSellHook.sol#64) is not in mixedCase\n",
+            "markdown": "Parameter [MockSellHook.setBuyParams(uint256,int256)._deltaBondingToken](src/mocks/MockSellHook.sol#L64) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 64,
+                  "endLine": 64
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "30678d5f10446c86dedef1a8a500347b0fdffe8347b3b4e2dfb997a53a329a0d"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockSellHook.setSellParams(uint256,int256)._fee (src/mocks/MockSellHook.sol#69) is not in mixedCase\n",
+            "markdown": "Parameter [MockSellHook.setSellParams(uint256,int256)._fee](src/mocks/MockSellHook.sol#L69) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 69
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "32c4211daa856188419f7e656f3216c02788f02e70cb1c54fec61a3b1f5d5810"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._seedInput (src/Behodler3Tokenlaunch.sol#159) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._seedInput](src/Behodler3Tokenlaunch.sol#L159) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 159,
+                  "endLine": 159
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "3e8fd24d2c2e1771c1fe3723e1e80285c3b36680021287863b68ed34ecb5f1ed"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._fundingGoal (src/Behodler3Tokenlaunch.sol#159) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._fundingGoal](src/Behodler3Tokenlaunch.sol#L159) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 159,
+                  "endLine": 159
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "409c7982bf1483457647e4dc5bc9c5f90955e1bb81da4dfcec0d3fa8d52b22f5"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockEarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._maxDurationHours (src/mocks/MockEarlySellPenaltyHook.sol#89) is not in mixedCase\n",
+            "markdown": "Parameter [MockEarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._maxDurationHours](src/mocks/MockEarlySellPenaltyHook.sol#L89) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 89,
+                  "endLine": 89
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "42ad9f06993feda57166d87aea02edd26c9607e09d14585838da786186327ec5"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._desiredAveragePrice (src/Behodler3Tokenlaunch.sol#159) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setGoals(uint256,uint256,uint256)._desiredAveragePrice](src/Behodler3Tokenlaunch.sol#L159) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 159,
+                  "endLine": 159
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "4b9ead1fd917e1d1b31450ed13aa57ce16aebed6ca2e145c3021a5b81872d442"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockEarlySellPenaltyHook.setPenaltyActive(bool)._active (src/mocks/MockEarlySellPenaltyHook.sol#95) is not in mixedCase\n",
+            "markdown": "Parameter [MockEarlySellPenaltyHook.setPenaltyActive(bool)._active](src/mocks/MockEarlySellPenaltyHook.sol#L95) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 95,
+                  "endLine": 95
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "55c0d3640b5d02c19ac6c00432a8a112ddeaff8ce91a18398d59f2539d434c4c"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Function EIP712._EIP712Version() (lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#157-159) is not in mixedCase\n",
+            "markdown": "Function [EIP712._EIP712Version()](lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#L157-L159) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol"
+                },
+                "region": {
+                  "startLine": 157,
+                  "endLine": 159
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "5b08301e8648d88e4cc740cc85995aa02917ecb8ccef3ef89d067cf5d80e4685"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Function Behodler3Tokenlaunch.DOMAIN_SEPARATOR() (src/Behodler3Tokenlaunch.sol#913-915) is not in mixedCase\n",
+            "markdown": "Function [Behodler3Tokenlaunch.DOMAIN_SEPARATOR()](src/Behodler3Tokenlaunch.sol#L913-L915) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 913,
+                  "endLine": 915
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "6b177108ae2582f6c9b284a510c7897e935cd206e53363d5b8b0da7a05bf7507"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockFailingHook.setRevertMessages(string,string)._buyMessage (src/mocks/MockFailingHook.sol#67) is not in mixedCase\n",
+            "markdown": "Parameter [MockFailingHook.setRevertMessages(string,string)._buyMessage](src/mocks/MockFailingHook.sol#L67) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockFailingHook.sol"
+                },
+                "region": {
+                  "startLine": 67,
+                  "endLine": 67
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "75b9f5163e683e9ca508f0d1c512dea503006df394d952fd9a4e2a08996c8f87"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockBuyHook.setBuyParams(uint256,int256)._deltaBondingToken (src/mocks/MockBuyHook.sol#64) is not in mixedCase\n",
+            "markdown": "Parameter [MockBuyHook.setBuyParams(uint256,int256)._deltaBondingToken](src/mocks/MockBuyHook.sol#L64) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 64,
+                  "endLine": 64
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "7c95a2fb41b072fb1541875a854246835ee44ca1565736d2b6fe049df898b7c2"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockEarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._declineRatePerHour (src/mocks/MockEarlySellPenaltyHook.sol#89) is not in mixedCase\n",
+            "markdown": "Parameter [MockEarlySellPenaltyHook.setPenaltyParameters(uint256,uint256)._declineRatePerHour](src/mocks/MockEarlySellPenaltyHook.sol#L89) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 89,
+                  "endLine": 89
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "887bec004ce030b32c226dd3d52bb6c5e407dc7de9f2096de41a059543d096f5"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockBuyHook.setSellParams(uint256,int256)._deltaBondingToken (src/mocks/MockBuyHook.sol#69) is not in mixedCase\n",
+            "markdown": "Parameter [MockBuyHook.setSellParams(uint256,int256)._deltaBondingToken](src/mocks/MockBuyHook.sol#L69) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 69
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "88e85226796fa1e6c8fcba076d39c7da25b0bc478ca6521769f8e34c3de939bd"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockFailingHook.setRevertMessages(string,string)._sellMessage (src/mocks/MockFailingHook.sol#67) is not in mixedCase\n",
+            "markdown": "Parameter [MockFailingHook.setRevertMessages(string,string)._sellMessage](src/mocks/MockFailingHook.sol#L67) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockFailingHook.sol"
+                },
+                "region": {
+                  "startLine": 67,
+                  "endLine": 67
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "908ad6a69c4e29dc42870f9a3eec37f60fa7e1b52ac6a7efd95d3a1c03314f50"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setInputToken(address)._token (src/Behodler3Tokenlaunch.sol#384) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setInputToken(address)._token](src/Behodler3Tokenlaunch.sol#L384) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 384,
+                  "endLine": 384
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "994968afb8e3c84a4f18206de9025902eb04157f48e86e0c0132f7c814c5c2e6"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Function IERC20Permit.DOMAIN_SEPARATOR() (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#89) is not in mixedCase\n",
+            "markdown": "Function [IERC20Permit.DOMAIN_SEPARATOR()](lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#L89) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol"
+                },
+                "region": {
+                  "startLine": 89,
+                  "endLine": 89
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "9a77c79a6cf40e2f151723e49ba63d30100a56d0f72688e58cdf4a550a6ff843"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockEarlySellPenaltyHook.setFailureMode(bool,bool)._shouldFailOnBuy (src/mocks/MockEarlySellPenaltyHook.sol#150) is not in mixedCase\n",
+            "markdown": "Parameter [MockEarlySellPenaltyHook.setFailureMode(bool,bool)._shouldFailOnBuy](src/mocks/MockEarlySellPenaltyHook.sol#L150) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 150,
+                  "endLine": 150
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "ac6e44f97a5ebcc810224bebf9d89d338739e53e9827fad387730bc0b89f946e"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockSellHook.setBuyParams(uint256,int256)._fee (src/mocks/MockSellHook.sol#64) is not in mixedCase\n",
+            "markdown": "Parameter [MockSellHook.setBuyParams(uint256,int256)._fee](src/mocks/MockSellHook.sol#L64) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 64,
+                  "endLine": 64
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "afb2e21f941b6cd824fbaf79accab9ad2bc4bf6aa35cf363f6d13abae8b49256"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockEarlySellPenaltyHook.setFailureMode(bool,bool)._shouldFailOnSell (src/mocks/MockEarlySellPenaltyHook.sol#150) is not in mixedCase\n",
+            "markdown": "Parameter [MockEarlySellPenaltyHook.setFailureMode(bool,bool)._shouldFailOnSell](src/mocks/MockEarlySellPenaltyHook.sol#L150) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockEarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 150,
+                  "endLine": 150
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b0e7b1340ba33d304c55d99723e925fa67dc6d11c6ed3fcd55276c1ad4d99f12"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter EarlySellPenaltyHook.setPenaltyActive(bool)._active (src/EarlySellPenaltyHook.sol#192) is not in mixedCase\n",
+            "markdown": "Parameter [EarlySellPenaltyHook.setPenaltyActive(bool)._active](src/EarlySellPenaltyHook.sol#L192) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/EarlySellPenaltyHook.sol"
+                },
+                "region": {
+                  "startLine": 192,
+                  "endLine": 192
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "b165af46c9c488f8d3cebc2fc70926a0f0daef3dfd83ea5c7c68e6e000c70d9b"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setAutoLock(bool)._autoLock (src/Behodler3Tokenlaunch.sol#713) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setAutoLock(bool)._autoLock](src/Behodler3Tokenlaunch.sol#L713) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 713,
+                  "endLine": 713
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "c2f1e30d62524d97f6ab505835d04758d04b1e65d7ee1c9e08a4ca35d031399c"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockFailingHook.setFailureMode(bool,bool)._buyFail (src/mocks/MockFailingHook.sol#62) is not in mixedCase\n",
+            "markdown": "Parameter [MockFailingHook.setFailureMode(bool,bool)._buyFail](src/mocks/MockFailingHook.sol#L62) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockFailingHook.sol"
+                },
+                "region": {
+                  "startLine": 62,
+                  "endLine": 62
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "c37b35c41a4011e47bc1d03ff173322f591b56df30e99fc366c027db93aa5952"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Function EIP712._EIP712Name() (lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#146-148) is not in mixedCase\n",
+            "markdown": "Function [EIP712._EIP712Name()](lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol#L146-L148) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol"
+                },
+                "region": {
+                  "startLine": 146,
+                  "endLine": 148
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "db96ea04e6546eb3d22674155940655c8a832e0e60c564b72e5f02f0c4ebf387"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockSellHook.setSellParams(uint256,int256)._deltaBondingToken (src/mocks/MockSellHook.sol#69) is not in mixedCase\n",
+            "markdown": "Parameter [MockSellHook.setSellParams(uint256,int256)._deltaBondingToken](src/mocks/MockSellHook.sol#L69) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockSellHook.sol"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 69
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "e56457001a85f77c92c57fd524365157c85aaed96b49bd39d8723bba23375af2"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockBuyHook.setSellParams(uint256,int256)._fee (src/mocks/MockBuyHook.sol#69) is not in mixedCase\n",
+            "markdown": "Parameter [MockBuyHook.setSellParams(uint256,int256)._fee](src/mocks/MockBuyHook.sol#L69) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockBuyHook.sol"
+                },
+                "region": {
+                  "startLine": 69,
+                  "endLine": 69
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "f7b6718d1ee5362dbd02ac8f0c472634822a0085db21afbae2c583f48185a0fa"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter MockFailingHook.setFailureMode(bool,bool)._sellFail (src/mocks/MockFailingHook.sol#62) is not in mixedCase\n",
+            "markdown": "Parameter [MockFailingHook.setFailureMode(bool,bool)._sellFail](src/mocks/MockFailingHook.sol#L62) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockFailingHook.sol"
+                },
+                "region": {
+                  "startLine": 62,
+                  "endLine": 62
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "fad71d4c77ea96d9639579235d8898993d193c3d5462d107450189e4212e4838"
+          }
+        },
+        {
+          "ruleId": "3-0-naming-convention",
+          "message": {
+            "text": "Parameter Behodler3Tokenlaunch.setVault(address)._vault (src/Behodler3Tokenlaunch.sol#430) is not in mixedCase\n",
+            "markdown": "Parameter [Behodler3Tokenlaunch.setVault(address)._vault](src/Behodler3Tokenlaunch.sol#L430) is not in mixedCase\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 430,
+                  "endLine": 430
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "feb0bb96fb7c0c799ee368bf47075e4097907421f5a8830f22147c16076d6974"
+          }
+        },
+        {
+          "ruleId": "3-1-too-many-digits",
+          "message": {
+            "text": "ShortStrings.slitherConstructorConstantVariables() (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#40-122) uses literals with too many digits:\n\t- FALLBACK_SENTINEL = 0x00000000000000000000000000000000000000000000000000000000000000FF (lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#42)\n",
+            "markdown": "[ShortStrings.slitherConstructorConstantVariables()](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L40-L122) uses literals with too many digits:\n\t- [FALLBACK_SENTINEL = 0x00000000000000000000000000000000000000000000000000000000000000FF](lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol#L42)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/ShortStrings.sol"
+                },
+                "region": {
+                  "startLine": 40,
+                  "endLine": 122
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "186f4716f541b247857e23dd41e5fda89248eea9e580857e3dc021dc1a307c50"
+          }
+        },
+        {
+          "ruleId": "3-1-too-many-digits",
+          "message": {
+            "text": "Math.log2(uint256) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#612-651) uses literals with too many digits:\n\t- r = r | byte(uint256,uint256)(x >> r,0x0000010102020202030303030303030300000000000000000000000000000000) (lib/openzeppelin-contracts/contracts/utils/math/Math.sol#649)\n",
+            "markdown": "[Math.log2(uint256)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L612-L651) uses literals with too many digits:\n\t- [r = r | byte(uint256,uint256)(x >> r,0x0000010102020202030303030303030300000000000000000000000000000000)](lib/openzeppelin-contracts/contracts/utils/math/Math.sol#L649)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "lib/openzeppelin-contracts/contracts/utils/math/Math.sol"
+                },
+                "region": {
+                  "startLine": 612,
+                  "endLine": 651
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "d4e0a626c90e9e44a08f5e9eaa9398f2803521dc3d1d6065167c8e7a56866e9f"
+          }
+        },
+        {
+          "ruleId": "3-0-unused-state",
+          "message": {
+            "text": "Behodler3Tokenlaunch._PERMIT_TYPEHASH (src/Behodler3Tokenlaunch.sol#98-99) is never used in Behodler3Tokenlaunch (src/Behodler3Tokenlaunch.sol#39-929)\n",
+            "markdown": "[Behodler3Tokenlaunch._PERMIT_TYPEHASH](src/Behodler3Tokenlaunch.sol#L98-L99) is never used in [Behodler3Tokenlaunch](src/Behodler3Tokenlaunch.sol#L39-L929)\n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 98,
+                  "endLine": 99
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "75ec96353f210f03802efe3218bef174106edef177b7b5d26e0669ddfd0f043b"
+          }
+        },
+        {
+          "ruleId": "4-0-immutable-states",
+          "message": {
+            "text": "Behodler3Tokenlaunch.bondingToken (src/Behodler3Tokenlaunch.sol#47) should be immutable \n",
+            "markdown": "[Behodler3Tokenlaunch.bondingToken](src/Behodler3Tokenlaunch.sol#L47) should be immutable \n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/Behodler3Tokenlaunch.sol"
+                },
+                "region": {
+                  "startLine": 47,
+                  "endLine": 47
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "558b3abed3228d91f6f8d05bc5b7c26b765c2a04e939913868493bdc80820e91"
+          }
+        },
+        {
+          "ruleId": "4-0-immutable-states",
+          "message": {
+            "text": "MockERC20._decimals (src/mocks/MockERC20.sol#12) should be immutable \n",
+            "markdown": "[MockERC20._decimals](src/mocks/MockERC20.sol#L12) should be immutable \n"
+          },
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/mocks/MockERC20.sol"
+                },
+                "region": {
+                  "startLine": 12,
+                  "endLine": 12
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "id": "95c0f8b60f648184e5e1d783ea2ea89510482c6ce24db3b965b81368473399ce"
+          }
+        }
+      ]
+    }
+  ]
+}

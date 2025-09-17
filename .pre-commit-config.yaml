@@ -52,8 +52,7 @@ repos:
         files: \.sol$
         pass_filenames: false
 
-  # Future integration points for security tools
-  # These hooks will be uncommented as security tools are implemented
+  # Security analysis tools integrated into pre-commit workflow
 
   # Solhint linting for Solidity security
   - repo: local
@@ -74,6 +73,21 @@ repos:
         name: Detect secrets
         args: ["--baseline", ".secrets.baseline"]
         exclude: package-lock.json
+
+  # Slither static analysis (quick scan for pre-commit)
+  - repo: local
+    hooks:
+      - id: slither-quick
+        name: Quick Slither analysis
+        entry: bash
+        language: system
+        files: \.sol$
+        pass_filenames: false
+        args:
+          [
+            "-c",
+            'if command -v slither >/dev/null 2>&1; then slither . --exclude-dependencies --disable-color; else echo "Warning: Slither not available, skipping analysis"; fi',
+          ]
 
 # Configuration for pre-commit behavior
 fail_fast: false

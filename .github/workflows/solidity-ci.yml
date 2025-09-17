@@ -1,0 +1,86 @@
+name: Solidity CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  security-and-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        # Install npm dependencies when package.json exists
+        if [ -f "package.json" ]; then
+          npm ci
+        fi
+
+    - name: Run Forge formatting check
+      run: forge fmt --check
+
+    - name: Run Forge build
+      run: forge build
+
+    - name: Run Forge tests
+      run: forge test -vvv
+
+    # Placeholder steps for future security tool integrations
+    # These will be uncommented and configured as security tools are added
+
+    # - name: Run Slither analysis
+    #   run: |
+    #     # Slither static analysis will be added here
+    #     echo "Slither analysis placeholder"
+
+    # - name: Run Mythril analysis
+    #   run: |
+    #     # Mythril security analysis will be added here
+    #     echo "Mythril analysis placeholder"
+
+    # - name: Run Echidna fuzzing
+    #   run: |
+    #     # Echidna property-based testing will be added here
+    #     echo "Echidna fuzzing placeholder"
+
+    # - name: Run Solhint linting
+    #   run: |
+    #     # Solhint linting via make commands will be added here
+    #     echo "Solhint linting placeholder"
+
+    # - name: Security audit checks
+    #   run: |
+    #     # Custom security audit scripts will be added here
+    #     echo "Security audit placeholder"
+
+    # Integration with future Makefile commands
+    # When Makefile is available, replace individual steps with:
+    # - name: Run all security checks
+    #   run: make security-check
+    #
+    # - name: Run linting
+    #   run: make lint
+    #
+    # - name: Run formatting check
+    #   run: make format-check
+    #
+    # - name: Run tests
+    #   run: make test

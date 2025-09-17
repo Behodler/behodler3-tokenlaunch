@@ -1,0 +1,83 @@
+repos:
+  # Prettier for code formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
+        name: Format code with Prettier
+        files: \.(json|md|yml|yaml)$
+
+  # General pre-commit hooks for basic checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML
+      - id: check-json
+        name: Check JSON
+      - id: check-added-large-files
+        name: Check for large files
+
+  # Forge formatting for Solidity files
+  - repo: local
+    hooks:
+      - id: forge-fmt
+        name: Format Solidity with Forge
+        entry: forge fmt
+        language: system
+        files: \.sol$
+        pass_filenames: false
+
+  # Forge build check to ensure contracts compile
+  - repo: local
+    hooks:
+      - id: forge-build
+        name: Build contracts with Forge
+        entry: forge build
+        language: system
+        files: \.sol$
+        pass_filenames: false
+
+  # Quick test runner for fast feedback
+  - repo: local
+    hooks:
+      - id: forge-test-quick
+        name: Run quick Forge tests
+        entry: forge test --gas-report
+        language: system
+        files: \.sol$
+        pass_filenames: false
+
+  # Future integration points for security tools
+  # These hooks will be uncommented as security tools are implemented
+
+  # Solhint linting (will integrate with future Makefile)
+  # - repo: local
+  #   hooks:
+  #     - id: solhint
+  #       name: Solidity linting with Solhint
+  #       entry: make lint-solidity
+  #       language: system
+  #       files: \.sol$
+  #       pass_filenames: false
+
+  # Security analysis placeholder
+  # - repo: local
+  #   hooks:
+  #     - id: security-check
+  #       name: Run security analysis
+  #       entry: make security-check
+  #       language: system
+  #       files: \.sol$
+  #       pass_filenames: false
+
+# Configuration for pre-commit behavior
+fail_fast: false
+default_stages: [commit]
+
+# Minimum pre-commit version required
+minimum_pre_commit_version: '3.0.0'

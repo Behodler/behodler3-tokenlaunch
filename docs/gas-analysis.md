@@ -9,8 +9,9 @@ This document analyzes the gas costs associated with the EarlySellPenaltyHook im
 ### Core Operations
 
 #### Buy Operations (Timestamp Storage)
+
 ```solidity
-function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken) 
+function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
     external override returns (uint256, int256) {
     buyerLastBuyTimestamp[buyer] = block.timestamp;  // SSTORE operation
     emit BuyerTimestampRecorded(buyer, block.timestamp);  // LOG operation
@@ -19,18 +20,21 @@ function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
 ```
 
 **Gas Analysis:**
+
 - **SSTORE (new timestamp)**: ~20,000 gas (first-time buyer)
 - **SSTORE (update timestamp)**: ~5,000 gas (existing buyer)
 - **LOG event emission**: ~1,500 gas
 - **Function overhead**: ~200 gas
 
 **Total Buy Operation Gas Cost:**
+
 - **First-time buyer**: ~21,700 gas
 - **Existing buyer**: ~6,700 gas
 
 #### Sell Operations (Penalty Calculation)
+
 ```solidity
-function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken) 
+function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
     external override returns (uint256, int256) {
     uint256 penaltyFee = calculatePenaltyFee(seller);  // Multiple SLOAD operations
     if (penaltyFee > 0) {
@@ -42,6 +46,7 @@ function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
 ```
 
 **Gas Analysis:**
+
 - **SLOAD (timestamp lookup)**: ~800 gas
 - **SLOAD (penalty parameters)**: ~1,600 gas (2 parameters)
 - **Arithmetic calculations**: ~50 gas
@@ -49,12 +54,14 @@ function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
 - **Function overhead**: ~200 gas
 
 **Total Sell Operation Gas Cost:**
+
 - **With penalty applied**: ~4,150 gas
 - **No penalty applied**: ~2,650 gas
 
 ### Detailed Gas Measurements
 
 #### Test Environment Setup
+
 ```solidity
 // Test configuration for accurate gas measurements
 contract GasAnalysisTest {
@@ -67,6 +74,7 @@ contract GasAnalysisTest {
 #### Measured Gas Costs
 
 **Buy Operations:**
+
 ```
 First buy (new SSTORE):        21,724 gas
 Second buy (update SSTORE):     6,724 gas
@@ -74,6 +82,7 @@ Third buy (update SSTORE):      6,724 gas
 ```
 
 **Sell Operations:**
+
 ```
 Immediate sell (100% penalty):  4,167 gas
 1-hour sell (99% penalty):      4,167 gas
@@ -83,6 +92,7 @@ Immediate sell (100% penalty):  4,167 gas
 ```
 
 **Parameter Updates (Owner Only):**
+
 ```
 setPenaltyParameters():        ~28,500 gas
 setPenaltyActive():           ~23,500 gas
@@ -93,11 +103,13 @@ setPenaltyActive():           ~23,500 gas
 ### Storage Optimization
 
 #### Current Implementation
+
 ```solidity
 mapping(address => uint256) private buyerLastBuyTimestamp;
 ```
 
 **Storage Characteristics:**
+
 - **Slot usage**: 1 slot per buyer address
 - **Cold storage access**: 2,100 gas (first access)
 - **Warm storage access**: 100 gas (subsequent accesses)
@@ -106,6 +118,7 @@ mapping(address => uint256) private buyerLastBuyTimestamp;
 #### Alternative Implementations Considered
 
 **Packed Storage Approach:**
+
 ```solidity
 struct BuyerData {
     uint128 lastBuyTimestamp;  // Sufficient until year 10^28
@@ -115,17 +128,20 @@ mapping(address => BuyerData) private buyers;
 ```
 
 **Gas Impact:**
+
 - **Pros**: Same gas costs for single timestamp access
 - **Cons**: More expensive for updates if both fields are used
 - **Verdict**: No significant improvement for current use case
 
 **Event-Based Storage:**
+
 ```solidity
 // Store timestamps only in events, read from logs
 event BuyerTimestampRecorded(address indexed buyer, uint256 indexed timestamp);
 ```
 
 **Gas Impact:**
+
 - **Pros**: Much cheaper writes (~1,500 gas vs 20,000 gas)
 - **Cons**: Expensive reads (requires log scanning), not practical for penalties
 - **Verdict**: Not suitable for real-time penalty calculations
@@ -133,18 +149,21 @@ event BuyerTimestampRecorded(address indexed buyer, uint256 indexed timestamp);
 ### Transaction Gas Cost Comparison
 
 #### Without Hook (Baseline)
+
 ```
 Buy transaction:   ~45,000 gas
 Sell transaction:  ~35,000 gas
 ```
 
 #### With EarlySellPenaltyHook
+
 ```
 Buy transaction:   ~66,700 gas (first-time) / ~51,700 gas (existing)
 Sell transaction:  ~39,200 gas (with penalty) / ~37,700 gas (no penalty)
 ```
 
 **Percentage Increase:**
+
 - **Buy operations**: +48% (first-time) / +15% (existing)
 - **Sell operations**: +12% (with penalty) / +8% (no penalty)
 
@@ -153,34 +172,37 @@ Sell transaction:  ~39,200 gas (with penalty) / ~37,700 gas (no penalty)
 ### Benefits vs. Gas Costs
 
 #### Economic Benefits
+
 1. **Penalty Revenue**: Penalties can generate significant protocol revenue
-   - 100% penalty on immediate sale = entire sale amount captured
-   - Progressive penalties create ongoing revenue stream
-   - Revenue can offset gas costs and provide protocol funding
+    - 100% penalty on immediate sale = entire sale amount captured
+    - Progressive penalties create ongoing revenue stream
+    - Revenue can offset gas costs and provide protocol funding
 
 2. **Behavioral Incentives**: Encourages holding behavior
-   - Reduces selling pressure on token price
-   - Creates natural price support mechanism
-   - Aligns user behavior with protocol goals
+    - Reduces selling pressure on token price
+    - Creates natural price support mechanism
+    - Aligns user behavior with protocol goals
 
 3. **Market Stability**: Reduces volatility
-   - Limits immediate profit-taking after purchases
-   - Creates predictable selling patterns
-   - Provides time for market to absorb buy pressure
+    - Limits immediate profit-taking after purchases
+    - Creates predictable selling patterns
+    - Provides time for market to absorb buy pressure
 
 #### Gas Cost Impact
+
 1. **Per-Transaction Costs**: ~$0.50-$2.00 additional cost per transaction (at 20 gwei, $1800 ETH)
-   - Buy operations: +$1.30 (first-time) / +$0.40 (existing)
-   - Sell operations: +$0.25 (with penalty) / +$0.15 (no penalty)
+    - Buy operations: +$1.30 (first-time) / +$0.40 (existing)
+    - Sell operations: +$0.25 (with penalty) / +$0.15 (no penalty)
 
 2. **User Experience**: Minimal impact on transaction costs
-   - Gas increases are small relative to typical DeFi transaction costs
-   - Users trading significant amounts unlikely to be deterred by gas costs
-   - Gas costs create additional barrier to small, frequent trading
+    - Gas increases are small relative to typical DeFi transaction costs
+    - Users trading significant amounts unlikely to be deterred by gas costs
+    - Gas costs create additional barrier to small, frequent trading
 
 ### ROI Analysis
 
 #### Example Scenario: 1000 Token Sale
+
 ```
 Sale Value: $10,000 (assuming $10/token)
 Gas Cost: ~$0.25 additional
@@ -196,12 +218,15 @@ The penalty revenue dramatically outweighs the gas costs, making the mechanism h
 ### Immediate Optimizations
 
 #### 1. Conditional Event Emission
+
 **Current:**
+
 ```solidity
 emit BuyerTimestampRecorded(buyer, block.timestamp);  // Always emitted
 ```
 
 **Optimized:**
+
 ```solidity
 if (shouldEmitEvents) {  // Configurable flag
     emit BuyerTimestampRecorded(buyer, block.timestamp);
@@ -211,7 +236,9 @@ if (shouldEmitEvents) {  // Configurable flag
 **Savings**: ~1,500 gas per buy operation when events disabled
 
 #### 2. Batch Parameter Updates
+
 **Current:**
+
 ```solidity
 function setPenaltyParameters(uint256 _declineRate, uint256 _maxDuration) external {
     penaltyDeclineRatePerHour = _declineRate;      // SSTORE
@@ -225,7 +252,9 @@ function setPenaltyParameters(uint256 _declineRate, uint256 _maxDuration) extern
 **Optimization**: Parameters rarely change, so current implementation is appropriate.
 
 #### 3. View Function Optimization
+
 **Current penalty calculation includes multiple storage reads:**
+
 ```solidity
 function calculatePenaltyFee(address seller) public view returns (uint256) {
     if (!penaltyActive) return 0;                           // SLOAD
@@ -243,6 +272,7 @@ function calculatePenaltyFee(address seller) public view returns (uint256) {
 ### Advanced Optimizations
 
 #### 1. Timestamp Precision Reduction
+
 **Current**: Full timestamp precision (block.timestamp)
 **Alternative**: Hour-rounded timestamps
 
@@ -252,11 +282,13 @@ buyerLastBuyTimestamp[buyer] = (block.timestamp / 3600) * 3600;
 ```
 
 **Impact:**
+
 - **Gas savings**: Minimal (~50 gas)
 - **Precision loss**: Could create edge cases at hour boundaries
 - **Verdict**: Not recommended - precision loss outweighs minimal savings
 
 #### 2. Lazy Timestamp Cleanup
+
 **Current**: Timestamps stored indefinitely
 **Alternative**: Clean up old timestamps (>100 hours)
 
@@ -270,12 +302,14 @@ function cleanupOldTimestamp(address buyer) external {
 ```
 
 **Impact:**
+
 - **Storage savings**: Reduces contract storage growth
 - **Gas costs**: Additional cleanup transactions required
 - **Complexity**: Introduces new functions and game theory
 - **Verdict**: Not recommended - complexity outweighs benefits
 
 #### 3. Penalty Caching
+
 **Alternative**: Cache penalty calculations
 
 ```solidity
@@ -287,6 +321,7 @@ mapping(address => CachedPenalty) private penaltyCache;
 ```
 
 **Impact:**
+
 - **Complexity**: Significant increase in contract complexity
 - **Gas costs**: Worse overall (additional storage operations)
 - **Cache invalidation**: Complex logic required
@@ -295,16 +330,19 @@ mapping(address => CachedPenalty) private penaltyCache;
 ## Network-Specific Considerations
 
 ### Ethereum Mainnet
+
 - **High gas costs**: Gas optimization most critical
 - **Current implementation**: Well-optimized for mainnet deployment
 - **Recommendation**: Deploy as-is, monitor gas usage patterns
 
 ### Layer 2 Solutions (Arbitrum, Optimism, Polygon)
+
 - **Lower gas costs**: Gas optimization less critical
 - **More flexibility**: Could consider additional features if gas is cheap
 - **Recommendation**: Current implementation suitable, could add enhanced events/monitoring
 
 ### Alternative Networks (BSC, Avalanche)
+
 - **Variable gas costs**: Depends on network congestion
 - **Different gas models**: Some networks have predictable gas costs
 - **Recommendation**: Adapt parameters based on network characteristics
@@ -314,10 +352,11 @@ mapping(address => CachedPenalty) private penaltyCache;
 ### Gas Usage Tracking
 
 #### Implementation
+
 ```solidity
 contract GasTracker {
     mapping(address => uint256) public totalGasUsed;
-    
+
     modifier trackGas() {
         uint256 gasStart = gasleft();
         _;
@@ -328,20 +367,23 @@ contract GasTracker {
 ```
 
 #### Metrics to Monitor
+
 1. **Average gas per buy operation**
-2. **Average gas per sell operation**  
+2. **Average gas per sell operation**
 3. **Gas usage by user type** (first-time vs. existing)
 4. **Gas efficiency trends** over time
 
 ### Performance Benchmarks
 
 #### Target Metrics
+
 - **Buy operations**: <25,000 gas overhead
 - **Sell operations**: <5,000 gas overhead
 - **Parameter updates**: <30,000 gas
 - **View functions**: <3,000 gas
 
 #### Current Performance
+
 - ✅ **Buy operations**: 21,700 gas (first-time), 6,700 gas (existing)
 - ✅ **Sell operations**: 4,150 gas (with penalty), 2,650 gas (no penalty)
 - ✅ **Parameter updates**: 28,500 gas
@@ -352,6 +394,7 @@ contract GasTracker {
 ## Economic Analysis
 
 ### Revenue Model
+
 The penalty mechanism creates multiple revenue streams:
 
 1. **Direct Penalties**: Applied to early sellers
@@ -359,6 +402,7 @@ The penalty mechanism creates multiple revenue streams:
 3. **Protocol Fees**: Can be extracted from penalty revenue
 
 ### Gas Cost Recovery
+
 Assuming the protocol captures penalty revenue:
 
 ```
@@ -371,6 +415,7 @@ Recovery Ratio: 2,500:1 to 17,500:1
 The penalty revenue easily covers gas costs with enormous margins.
 
 ### User Cost-Benefit
+
 From a user perspective:
 
 **Cost**: +$0.40 average gas cost per transaction

@@ -1,0 +1,562 @@
+Warning: This is a nightly build of Foundry. It is recommended to use the latest stable version. Visit https://book.getfoundry.sh/announcements for more information.
+To mute this warning set `FOUNDRY_DISABLE_NIGHTLY_WARNING` in your environment.
+
+No files changed, compilation skipped
+
+Ran 14 tests for test/B3VirtualPairTest.sol:B3VirtualPairTest
+[PASS] testKConsistencyAfterVirtualPairUpdates() (gas: 28674)
+[PASS] testKConstantCalculation() (gas: 12917)
+[PASS] testVirtualInputTokensInitialization() (gas: 7849)
+[PASS] testVirtualLInitialization() (gas: 18030)
+[PASS] testVirtualLNotEqualTotalSupply() (gas: 27709)
+[PASS] testVirtualPairArchitectureDocumentation() (gas: 29144)
+[PASS] testVirtualPairConsistency() (gas: 39128)
+[PASS] testVirtualPairIndependentFromActualBalances() (gas: 254433)
+[PASS] testVirtualPairInitialization() (gas: 38014)
+[PASS] testVirtualPairInitializationFlag() (gas: 12149)
+[PASS] testVirtualPairNotStandardBondingCurve() (gas: 15193)
+[PASS] testVirtualPairPreservesKAfterOperations() (gas: 245962)
+[PASS] testVirtualPairStateAfterBondingTokenMinting() (gas: 101045)
+[PASS] testVirtualPairWithZeroValues() (gas: 10325)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 1.33ms (504.66µs CPU time)
+
+Ran 22 tests for test/B3QuoteFunctionsTest.sol:B3QuoteFunctionsTest
+[PASS] testMultipleQuoteCallsConsistent() (gas: 45481)
+[PASS] testQuoteAddLiquidityBasic() (gas: 17035)
+[PASS] testQuoteAddLiquidityConsistentWithActual() (gas: 247146)
+[PASS] testQuoteAddLiquidityDifferentAmounts() (gas: 75587)
+[PASS] testQuoteAddLiquidityLargeAmount() (gas: 24677)
+[PASS] testQuoteAddLiquidityMath() (gas: 42982)
+[PASS] testQuoteAddLiquidityMaxInput() (gas: 16658)
+[PASS] testQuoteAddLiquidityPrecision() (gas: 17094)
+[PASS] testQuoteAddLiquiditySmallAmount() (gas: 16969)
+[PASS] testQuoteAddLiquidityZeroInput() (gas: 5714)
+[PASS] testQuoteAfterStateChanges() (gas: 259325)
+[PASS] testQuoteRemoveLiquidityBasic() (gas: 17042)
+[PASS] testQuoteRemoveLiquidityConsistentWithActual() (gas: 333118)
+[PASS] testQuoteRemoveLiquidityDifferentAmounts() (gas: 75549)
+[PASS] testQuoteRemoveLiquidityLargeAmount() (gas: 24674)
+[PASS] testQuoteRemoveLiquidityMath() (gas: 42935)
+[PASS] testQuoteRemoveLiquidityMaxBonding() (gas: 16567)
+[PASS] testQuoteRemoveLiquidityPrecision() (gas: 17059)
+[PASS] testQuoteRemoveLiquiditySmallAmount() (gas: 17065)
+[PASS] testQuoteRemoveLiquidityZeroInput() (gas: 5680)
+[PASS] testQuoteSymmetryAddRemove() (gas: 31342)
+[PASS] testQuotesDoNotChangeState() (gas: 346726)
+Suite result: ok. 22 passed; 0 failed; 0 skipped; finished in 3.13ms (2.12ms CPU time)
+
+Ran 25 tests for test/B3SecurityIntegrationTest.sol:B3SecurityIntegrationTest
+[PASS] testAddLiquidityReentrancyProtection() (gas: 232948)
+[PASS] testAutoLockInitialization() (gas: 7824)
+[PASS] testAutoLockTriggersOnCondition() (gas: 282052)
+[PASS] testCompleteUserFlow() (gas: 366513)
+[PASS] testGasUsageAddLiquidity() (gas: 233133)
+[PASS] testGasUsageRemoveLiquidity() (gas: 321791)
+[PASS] testInvariantVirtualPairIntegrity() (gas: 801824)
+[PASS] testLockEmitsEvent() (gas: 41182)
+[PASS] testLockPreventsAddLiquidity() (gas: 125102)
+[PASS] testLockPreventsRemoveLiquidity() (gas: 297113)
+[PASS] testMultipleUsersInteraction() (gas: 549239)
+[PASS] testMultipleVaultChanges() (gas: 2674939)
+[PASS] testOverflowProtection() (gas: 137884)
+[PASS] testRemoveLiquidityReentrancyProtection() (gas: 321675)
+[PASS] testSetAutoLockChangesState() (gas: 86774)
+[PASS] testSetVaultBlocksOperationsUntilReinitialized() (gas: 1886606)
+[PASS] testSetVaultChangesVaultAddress() (gas: 1322562)
+[PASS] testSetVaultEmitsVaultChangedEvent() (gas: 1316580)
+[PASS] testSetVaultOnlyOwnerCanCall() (gas: 1337322)
+[PASS] testSetVaultResetsVaultApprovalInitialized() (gas: 1320210)
+[PASS] testSetVaultWithZeroAddressReverts() (gas: 37060)
+[PASS] testUnlockAllowsOperations() (gas: 295478)
+[PASS] testUnlockEmitsEvent() (gas: 70954)
+[PASS] testVaultFailureHandling() (gas: 233021)
+[PASS] testZeroAddressProtection() (gas: 4960309)
+Suite result: ok. 25 passed; 0 failed; 0 skipped; finished in 3.97ms (4.17ms CPU time)
+
+Ran 15 tests for test/B3AddLiquidityTest.sol:B3AddLiquidityTest
+[PASS] testAddLiquidityBasic() (gas: 240754)
+[PASS] testAddLiquidityEvent() (gas: 253771)
+[PASS] testAddLiquidityInsufficientApproval() (gas: 114607)
+[PASS] testAddLiquidityInsufficientBalance() (gas: 120048)
+[PASS] testAddLiquidityLargeAmount() (gas: 275932)
+[PASS] testAddLiquidityMEVProtection() (gas: 120222)
+[PASS] testAddLiquidityMEVProtectionPasses() (gas: 247155)
+[PASS] testAddLiquidityMultipleUsers() (gas: 398569)
+[PASS] testAddLiquidityPreservesK() (gas: 261930)
+[PASS] testAddLiquidityReentrancyProtection() (gas: 232946)
+[PASS] testAddLiquidityVaultDeposit() (gas: 253127)
+[PASS] testAddLiquidityVirtualPairMath() (gas: 247171)
+[PASS] testAddLiquidityVirtualPairUpdate() (gas: 248987)
+[PASS] testAddLiquidityWithDifferentAmounts() (gas: 720580)
+[PASS] testAddLiquidityZeroAmount() (gas: 40815)
+Suite result: ok. 15 passed; 0 failed; 0 skipped; finished in 4.43ms (3.45ms CPU time)
+
+Ran 17 tests for test/B3RemoveLiquidityTest.sol:B3RemoveLiquidityTest
+[PASS] testAddThenRemoveLiquidity() (gas: 3042547)
+[PASS] testRemoveAllLiquidity() (gas: 108301)
+[PASS] testRemoveLiquidityBasic() (gas: 116448)
+[PASS] testRemoveLiquidityBurnsBondingTokens() (gas: 116230)
+[PASS] testRemoveLiquidityEvent() (gas: 119670)
+[PASS] testRemoveLiquidityInsufficientBondingTokens() (gas: 48392)
+[PASS] testRemoveLiquidityInsufficientVaultBalance() (gas: 141070)
+[PASS] testRemoveLiquidityMEVProtection() (gas: 62045)
+[PASS] testRemoveLiquidityMEVProtectionPasses() (gas: 113251)
+[PASS] testRemoveLiquidityMultipleUsers() (gas: 246781)
+[PASS] testRemoveLiquidityPreservesK() (gas: 3054906)
+[PASS] testRemoveLiquidityReentrancyProtection() (gas: 98958)
+[PASS] testRemoveLiquidityVaultWithdrawal() (gas: 121028)
+[PASS] testRemoveLiquidityVirtualPairMath() (gas: 120675)
+[PASS] testRemoveLiquidityVirtualPairUpdate() (gas: 114852)
+[PASS] testRemoveLiquidityWithDifferentAmounts() (gas: 12106276)
+[PASS] testRemoveLiquidityZeroAmount() (gas: 40805)
+Suite result: ok. 17 passed; 0 failed; 0 skipped; finished in 5.98ms (4.92ms CPU time)
+
+Ran 36 tests for test/B3BuySellHooksTest.sol:B3BuySellHooksTest
+[PASS] test_BuyHookCalledDuringAddLiquidity_ShouldFail() (gas: 361716)
+[PASS] test_BuyHookCallsAfterBaseCalculation_ShouldFail() (gas: 365929)
+[PASS] test_BuyHookFeeAppliedToInputToken_ShouldFail() (gas: 395350)
+[PASS] test_BuyHookReceivesCorrectBaseBondingAmount_ShouldFail() (gas: 365930)
+[PASS] test_BuyHookReceivesCorrectBaseInputAmount_ShouldFail() (gas: 347289)
+[PASS] test_BuyHookReceivesCorrectBuyerAddress_ShouldFail() (gas: 349555)
+[PASS] test_BuyOperationSkipsHookWhenAddressIsZero_ShouldFail() (gas: 201578)
+[PASS] test_BuyRevertsWhenNegativeDeltaExceedsBaseMinting_ShouldFail() (gas: 243816)
+[PASS] test_BuyWithPositiveDeltaBondingTokenBonus_ShouldFail() (gas: 382349)
+[PASS] test_CompleteBuyFlow_ShouldFail() (gas: 398009)
+[PASS] test_CompleteSellFlow_ShouldFail() (gas: 546315)
+[PASS] test_DeltaBondingTokenAdjustmentEventsEmitted_ShouldFail() (gas: 368409)
+[PASS] test_EdgeCaseDeltaEqualsNegativeBaseAmount_ShouldFail() (gas: 243785)
+[PASS] test_FeeApplicationEventsEmitted_ShouldFail() (gas: 370025)
+[PASS] test_FeeCalculationWithMaximumFee_ShouldFail() (gas: 232701)
+[PASS] test_FeeCalculationWithTypicalFee_ShouldFail() (gas: 381199)
+[PASS] test_FeeCalculationWithZeroFee_ShouldFail() (gas: 386597)
+[PASS] test_HookAddressRetrieval_ShouldFail() (gas: 31895)
+[PASS] test_HookAddressStorage_ShouldFail() (gas: 31329)
+[PASS] test_HookCallEventsEmitted_ShouldFail() (gas: 377081)
+[PASS] test_NegativeDeltaBondingTokenDecreasesMintedTokensOnBuy_ShouldFail() (gas: 382765)
+[PASS] test_NegativeDeltaBondingTokenDecreasesRequiredTokensOnSell_ShouldFail() (gas: 470630)
+[PASS] test_NoRevertWithUnsetHooksDuringNormalOperations_ShouldFail() (gas: 268771)
+[PASS] test_PositiveDeltaBondingTokenIncreasesMintedTokensOnBuy_ShouldFail() (gas: 379580)
+[PASS] test_PositiveDeltaBondingTokenIncreasesRequiredTokensOnSell_ShouldFail() (gas: 538806)
+[PASS] test_SellHookCalledDuringRemoveLiquidity_ShouldFail() (gas: 504466)
+[PASS] test_SellHookCallsAfterBaseCalculation_ShouldFail() (gas: 513560)
+[PASS] test_SellHookFeeAppliedToBondingToken_ShouldFail() (gas: 527688)
+[PASS] test_SellHookReceivesCorrectBaseBondingAmount_ShouldFail() (gas: 490380)
+[PASS] test_SellHookReceivesCorrectBaseInputAmount_ShouldFail() (gas: 513583)
+[PASS] test_SellHookReceivesCorrectSellerAddress_ShouldFail() (gas: 492711)
+[PASS] test_SellOperationSkipsHookWhenAddressIsZero_ShouldFail() (gas: 287267)
+[PASS] test_SellRevertsWhenAdjustmentsResultInZeroOrNegative_ShouldFail() (gas: 415111)
+[PASS] test_SellWithNegativeDeltaBondingTokenDiscount_ShouldFail() (gas: 541650)
+[PASS] test_SetHook_OnlyOwner_ShouldFail() (gas: 59179)
+[PASS] test_UnauthorizedSetHook_ShouldFail() (gas: 36779)
+Suite result: ok. 36 passed; 0 failed; 0 skipped; finished in 7.55ms (10.10ms CPU time)
+
+Ran 20 tests for test/AutoDolaVaultIntegration.t.sol:AutoDolaVaultIntegration
+[SKIP] test_AutoDolaCompound_GasBenchmark_PlaceholderForFuture() (gas: 0)
+[SKIP] test_AutoDolaHarvest_GasBenchmark_PlaceholderForFuture() (gas: 0)
+[PASS] test_ComprehensiveGasAnalysis() (gas: 1033232)
+[PASS] test_IntegratedDeposit_via_AddLiquidity_GasBenchmark() (gas: 319278)
+[PASS] test_IntegratedWithdraw_via_RemoveLiquidity_GasBenchmark() (gas: 418842)
+[PASS] test_MultipleUsers_Deposit_GasBenchmark() (gas: 462807)
+[PASS] test_VaultDeposit_LargeAmount_GasBenchmark() (gas: 277897)
+[PASS] test_VaultDeposit_MaxAmount_GasBenchmark() (gas: 311589)
+[PASS] test_VaultDeposit_MediumAmount_GasBenchmark() (gas: 277960)
+[PASS] test_VaultDeposit_SmallAmount_GasBenchmark() (gas: 277915)
+[PASS] test_VaultDeposit_Unauthorized_ShouldRevert() (gas: 1353018)
+[PASS] test_VaultDeposit_ZeroAddressRecipient_ShouldRevert() (gas: 84639)
+[PASS] test_VaultDeposit_ZeroAddressToken_ShouldRevert() (gas: 32822)
+[PASS] test_VaultDeposit_ZeroAmount_ShouldRevert() (gas: 64754)
+[PASS] test_VaultWithdraw_InsufficientBalance_ShouldRevert() (gas: 37514)
+[PASS] test_VaultWithdraw_LargeAmount_GasBenchmark() (gas: 321510)
+[PASS] test_VaultWithdraw_MediumAmount_GasBenchmark() (gas: 321392)
+[PASS] test_VaultWithdraw_SmallAmount_GasBenchmark() (gas: 328560)
+[PASS] test_VaultWithdraw_Unauthorized_ShouldRevert() (gas: 1303549)
+[PASS] test_VaultWithdraw_ZeroAmount_ShouldRevert() (gas: 35105)
+Suite result: ok. 18 passed; 0 failed; 2 skipped; finished in 7.58ms (7.69ms CPU time)
+
+Ran 23 tests for test/EarlySellPenaltyHookIntegrationTest.sol:EarlySellPenaltyHookIntegrationTest
+[PASS] test_BuyerTimestampRecordedEventEmitted() (gas: 270807)
+[PASS] test_BuyerTimestampRecordedOnPurchase() (gas: 279533)
+[PASS] test_CompleteScenario_BuyWaitSellWithPenalty() (gas: 417900)
+[PASS] test_CustomPenaltyRateWorks() (gas: 343435)
+[PASS] test_DifferentBuyersHaveDifferentTimestamps() (gas: 427133)
+[PASS] test_FirstTimeBuyerHasZeroTimestamp() (gas: 10096)
+[PASS] test_FirstTimeSellWithoutBuyHasMaxPenalty() (gas: 68443)
+[PASS] test_ImmediateSellHasMaximumPenalty() (gas: 380748)
+[PASS] test_MultipleBuysSingleSell() (gas: 407177)
+[PASS] test_NoPenaltyAfter100Hours() (gas: 390300)
+[PASS] test_OnlyOwnerCanSetPenaltyParameters() (gas: 80190)
+[PASS] test_OnlyOwnerCanTogglePenaltyStatus() (gas: 64764)
+[PASS] test_PenaltyAppliedEventEmitted() (gas: 378510)
+[PASS] test_PenaltyAtExactHourBoundaries() (gas: 304493)
+[PASS] test_PenaltyCanBeDeactivated() (gas: 405563)
+[PASS] test_PenaltyDeclinesOverTime() (gas: 306923)
+[PASS] test_PenaltyHookIntegratesWithBehodler3() (gas: 383760)
+[PASS] test_PenaltyParametersCanBeSet() (gas: 53064)
+[PASS] test_PenaltyParametersUpdatedEventEmitted() (gas: 47336)
+[PASS] test_PenaltyParametersValidation() (gas: 85435)
+[PASS] test_PenaltyStatusChangedEventEmitted() (gas: 31825)
+[PASS] test_TimestampUpdatedOnSubsequentBuy() (gas: 392724)
+[PASS] test_ZeroAmountBuyDoesNotUpdateTimestamp() (gas: 111683)
+Suite result: ok. 23 passed; 0 failed; 0 skipped; finished in 7.35ms (5.75ms CPU time)
+
+Ran 21 tests for test/B3PermitTest.sol:B3PermitTest
+[PASS] test_AddLiquidityWithPermit_FailsWithoutPermitOrAllowance() (gas: 117500)
+[PASS] test_AddLiquidityWithPermit_FallsBackToAllowance() (gas: 306366)
+[PASS] test_AddLiquidityWithPermit_ValidSignature() (gas: 271492)
+[PASS] test_DomainSeparator_Consistency() (gas: 8655)
+[PASS] test_GasOptimization_PermitVsApprove() (gas: 248951)
+[PASS] test_IndependentNoncesForMultipleUsers() (gas: 278179)
+[PASS] test_NonceIncrementsCorrectly() (gas: 146783)
+[PASS] test_PermitBasic_WithValidSignature() (gas: 164304)
+[PASS] test_PermitFails_WithExpiredDeadline() (gas: 55191)
+[PASS] test_PermitFails_WithInvalidSignature() (gas: 107540)
+[PASS] test_PermitFails_WithNonPermitToken() (gas: 2857791)
+[PASS] test_PermitFails_WithWrongNonce() (gas: 107528)
+[PASS] test_PermitFails_WithZeroOwner() (gas: 31510)
+[PASS] test_PermitFails_WithZeroSpender() (gas: 33745)
+[PASS] test_ReplayAttackPrevention() (gas: 179557)
+[PASS] test_SecurityTest_SignatureDeadlineMismatch() (gas: 107571)
+[PASS] test_SecurityTest_SignatureSpenderMismatch() (gas: 107439)
+[PASS] test_SecurityTest_SignatureValueMismatch() (gas: 107518)
+[PASS] test_SupportsInterface_EIP165() (gas: 5804)
+[PASS] test_SupportsInterface_IERC20Permit() (gas: 5837)
+[PASS] test_SupportsInterface_UnsupportedInterface() (gas: 5803)
+Suite result: ok. 21 passed; 0 failed; 0 skipped; finished in 7.96ms (18.09ms CPU time)
+
+Ran 22 tests for test/EarlySellPenaltyHookTest.sol:EarlySellPenaltyHookTest
+[PASS] test_BlockTimestampEdgeCases_ShouldFail() (gas: 507658)
+[PASS] test_BuyerTimestampRecordedEventEmitted_ShouldFail() (gas: 363657)
+[PASS] test_BuyerTimestampRecordedOnPurchase_ShouldFail() (gas: 365146)
+[PASS] test_CustomPenaltyRateWorks_ShouldFail() (gas: 568398)
+[PASS] test_DifferentBuyersHaveDifferentTimestamps_ShouldFail() (gas: 536325)
+[PASS] test_EarlySellPenaltyHookContractDoesNotExist_ShouldFail() (gas: 24783)
+[PASS] test_FirstTimeBuyerHasZeroTimestamp() (gas: 10076)
+[PASS] test_FirstTimeSellWithoutBuyHasMaxPenalty_ShouldFail() (gas: 585585)
+[PASS] test_IEarlySellPenaltyHookInterfaceCompilation_ShouldFail() (gas: 29564)
+[PASS] test_ImmediateSellHasMaximumPenalty_ShouldFail() (gas: 510167)
+[PASS] test_MultipleBuysSingleSell_ShouldFail() (gas: 641029)
+[PASS] test_NoPenaltyAfter100Hours_ShouldFail() (gas: 487624)
+[PASS] test_PenaltyAppliedEventEmitted_ShouldFail() (gas: 531639)
+[PASS] test_PenaltyAtExactHourBoundaries_ShouldFail() (gas: 532407)
+[PASS] test_PenaltyCanBeDeactivated_ShouldFail() (gas: 504124)
+[PASS] test_PenaltyDeclinesOverTime_ShouldFail() (gas: 532410)
+[PASS] test_PenaltyHookIntegratesWithBehodler3_ShouldFail() (gas: 533948)
+[PASS] test_PenaltyParametersCanBeSet() (gas: 45745)
+[PASS] test_PenaltyParametersUpdatedEventEmitted_ShouldFail() (gas: 42530)
+[PASS] test_TimestampStorageGasCosts() (gas: 361891)
+[PASS] test_TimestampUpdatedOnSubsequentBuy_ShouldFail() (gas: 504326)
+[PASS] test_ZeroAmountBuyDoesNotUpdateTimestamp_ShouldFail() (gas: 111733)
+Suite result: ok. 22 passed; 0 failed; 0 skipped; finished in 3.48ms (4.50ms CPU time)
+
+Ran 17 tests for test/VirtualLiquidityTest.sol:VirtualLiquidityTest
+[PASS] test_AddLiquidity_WithVirtualLiquidity() (gas: 685617)
+[PASS] test_AveragePrice_CalculatedCorrectly() (gas: 670659)
+[PASS] test_CurrentMarginalPrice_StartsAtInitialPrice() (gas: 231620)
+[PASS] test_EdgeCase_ApproachingFundingGoal() (gas: 662464)
+[PASS] test_EdgeCase_VerySmallAmounts() (gas: 649425)
+[PASS] test_ExampleParameters_XFin1M_X01K_PAve09() (gas: 236888)
+[PASS] test_FinalMarginalPrice_IsOne() (gas: 5710)
+[PASS] test_HoldersCannot_ClaimMoreThanAvailable() (gas: 688901)
+[PASS] test_InitialMarginalPrice_EqualsSquareOfAveragePrice() (gas: 221053)
+[PASS] test_MathematicalInvariant_Holds() (gas: 682319)
+[PASS] test_PriceBounds_AreEnforced() (gas: 231392)
+[PASS] test_RemoveLiquidity_WithVirtualLiquidity() (gas: 784358)
+[PASS] test_SetGoals_CalculatesCorrectParameters() (gas: 253841)
+[PASS] test_SetGoals_InputValidation() (gas: 111000)
+[PASS] test_TotalRaised_CalculatedCorrectly() (gas: 660299)
+[PASS] test_VirtualLiquidityAlwaysEnabled() (gas: 238017)
+[PASS] test_VirtualLiquidityQuote_ReturnsReasonableValues() (gas: 228217)
+Suite result: ok. 17 passed; 0 failed; 0 skipped; finished in 2.74ms (6.82ms CPU time)
+
+╭------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| lib/vault/src/mocks/MockERC20.sol:MockERC20 Contract |                 |       |        |       |         |
++===========================================================================================================+
+| Deployment Cost                                      | Deployment Size |       |        |       |         |
+|------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 556976                                               | 2899            |       |        |       |         |
+|------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                      |                 |       |        |       |         |
+|------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                        | Min             | Avg   | Median | Max   | # Calls |
+|------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                              | 46367           | 46385 | 46391  | 46391 | 8       |
+|------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                            | 2559            | 2559  | 2559   | 2559  | 42      |
+╰------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭------------------------------------------------------+-----------------+-------+--------+--------+---------╮
+| lib/vault/src/mocks/MockVault.sol:MockVault Contract |                 |       |        |        |         |
++============================================================================================================+
+| Deployment Cost                                      | Deployment Size |       |        |        |         |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| 1234477                                              | 5607            |       |        |        |         |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+|                                                      |                 |       |        |        |         |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| Function Name                                        | Min             | Avg   | Median | Max    | # Calls |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| balanceOf                                            | 2814            | 2814  | 2814   | 2814   | 16      |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| deposit                                              | 24597           | 80402 | 103249 | 103525 | 16      |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| getTotalDeposits                                     | 2547            | 2547  | 2547   | 2547   | 5       |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| setClient                                            | 28019           | 47842 | 47919  | 47919  | 262     |
+|------------------------------------------------------+-----------------+-------+--------+--------+---------|
+| withdraw                                             | 24602           | 37429 | 41100  | 54799  | 9       |
+╰------------------------------------------------------+-----------------+-------+--------+--------+---------╯
+
+╭------------------------------------------------------------+-----------------+--------+--------+--------+---------╮
+| src/Behodler3Tokenlaunch.sol:Behodler3Tokenlaunch Contract |                 |        |        |        |         |
++===================================================================================================================+
+| Deployment Cost                                            | Deployment Size |        |        |        |         |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| 2433836                                                    | 11727           |        |        |        |         |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+|                                                            |                 |        |        |        |         |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| Function Name                                              | Min             | Avg    | Median | Max    | # Calls |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| DOMAIN_SEPARATOR                                           | 362             | 362    | 362    | 362    | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| addLiquidity                                               | 28889           | 209757 | 198185 | 322928 | 149     |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| addLiquidityWithPermit                                     | 94534           | 216823 | 257440 | 257880 | 4       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| alpha                                                      | 2449            | 2449   | 2449   | 2449   | 19      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| autoLock                                                   | 2442            | 2442   | 2442   | 2442   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| beta                                                       | 2428            | 2428   | 2428   | 2428   | 16      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| desiredAveragePrice                                        | 2362            | 2362   | 2362   | 2362   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| fundingGoal                                                | 2383            | 2383   | 2383   | 2383   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getAveragePrice                                            | 7698            | 9997   | 9997   | 12296  | 2       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getCurrentMarginalPrice                                    | 7071            | 7071   | 7071   | 7071   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getFinalMarginalPrice                                      | 257             | 257    | 257    | 257    | 4       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getHook                                                    | 2463            | 9484   | 2463   | 23527  | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getInitialMarginalPrice                                    | 2738            | 2738   | 2738   | 2738   | 4       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getTotalRaised                                             | 4725            | 4725   | 4725   | 4725   | 2       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| getVirtualPair                                             | 4910            | 4910   | 4910   | 4910   | 28      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| initializeVaultApproval                                    | 58628           | 58630  | 58628  | 58651  | 240     |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| isVirtualPairInitialized                                   | 6737            | 6737   | 6737   | 6737   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| lock                                                       | 29284           | 29284  | 29284  | 29284  | 5       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| nonces                                                     | 2639            | 2639   | 2639   | 2639   | 12      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| permit                                                     | 23086           | 72564  | 78869  | 105468 | 15      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| quoteAddLiquidity                                          | 357             | 11452  | 11670  | 11670  | 53      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| quoteRemoveLiquidity                                       | 355             | 11404  | 11667  | 11667  | 44      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| removeLiquidity                                            | 28911           | 125795 | 110961 | 204680 | 61      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| seedInput                                                  | 2405            | 2405   | 2405   | 2405   | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setAutoLock                                                | 23922           | 38530  | 45834  | 45834  | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setGoals                                                   | 24171           | 202152 | 205155 | 205155 | 241     |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setHook                                                    | 24041           | 45814  | 46160  | 46160  | 64      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| setVault                                                   | 24063           | 29474  | 30636  | 30636  | 10      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| supportsInterface                                          | 465             | 490    | 503    | 503    | 3       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| unlock                                                     | 29229           | 29229  | 29229  | 29229  | 2       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| vault                                                      | 2457            | 2457   | 2457   | 2457   | 7       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| vaultApprovalInitialized                                   | 2371            | 2371   | 2371   | 2371   | 5       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| virtualInputTokens                                         | 2448            | 2448   | 2448   | 2448   | 2       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| virtualK                                                   | 2339            | 2339   | 2339   | 2339   | 21      |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| virtualL                                                   | 2449            | 2449   | 2449   | 2449   | 5       |
+|------------------------------------------------------------+-----------------+--------+--------+--------+---------|
+| virtualLDifferentFromTotalSupply                           | 9761            | 9761   | 9761   | 9761   | 1       |
+╰------------------------------------------------------------+-----------------+--------+--------+--------+---------╯
+
+╭------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/EarlySellPenaltyHook.sol:EarlySellPenaltyHook Contract |                 |       |        |       |         |
++=================================================================================================================+
+| Deployment Cost                                            | Deployment Size |       |        |       |         |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 586147                                                     | 2215            |       |        |       |         |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                            |                 |       |        |       |         |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                              | Min             | Avg   | Median | Max   | # Calls |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| calculatePenaltyFee                                        | 2563            | 8051  | 9622   | 9622  | 12      |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| getBuyerTimestamp                                          | 2601            | 2601  | 2601   | 2601  | 19      |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| getPenaltyParameters                                       | 6562            | 6562  | 6562   | 6562  | 3       |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setPenaltyActive                                           | 23714           | 24641 | 24951  | 24951 | 4       |
+|------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setPenaltyParameters                                       | 23876           | 29650 | 29713  | 35329 | 8       |
+╰------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭----------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockBondingToken.sol:MockBondingToken Contract |                 |       |        |       |         |
++===============================================================================================================+
+| Deployment Cost                                          | Deployment Size |       |        |       |         |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 649401                                                   | 3355            |       |        |       |         |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                          |                 |       |        |       |         |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                            | Min             | Avg   | Median | Max   | # Calls |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                                | 2559            | 2559  | 2559   | 2559  | 79      |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                                     | 51097           | 59647 | 59647  | 68197 | 2       |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| totalSupply                                              | 2373            | 2373  | 2373   | 2373  | 13      |
+|----------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| transfer                                                 | 46788           | 46788 | 46788  | 46788 | 1       |
+╰----------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockBuyHook.sol:MockBuyHook Contract |                 |       |        |       |         |
++=====================================================================================================+
+| Deployment Cost                                | Deployment Size |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 330084                                         | 1113            |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                |                 |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                  | Min             | Avg   | Median | Max   | # Calls |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| buyCallCount                                   | 2360            | 2360  | 2360   | 2360  | 3       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastBaseBondingToken                           | 2317            | 2317  | 2317   | 2317  | 2       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastBaseInputToken                             | 2317            | 2317  | 2317   | 2317  | 1       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastBuyer                                      | 2349            | 2349  | 2349   | 2349  | 1       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setBuyParams                                   | 24065           | 26132 | 26871  | 27237 | 12      |
+╰------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭--------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockERC20.sol:MockERC20 Contract |                 |       |        |       |         |
++=================================================================================================+
+| Deployment Cost                            | Deployment Size |       |        |       |         |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+| 557012                                     | 2899            |       |        |       |         |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                            |                 |       |        |       |         |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                              | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                    | 26395           | 46453 | 46679  | 46679 | 279     |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+| balanceOf                                  | 2559            | 2559  | 2559   | 2559  | 15      |
+|--------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                       | 34012           | 59164 | 51328  | 68428 | 456     |
+╰--------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockEarlySellPenaltyHook.sol:MockEarlySellPenaltyHook Contract |                 |       |        |       |         |
++===============================================================================================================================+
+| Deployment Cost                                                          | Deployment Size |       |        |       |         |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 677250                                                                   | 2540            |       |        |       |         |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                                          |                 |       |        |       |         |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                                            | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| buyCallCount                                                             | 2338            | 2338  | 2338   | 2338  | 1       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| getBuyerTimestamp                                                        | 2626            | 2626  | 2626   | 2626  | 8       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| getPenaltyParameters                                                     | 6629            | 6629  | 6629   | 6629  | 1       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastPenaltyApplied                                                       | 2404            | 2404  | 2404   | 2404  | 8       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| sellCallCount                                                            | 2382            | 2382  | 2382   | 2382  | 1       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setPenaltyActive                                                         | 22823           | 22823 | 22823  | 22823 | 1       |
+|--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setPenaltyParameters                                                     | 33031           | 33031 | 33031  | 33031 | 3       |
+╰--------------------------------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭--------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockSellHook.sol:MockSellHook Contract |                 |       |        |       |         |
++=======================================================================================================+
+| Deployment Cost                                  | Deployment Size |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 330084                                           | 1113            |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                  |                 |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                    | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastBaseBondingToken                             | 2317            | 2317  | 2317   | 2317  | 1       |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastBaseInputToken                               | 2317            | 2317  | 2317   | 2317  | 2       |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| lastSeller                                       | 2392            | 2392  | 2392   | 2392  | 1       |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| sellCallCount                                    | 2382            | 2382  | 2382   | 2382  | 3       |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| setSellParams                                    | 24033           | 26879 | 27013  | 29205 | 6       |
+╰--------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭--------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| src/mocks/MockZeroHook.sol:MockZeroHook Contract |                 |       |        |       |         |
++=======================================================================================================+
+| Deployment Cost                                  | Deployment Size |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 190135                                           | 661             |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                  |                 |       |        |       |         |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                    | Min             | Avg   | Median | Max   | # Calls |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| buyCallCount                                     | 2359            | 2359  | 2359   | 2359  | 1       |
+|--------------------------------------------------+-----------------+-------+--------+-------+---------|
+| resetCallCounts                                  | 25629           | 25629 | 25629  | 25629 | 1       |
+╰--------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+╭------------------------------------------------+-----------------+-------+--------+-------+---------╮
+| test/B3PermitTest.sol:ERC20PermitMock Contract |                 |       |        |       |         |
++=====================================================================================================+
+| Deployment Cost                                | Deployment Size |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| 1001435                                        | 5619            |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+|                                                |                 |       |        |       |         |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| Function Name                                  | Min             | Avg   | Median | Max   | # Calls |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| DOMAIN_SEPARATOR                               | 383             | 383   | 383    | 383   | 15      |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| allowance                                      | 2811            | 2811  | 2811   | 2811  | 3       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| approve                                        | 46402           | 46402 | 46402  | 46402 | 1       |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| mint                                           | 51417           | 51417 | 51417  | 51417 | 42      |
+|------------------------------------------------+-----------------+-------+--------+-------+---------|
+| nonces                                         | 2613            | 2613  | 2613   | 2613  | 10      |
+╰------------------------------------------------+-----------------+-------+--------+-------+---------╯
+
+
+Ran 11 test suites in 48.18ms (55.50ms CPU time): 230 tests passed, 0 failed, 2 skipped (232 total tests)

@@ -1,0 +1,38 @@
+{
+  "name": "behodler3-tokenlaunch",
+  "version": "1.0.0",
+  "description": "Bootstrap AMM using Virtual Pair architecture for token launches.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "solhint 'src/**/*.sol' 'test/**/*.sol'",
+    "lint:fix": "solhint 'src/**/*.sol' 'test/**/*.sol' --fix",
+    "format": "prettier --write '**/*.{json,md,yml,yaml}' && forge fmt",
+    "format:check": "prettier --check '**/*.{json,md,yml,yaml}' && forge fmt --check",
+    "quality": "npm run lint && npm run format:check",
+    "quality:fix": "npm run lint:fix && npm run format",
+    "install-dev": "npm install && forge install",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "prettier-plugin-solidity": "^2.1.0",
+    "solhint": "^6.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6"
+  },
+  "keywords": [
+    "ethereum",
+    "solidity",
+    "foundry",
+    "defi",
+    "amm",
+    "tokenlaunch"
+  ],
+  "author": "Behodler",
+  "license": "MIT"
+}

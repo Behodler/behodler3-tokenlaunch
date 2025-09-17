@@ -8,3 +8,14 @@ optimizer_runs = 200
 
 [profile.default.optimizer_details]
 yul = true
+
+# Formatter settings
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "short"
+multiline_func_header = "all"
+quote_style = "double"
+number_underscore = "thousands"
+wrap_comments = true

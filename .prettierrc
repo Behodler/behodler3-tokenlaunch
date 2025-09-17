@@ -1,0 +1,32 @@
+{
+  "printWidth": 120,
+  "tabWidth": 4,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "quoteProps": "as-needed",
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": "*.sol",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "useTabs": false,
+        "singleQuote": false,
+        "bracketSpacing": false,
+        "explicitTypes": "preserve"
+      }
+    },
+    {
+      "files": ["*.json", "*.yml", "*.yaml"],
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
+}

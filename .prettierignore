@@ -1,0 +1,47 @@
+# Dependencies
+lib/
+node_modules/
+
+# Build outputs
+out/
+cache/
+artifacts/
+typechain/
+
+# Deployment outputs
+broadcast/
+deployments/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitmodules
+
+# CI/CD
+.github/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env*
+
+# Other tools
+.husky/

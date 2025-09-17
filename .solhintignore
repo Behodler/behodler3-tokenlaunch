@@ -1,0 +1,6 @@
+lib/**/*
+node_modules/**/*
+out/**/*
+cache/**/*
+.husky/**/*
+.github/**/*

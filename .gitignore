@@ -2,3 +2,6 @@ out/
 cache
 lib/
 .gas-snapshotdocs/reports/*.json
+
+docs/reports
+*.log

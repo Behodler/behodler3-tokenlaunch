@@ -100,3 +100,4 @@ When a feature requires changes to a mutable dependency:
 - Follow Solidity best practices and naming conventions
 - Use Foundry testing tools exclusively (no Hardhat or Truffle)
 - If you need to change a mutable dependency, use the change request process
+- docs/reports must remain in .gitignore. Never add it to source control!

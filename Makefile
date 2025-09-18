@@ -153,11 +153,20 @@ mythril-analysis: ## Run Mythril security analysis
 	@timestamp=$$(date +%Y%m%d_%H%M%S); \
 	echo "📊 Generating Mythril reports (timestamp: $$timestamp)..."; \
 	if command -v myth >/dev/null 2>&1; then \
-		find src -name "*.sol" -type f | head -5 | while read contract; do \
-			echo "🔍 Analyzing $$contract..."; \
-			timeout 300 myth analyze "$$contract" --solv 0.8.28 > "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt" 2>&1 || \
-			echo "⚠️  Analysis timeout or error for $$contract" >> "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt"; \
-		done; \
+		if [ -f mythril-analyze.sh ]; then \
+			find src -name "*.sol" -type f | grep -v interfaces | head -5 | while read contract; do \
+				echo "🔍 Analyzing $$contract with import callback fix..."; \
+				./mythril-analyze.sh -f "$$contract" -t 300 > "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt" 2>&1 || \
+				echo "⚠️  Analysis timeout or error for $$contract" >> "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt"; \
+			done; \
+		else \
+			echo "⚠️  mythril-analyze.sh script not found, using fallback method..."; \
+			find src -name "*.sol" -type f | head -5 | while read contract; do \
+				echo "🔍 Analyzing $$contract..."; \
+				timeout 300 myth analyze "$$contract" --solv 0.8.25 > "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt" 2>&1 || \
+				echo "⚠️  Analysis timeout or error for $$contract" >> "docs/reports/mythril-$$(basename $$contract .sol)-$$timestamp.txt"; \
+			done; \
+		fi; \
 		echo "✅ Mythril analysis complete! Reports saved to docs/reports/"; \
 	else \
 		echo "⚠️  Mythril not found - creating fallback report..."; \

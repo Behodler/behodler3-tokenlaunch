@@ -92,10 +92,16 @@ pre-commit run prettier     # Run specific hook
 
 - **detect-secrets**: Scans for potential secrets and credentials
 - **Baseline**: `.secrets.baseline` contains known/approved findings
+- **Static Analysis Tools**: Comprehensive security analysis using multiple tools
+    - **Slither**: Vulnerability detection and code analysis
+    - **Mythril**: Security analysis with import callback support (see `MYTHRIL-IMPORT-FIX.md`)
+    - **Manticore**: Symbolic execution analysis
 - **Usage**:
     ```shell
-    make security-scan              # Run security analysis
+    make security-scan              # Run basic security analysis (secrets detection)
     make security-update-baseline   # Update secrets baseline
+    make static-analysis            # Run all static analysis tools (Slither, Mythril, Manticore)
+    make mythril-analysis           # Run Mythril with import callback fix
     ```
 
 ### Make Targets Reference

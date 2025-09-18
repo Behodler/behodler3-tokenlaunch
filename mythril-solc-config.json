@@ -1,0 +1,13 @@
+{
+  "remappings": [
+    "@vault/=lib/vault/src/",
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "vault-contracts/=lib/vault/src/contracts/",
+    "vault-interfaces/=lib/vault/src/interfaces/",
+    "forge-std/=lib/forge-std/src/"
+  ],
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  }
+}

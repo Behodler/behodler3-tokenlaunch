@@ -66,7 +66,7 @@ contract TokenLaunchProperties {
     uint constant INITIAL_TOKEN_SUPPLY = 1_000_000 * 1e18;
     uint constant TEST_FUNDING_GOAL = 50_000 * 1e18;
     uint constant TEST_SEED_INPUT = 1000 * 1e18;
-    uint constant TEST_DESIRED_PRICE = 1e18; // 1:1 price
+    uint constant TEST_DESIRED_PRICE = 0.9e18; // 0.9 (90% of final price, must be < 1)
 
     constructor() {
         // Initialize mock tokens

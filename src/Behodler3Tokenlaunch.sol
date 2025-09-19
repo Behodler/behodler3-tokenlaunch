@@ -37,18 +37,17 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
  * - Fallback safety check in addLiquidity ensures vault approval is initialized
  */
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
-    
     // ============ STATE VARIABLES ============
-    
+
     /// @notice The input token being bootstrapped
     IERC20 public inputToken;
-    
+
     /// @notice The bonding token representing liquidity positions
     IBondingToken public bondingToken;
-    
+
     /// @notice The vault contract for token storage
     IVault public vault;
-    
+
     /// @notice Whether the contract is locked for emergency purposes
     bool public locked;
 
@@ -57,42 +56,40 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
     // Virtual Pair State - CRITICAL: These are separate from actual token balances
     /// @notice Virtual amount of input tokens in the pair (starts at 10000)
-    uint256 public virtualInputTokens;
+    uint public virtualInputTokens;
 
     /// @notice Virtual amount of L tokens in the pair (starts at 100000000)
-    uint256 public virtualL;
-
+    uint public virtualL;
 
     // Virtual Liquidity Parameters for (x+α)(y+β)=k formula
     /// @notice Virtual liquidity offset for input tokens (α)
-    uint256 public alpha;
+    uint public alpha;
 
     /// @notice Virtual liquidity offset for bonding tokens (β)
-    uint256 public beta;
+    uint public beta;
 
     /// @notice Virtual liquidity constant product k for (x+α)(y+β)=k
-    uint256 public virtualK;
-
+    uint public virtualK;
 
     /// @notice Funding goal for virtual liquidity mode
-    uint256 public fundingGoal;
+    uint public fundingGoal;
 
     /// @notice Seed input amount for virtual liquidity mode
-    uint256 public seedInput;
+    uint public seedInput;
 
     /// @notice Desired average price for virtual liquidity mode (scaled by 1e18)
-    uint256 public desiredAveragePrice;
-    
+    uint public desiredAveragePrice;
+
     /// @notice Auto-lock functionality flag
     bool public autoLock;
-    
+
     /// @notice The bonding curve hook for buy/sell operations
     IBondingCurveHook private bondingCurveHook;
 
     // ============ EIP-2612 PERMIT VARIABLES ============
 
     /// @notice Mapping of user addresses to their current nonce for permit functionality
-    mapping(address => uint256) private _nonces;
+    mapping(address => uint) private _nonces;
 
     /// @notice EIP-712 typehash for the permit function
     bytes32 private constant _PERMIT_TYPEHASH =
@@ -103,38 +100,43 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
     /// @notice Version used for EIP-712 domain separator
     string private constant _EIP712_VERSION = "1";
-    
+
     // ============ EVENTS ============
-    
-    event LiquidityAdded(address indexed user, uint256 inputAmount, uint256 bondingTokensOut);
-    event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
+
+    event LiquidityAdded(address indexed user, uint inputAmount, uint bondingTokensOut);
+    event LiquidityRemoved(address indexed user, uint bondingTokenAmount, uint inputTokensOut);
     event ContractLocked();
     event ContractUnlocked();
-    event HookCalled(address indexed hook, address indexed user, string operation, uint256 fee, int256 delta);
-    event FeeApplied(address indexed user, uint256 fee, string operation);
-    event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
+    event HookCalled(address indexed hook, address indexed user, string operation, uint fee, int delta);
+    event FeeApplied(address indexed user, uint fee, string operation);
+    event BondingTokenAdjusted(address indexed user, int adjustment, string operation);
     event VaultChanged(address indexed oldVault, address indexed newVault);
-    event VirtualLiquidityGoalsSet(uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
+    event VirtualLiquidityGoalsSet(
+        uint fundingGoal, uint seedInput, uint desiredAveragePrice, uint alpha, uint beta, uint virtualK
+    );
 
     // ============ EIP-2612 PERMIT EVENTS ============
 
     /// @notice Emitted when a permit is used for token approval
-    event PermitUsed(address indexed owner, address indexed spender, uint256 value, uint256 nonce, uint256 deadline);
-    
+    event PermitUsed(address indexed owner, address indexed spender, uint value, uint nonce, uint deadline);
+
     // ============ MODIFIERS ============
-    
+
     modifier notLocked() {
         require(!locked, "B3: Contract is locked");
         _;
     }
-    
+
     // ============ CONSTRUCTOR ============
-    
+
     constructor(
         IERC20 _inputToken,
         IBondingToken _bondingToken,
         IVault _vault
-    ) Ownable(msg.sender) EIP712(_EIP712_NAME, _EIP712_VERSION) {
+    )
+        Ownable(msg.sender)
+        EIP712(_EIP712_NAME, _EIP712_VERSION)
+    {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
         bondingToken = _bondingToken;
@@ -156,7 +158,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param _seedInput Initial seed amount of input tokens (x_0)
      * @param _desiredAveragePrice Desired average price for the sale (P_ave), scaled by 1e18
      */
-    function setGoals(uint256 _fundingGoal, uint256 _seedInput, uint256 _desiredAveragePrice) external onlyOwner {
+    function setGoals(uint _fundingGoal, uint _seedInput, uint _desiredAveragePrice) external onlyOwner {
         require(_fundingGoal > _seedInput, "VL: Funding goal must be greater than seed");
         require(_desiredAveragePrice > 0 && _desiredAveragePrice < 1e18, "VL: Average price must be between 0 and 1");
         require(_seedInput > 0, "VL: Seed input must be greater than 0");
@@ -168,19 +170,19 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
         // Calculate α using formula: α = (P_ave * x_fin - x_0) / (1 - P_ave)
         // All calculations in wei (1e18) precision
-        uint256 numerator = (_desiredAveragePrice * _fundingGoal) / 1e18 - _seedInput;
-        uint256 denominator = 1e18 - _desiredAveragePrice;
+        uint numerator = (_desiredAveragePrice * _fundingGoal) / 1e18 - _seedInput;
+        uint denominator = 1e18 - _desiredAveragePrice;
         alpha = (numerator * 1e18) / denominator;
 
         // Set β = α for equal final prices as specified in planning doc
         beta = alpha;
 
         // Calculate k = (x_fin + α)^2
-        uint256 xFinPlusAlpha = _fundingGoal + alpha;
+        uint xFinPlusAlpha = _fundingGoal + alpha;
         virtualK = xFinPlusAlpha * xFinPlusAlpha; // Keep the full precision
 
         // Initialize virtual bonding token balance: y_0 = k/(x_0 + α) - α
-        uint256 x0PlusAlpha = _seedInput + alpha;
+        uint x0PlusAlpha = _seedInput + alpha;
         virtualL = virtualK / x0PlusAlpha - alpha;
 
         // Set virtual input tokens to seed amount
@@ -191,13 +193,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         emit VirtualLiquidityGoalsSet(_fundingGoal, _seedInput, _desiredAveragePrice, alpha, beta, virtualK);
     }
 
-
     /**
      * @notice Get current marginal price using virtual liquidity formula
      * @dev Returns price = (x+α)²/k scaled by 1e18
      * @return price Current marginal price scaled by 1e18
      */
-    function getCurrentMarginalPrice() external view returns (uint256 price) {
+    function getCurrentMarginalPrice() external view returns (uint price) {
         return _getCurrentMarginalPriceInternal();
     }
 
@@ -206,11 +207,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns total tokens raised divided by total bonding tokens issued
      * @return avgPrice Average price scaled by 1e18
      */
-    function getAveragePrice() external view returns (uint256 avgPrice) {
-        uint256 totalBondingTokens = bondingToken.totalSupply();
+    function getAveragePrice() external view returns (uint avgPrice) {
+        uint totalBondingTokens = bondingToken.totalSupply();
         if (totalBondingTokens == 0) return 0;
 
-        uint256 totalRaised = getTotalRaised();
+        uint totalRaised = getTotalRaised();
         avgPrice = (totalRaised * 1e18) / totalBondingTokens;
         return avgPrice;
     }
@@ -220,7 +221,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns difference between current and initial virtual input tokens
      * @return totalRaised Total input tokens raised
      */
-    function getTotalRaised() public view returns (uint256 totalRaised) {
+    function getTotalRaised() public view returns (uint totalRaised) {
         require(seedInput > 0, "VL: Goals not set - call setGoals first");
         return virtualInputTokens - seedInput;
     }
@@ -230,7 +231,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns the theoretical initial price based on goals
      * @return initialPrice Initial marginal price scaled by 1e18
      */
-    function getInitialMarginalPrice() external view returns (uint256 initialPrice) {
+    function getInitialMarginalPrice() external view returns (uint initialPrice) {
         return _getInitialMarginalPriceInternal();
     }
 
@@ -239,12 +240,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns 1e18 as final price when x = y at funding goal
      * @return finalPrice Final marginal price scaled by 1e18
      */
-    function getFinalMarginalPrice() external pure returns (uint256 finalPrice) {
+    function getFinalMarginalPrice() external pure returns (uint finalPrice) {
         return 1e18; // Price equals 1 when x = y
     }
 
     // ============ INTERNAL HELPER FUNCTIONS ============
-    
+
     /**
      * @notice Generalized quote calculation for virtual pair operations (DRY principle)
      * @dev Unified logic for both add and remove operations using virtual pair math formula
@@ -254,13 +255,13 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @return outputAmount Amount of tokens that would be reduced from virtualFrom
      */
     function _calculateVirtualPairQuote(
-        uint256 virtualFrom,
-        uint256 virtualTo,
-        uint256 inputAmount
+        uint virtualFrom,
+        uint virtualTo,
+        uint inputAmount
     )
         internal
         view
-        returns (uint256 outputAmount)
+        returns (uint outputAmount)
     {
         // Always use virtual liquidity formula: (x+α)(y+β)=k
         require(virtualK > 0, "VL: Goals not set - call setGoals first");
@@ -276,17 +277,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @return outputAmount Amount of tokens that would be reduced from virtualFrom
      */
     function _calculateVirtualLiquidityQuote(
-        uint256 virtualFrom,
-        uint256 virtualTo,
-        uint256 inputAmount
+        uint virtualFrom,
+        uint virtualTo,
+        uint inputAmount
     )
         internal
         view
-        returns (uint256 outputAmount)
+        returns (uint outputAmount)
     {
         // Determine which offset to use based on token type
-        uint256 fromOffset;
-        uint256 toOffset;
+        uint fromOffset;
+        uint toOffset;
 
         if (virtualFrom == virtualInputTokens) {
             // virtualFrom is input tokens, virtualTo is bonding tokens
@@ -300,8 +301,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
         // Calculate using (x+α)(y+β)=k formula
         // newVirtualFrom = k / (virtualTo + inputAmount + toOffset) - fromOffset
-        uint256 denominator = virtualTo + inputAmount + toOffset;
-        uint256 newVirtualFrom = virtualK / denominator - fromOffset;
+        uint denominator = virtualTo + inputAmount + toOffset;
+        uint newVirtualFrom = virtualK / denominator - fromOffset;
 
         // Ensure we don't get negative results
         require(newVirtualFrom < virtualFrom, "VL: Invalid calculation result");
@@ -319,9 +320,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function _checkPriceBounds() internal view {
         require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
-        uint256 currentPrice = _getCurrentMarginalPriceInternal();
-        uint256 initialPrice = _getInitialMarginalPriceInternal();
-        uint256 finalPrice = 1e18; // Final price is always 1.0
+        uint currentPrice = _getCurrentMarginalPriceInternal();
+        uint initialPrice = _getInitialMarginalPriceInternal();
+        uint finalPrice = 1e18; // Final price is always 1.0
 
         require(currentPrice >= initialPrice, "VL: Price below initial bound");
         require(currentPrice <= finalPrice, "VL: Price above final bound");
@@ -331,10 +332,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Internal function to get current marginal price
      * @dev Used internally to avoid external call issues
      */
-    function _getCurrentMarginalPriceInternal() internal view returns (uint256 price) {
+    function _getCurrentMarginalPriceInternal() internal view returns (uint price) {
         require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
-        uint256 xPlusAlpha = virtualInputTokens + alpha;
+        uint xPlusAlpha = virtualInputTokens + alpha;
         // Calculate (x+α)²/k with proper scaling
         price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK;
         return price;
@@ -344,7 +345,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Internal function to get initial marginal price
      * @dev Used internally to avoid external call issues
      */
-    function _getInitialMarginalPriceInternal() internal view returns (uint256 initialPrice) {
+    function _getInitialMarginalPriceInternal() internal view returns (uint initialPrice) {
         require(desiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
         initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
         return initialPrice;
@@ -356,21 +357,21 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param inputTokenDelta Change in input tokens (positive for add, negative for remove)
      * @param bondingTokenDelta Change in bonding tokens (negative for add, positive for remove)
      */
-    function _updateVirtualLiquidityState(int256 inputTokenDelta, int256 bondingTokenDelta) internal {
+    function _updateVirtualLiquidityState(int inputTokenDelta, int bondingTokenDelta) internal {
         require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
         // Update virtual input tokens
         if (inputTokenDelta >= 0) {
-            virtualInputTokens += uint256(inputTokenDelta);
+            virtualInputTokens += uint(inputTokenDelta);
         } else {
-            virtualInputTokens -= uint256(-inputTokenDelta);
+            virtualInputTokens -= uint(-inputTokenDelta);
         }
 
         // Update virtual bonding tokens
         if (bondingTokenDelta >= 0) {
-            virtualL += uint256(bondingTokenDelta);
+            virtualL += uint(bondingTokenDelta);
         } else {
-            virtualL -= uint256(-bondingTokenDelta);
+            virtualL -= uint(-bondingTokenDelta);
         }
 
         // Check price bounds after state update
@@ -381,11 +382,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Once off approve on vault to save gas
      * @param _token new input token address
      */
-    function setInputToken(address _token) external onlyOwner{
-      _setInputToken(IERC20(_token));
+    function setInputToken(address _token) external onlyOwner {
+        _setInputToken(IERC20(_token));
     }
 
-    function _setInputToken(IERC20 _token) internal{
+    function _setInputToken(IERC20 _token) internal {
         inputToken = _token;
 
         // Only approve if vault has already authorized this contract
@@ -447,43 +448,34 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         emit VaultChanged(oldVault, address(_vault));
     }
 
-
     /**
      * @notice Calculate bonding tokens output for a given input amount using virtual pair math
      * @dev Uses generalized quote logic to eliminate duplication across quote system
      * @param inputAmount Amount of input tokens being added
      * @return bondingTokensOut Amount of bonding tokens that would be minted
      */
-    function _calculateBondingTokensOut(uint256 inputAmount) 
-        internal 
-        view 
-        returns (uint256 bondingTokensOut) 
-    {
+    function _calculateBondingTokensOut(uint inputAmount) internal view returns (uint bondingTokensOut) {
         // Use generalized quote: virtualL reduces, virtualInputTokens increases
         bondingTokensOut = _calculateVirtualPairQuote(virtualL, virtualInputTokens, inputAmount);
-        
+
         return bondingTokensOut;
     }
-    
+
     /**
      * @notice Calculate input tokens output for a given bonding token amount using virtual pair math
      * @dev Uses generalized quote logic to eliminate duplication across quote system
      * @param bondingTokenAmount Amount of bonding tokens being burned
      * @return inputTokensOut Amount of input tokens that would be received
      */
-    function _calculateInputTokensOut(uint256 bondingTokenAmount) 
-        internal 
-        view 
-        returns (uint256 inputTokensOut) 
-    {
+    function _calculateInputTokensOut(uint bondingTokenAmount) internal view returns (uint inputTokensOut) {
         // Use generalized quote: virtualInputTokens reduces, virtualL increases
         inputTokensOut = _calculateVirtualPairQuote(virtualInputTokens, virtualL, bondingTokenAmount);
-        
+
         return inputTokensOut;
     }
-    
+
     // ============ MAIN FUNCTIONS - ALL STUBS THAT WILL FAIL ============
-    
+
     /**
      * @notice Add liquidity to the bootstrap AMM
      * @dev Uses refactored _calculateBondingTokensOut() for DRY principle compliance
@@ -491,78 +483,77 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
      * @return bondingTokensOut Amount of bonding tokens minted
      */
-    function addLiquidity(uint256 inputAmount, uint256 minBondingTokens)
+    function addLiquidity(
+        uint inputAmount,
+        uint minBondingTokens
+    )
         external
         nonReentrant
         notLocked
-        returns (uint256 bondingTokensOut)
+        returns (uint bondingTokensOut)
     {
         require(inputAmount > 0, "B3: Input amount must be greater than 0");
 
         // Fallback safety check: ensure vault approval is initialized
         // This prevents operations if approval was missed or revoked
         require(vaultApprovalInitialized, "B3: Vault approval not initialized - call initializeVaultApproval() first");
-        
+
         // Calculate base bonding tokens using refactored virtual pair math
-        uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);
-        
+        uint baseBondingTokens = _calculateBondingTokensOut(inputAmount);
+
         // Initialize variables for hook processing
-        uint256 effectiveInputAmount = inputAmount;
+        uint effectiveInputAmount = inputAmount;
         bondingTokensOut = baseBondingTokens;
-        
+
         // Call buy hook if set
         if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) = bondingCurveHook.buy(
-                msg.sender, 
-                baseBondingTokens, 
-                inputAmount
-            );
-            
+            (uint hookFee, int deltaBondingToken) = bondingCurveHook.buy(msg.sender, baseBondingTokens, inputAmount);
+
             // Emit hook called event
             emit HookCalled(address(bondingCurveHook), msg.sender, "buy", hookFee, deltaBondingToken);
-            
+
             // Apply fee to input amount
             if (hookFee > 0) {
                 require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (inputAmount * hookFee) / 1000;
+                uint feeAmount = (inputAmount * hookFee) / 1000;
                 effectiveInputAmount = inputAmount - feeAmount;
                 emit FeeApplied(msg.sender, feeAmount, "buy");
-                
+
                 // Recalculate bonding tokens with reduced input
                 bondingTokensOut = _calculateBondingTokensOut(effectiveInputAmount);
             }
-            
+
             // Apply delta bonding token adjustment
             if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(bondingTokensOut) + deltaBondingToken;
+                int adjustedBondingAmount = int(bondingTokensOut) + deltaBondingToken;
                 require(adjustedBondingAmount > 0, "B3: Negative bonding token result");
-                bondingTokensOut = uint256(adjustedBondingAmount);
+                bondingTokensOut = uint(adjustedBondingAmount);
                 emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "buy");
             }
         }
-        
+
         // Check MEV protection
         require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
-        
+
         // Transfer input tokens from user to contract
         require(inputToken.transferFrom(msg.sender, address(this), inputAmount), "B3: Transfer failed");
-        
+
         // Deposit input tokens to vault
         vault.deposit(address(inputToken), inputAmount, address(this));
-        
+
         // Mint bonding tokens to user (only if amount > 0)
         if (bondingTokensOut > 0) {
             bondingToken.mint(msg.sender, bondingTokensOut);
         }
-        
+
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
-        
+        _updateVirtualLiquidityState(int(effectiveInputAmount), -int(baseBondingTokens));
+
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
-        
+
         return bondingTokensOut;
     }
-    
+
     /**
      * @notice Remove liquidity from the bootstrap AMM
      * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance
@@ -570,40 +561,40 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param minInputTokens Minimum input tokens to receive (MEV protection)
      * @return inputTokensOut Amount of input tokens received
      */
-    function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens) 
-        external 
-        nonReentrant 
-        notLocked 
-        returns (uint256 inputTokensOut) 
+    function removeLiquidity(
+        uint bondingTokenAmount,
+        uint minInputTokens
+    )
+        external
+        nonReentrant
+        notLocked
+        returns (uint inputTokensOut)
     {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
-        
+
         // Calculate base input tokens using refactored virtual pair math
-        uint256 baseInputTokens = _calculateInputTokensOut(bondingTokenAmount);
-        
+        uint baseInputTokens = _calculateInputTokensOut(bondingTokenAmount);
+
         // Initialize variables for hook processing
-        uint256 effectiveBondingAmount = bondingTokenAmount;
+        uint effectiveBondingAmount = bondingTokenAmount;
         inputTokensOut = baseInputTokens;
-        
+
         // Call sell hook if set
         if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) = bondingCurveHook.sell(
-                msg.sender, 
-                bondingTokenAmount, 
-                baseInputTokens
-            );
-            
+            (uint hookFee, int deltaBondingToken) =
+                bondingCurveHook.sell(msg.sender, bondingTokenAmount, baseInputTokens);
+
             // Emit hook called event
             emit HookCalled(address(bondingCurveHook), msg.sender, "sell", hookFee, deltaBondingToken);
-            
+
             // Apply fee to bonding token amount
             if (hookFee > 0) {
                 require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (bondingTokenAmount * hookFee) / 1000;
+                uint feeAmount = (bondingTokenAmount * hookFee) / 1000;
                 effectiveBondingAmount = bondingTokenAmount - feeAmount;
                 emit FeeApplied(msg.sender, feeAmount, "sell");
-                
+
                 // Recalculate input tokens with reduced bonding tokens
                 // Handle edge case where fee is 100% (effectiveBondingAmount = 0)
                 if (effectiveBondingAmount > 0) {
@@ -612,13 +603,13 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
                     inputTokensOut = 0;
                 }
             }
-            
+
             // Apply delta bonding token adjustment
             if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(effectiveBondingAmount) + deltaBondingToken;
+                int adjustedBondingAmount = int(effectiveBondingAmount) + deltaBondingToken;
                 require(adjustedBondingAmount > 0, "B3: Invalid bonding token amount after adjustment");
-                effectiveBondingAmount = uint256(adjustedBondingAmount);
-                
+                effectiveBondingAmount = uint(adjustedBondingAmount);
+
                 // Handle edge case where adjusted amount might be 0
                 if (effectiveBondingAmount > 0) {
                     inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
@@ -628,67 +619,59 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
                 emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "sell");
             }
         }
-        
+
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
-        
+
         // Burn bonding tokens from user
         bondingToken.burn(msg.sender, bondingTokenAmount);
-        
+
         // Withdraw and transfer input tokens to user (only if amount > 0)
         if (inputTokensOut > 0) {
             vault.withdraw(address(inputToken), inputTokensOut, address(this));
             require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         }
-        
+
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(-int256(baseInputTokens), int256(bondingTokenAmount));
-        
+        _updateVirtualLiquidityState(-int(baseInputTokens), int(bondingTokenAmount));
+
         emit LiquidityRemoved(msg.sender, bondingTokenAmount, inputTokensOut);
-        
+
         return inputTokensOut;
     }
-    
+
     /**
      * @notice Quote how many bonding tokens would be received for adding liquidity
      * @dev Uses refactored _calculateBondingTokensOut() for consistent calculation with addLiquidity
      * @param inputAmount Amount of input tokens to add
      * @return bondingTokensOut Expected bonding tokens to be minted
      */
-    function quoteAddLiquidity(uint256 inputAmount) 
-        external 
-        view 
-        returns (uint256 bondingTokensOut) 
-    {
+    function quoteAddLiquidity(uint inputAmount) external view returns (uint bondingTokensOut) {
         if (inputAmount == 0) return 0;
-        
+
         // Calculate using refactored virtual pair math
         bondingTokensOut = _calculateBondingTokensOut(inputAmount);
-        
+
         return bondingTokensOut;
     }
-    
+
     /**
      * @notice Quote how many input tokens would be received for removing liquidity
      * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity
      * @param bondingTokenAmount Amount of bonding tokens to burn
      * @return inputTokensOut Expected input tokens to be received
      */
-    function quoteRemoveLiquidity(uint256 bondingTokenAmount) 
-        external 
-        view 
-        returns (uint256 inputTokensOut) 
-    {
+    function quoteRemoveLiquidity(uint bondingTokenAmount) external view returns (uint inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
-        
+
         // Calculate using refactored virtual pair math
         inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
-        
+
         return inputTokensOut;
     }
-    
+
     // ============ OWNER FUNCTIONS - ALL STUBS ============
-    
+
     /**
      * @notice Lock the contract to prevent operations
      */
@@ -696,7 +679,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         locked = true;
         emit ContractLocked();
     }
-    
+
     /**
      * @notice Unlock the contract to allow operations
      */
@@ -705,7 +688,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         emit ContractUnlocked();
     }
 
-    
     /**
      * @notice Set auto-lock functionality
      * @param _autoLock Whether to enable auto-lock
@@ -713,7 +695,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function setAutoLock(bool _autoLock) external onlyOwner {
         autoLock = _autoLock;
     }
-    
+
     /**
      * @notice Set the bonding curve hook
      * @param _hook The hook contract address
@@ -721,7 +703,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function setHook(IBondingCurveHook _hook) external onlyOwner {
         bondingCurveHook = _hook;
     }
-    
+
     /**
      * @notice Get the current bonding curve hook
      * @return The hook contract address
@@ -729,19 +711,19 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function getHook() external view returns (IBondingCurveHook) {
         return bondingCurveHook;
     }
-    
+
     // ============ VIEW FUNCTIONS - ALL STUBS ============
-    
+
     /**
      * @notice Get the current virtual pair state
      * @return inputTokens Virtual input tokens in the pair
      * @return lTokens Virtual L tokens in the pair
      * @return k The constant product
      */
-    function getVirtualPair() external view returns (uint256 inputTokens, uint256 lTokens, uint256 k) {
+    function getVirtualPair() external view returns (uint inputTokens, uint lTokens, uint k) {
         return (virtualInputTokens, virtualL, virtualInputTokens * virtualL);
     }
-    
+
     /**
      * @notice Check if virtual pair is properly initialized
      * @return True if initialized correctly
@@ -749,7 +731,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function isVirtualPairInitialized() external view returns (bool) {
         return virtualK > 0 && alpha > 0 && beta > 0;
     }
-    
+
     /**
      * @notice Verify that virtualL != bondingToken.totalSupply()
      * @return True if they are different (as expected in virtual pair architecture)
@@ -774,17 +756,19 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function permit(
         address owner,
         address spender,
-        uint256 value,
-        uint256 deadline,
+        uint value,
+        uint deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    )
+        external
+    {
         require(deadline >= block.timestamp, "B3: Permit expired");
         require(owner != address(0), "B3: Invalid owner");
         require(spender != address(0), "B3: Invalid spender");
 
-        uint256 nonce = _nonces[owner];
+        uint nonce = _nonces[owner];
 
         // Increment nonce to prevent replay attacks
         _nonces[owner]++;
@@ -812,13 +796,18 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @return bondingTokensOut Amount of bonding tokens minted
      */
     function addLiquidityWithPermit(
-        uint256 inputAmount,
-        uint256 minBondingTokens,
-        uint256 deadline,
+        uint inputAmount,
+        uint minBondingTokens,
+        uint deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external nonReentrant notLocked returns (uint256 bondingTokensOut) {
+    )
+        external
+        nonReentrant
+        notLocked
+        returns (uint bondingTokensOut)
+    {
         require(inputAmount > 0, "B3: Input amount must be greater than 0");
 
         // Fallback safety check: ensure vault approval is initialized
@@ -836,19 +825,15 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         }
 
         // Calculate base bonding tokens using refactored virtual pair math
-        uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);
+        uint baseBondingTokens = _calculateBondingTokensOut(inputAmount);
 
         // Initialize variables for hook processing
-        uint256 effectiveInputAmount = inputAmount;
+        uint effectiveInputAmount = inputAmount;
         bondingTokensOut = baseBondingTokens;
 
         // Call buy hook if set
         if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) = bondingCurveHook.buy(
-                msg.sender,
-                baseBondingTokens,
-                inputAmount
-            );
+            (uint hookFee, int deltaBondingToken) = bondingCurveHook.buy(msg.sender, baseBondingTokens, inputAmount);
 
             // Emit hook called event
             emit HookCalled(address(bondingCurveHook), msg.sender, "buy", hookFee, deltaBondingToken);
@@ -856,7 +841,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
             // Apply fee to input amount
             if (hookFee > 0) {
                 require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (inputAmount * hookFee) / 1000;
+                uint feeAmount = (inputAmount * hookFee) / 1000;
                 effectiveInputAmount = inputAmount - feeAmount;
                 emit FeeApplied(msg.sender, feeAmount, "buy");
 
@@ -866,9 +851,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
             // Apply delta bonding token adjustment
             if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(bondingTokensOut) + deltaBondingToken;
+                int adjustedBondingAmount = int(bondingTokensOut) + deltaBondingToken;
                 require(adjustedBondingAmount > 0, "B3: Negative bonding token result");
-                bondingTokensOut = uint256(adjustedBondingAmount);
+                bondingTokensOut = uint(adjustedBondingAmount);
                 emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "buy");
             }
         }
@@ -888,7 +873,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         }
 
         // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
+        _updateVirtualLiquidityState(int(effectiveInputAmount), -int(baseBondingTokens));
 
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
 
@@ -901,7 +886,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param owner The address to query the nonce for
      * @return The current nonce for the owner
      */
-    function nonces(address owner) external view returns (uint256) {
+    function nonces(address owner) external view returns (uint) {
         return _nonces[owner];
     }
 
@@ -921,8 +906,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @return True if the interface is supported
      */
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return
-            interfaceId == type(IERC20Permit).interfaceId ||
-            interfaceId == 0x01ffc9a7; // EIP-165 interface ID
+        return interfaceId == type(IERC20Permit).interfaceId || interfaceId == 0x01ffc9a7; // EIP-165 interface ID
     }
 }

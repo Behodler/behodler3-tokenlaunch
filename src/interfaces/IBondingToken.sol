@@ -13,12 +13,12 @@ interface IBondingToken is IERC20 {
      * @param to The address that will receive the minted tokens
      * @param amount The amount of tokens to mint
      */
-    function mint(address to, uint256 amount) external;
+    function mint(address to, uint amount) external;
 
     /**
      * @notice Burn bonding tokens from an address
      * @param from The address to burn tokens from
      * @param amount The amount of tokens to burn
      */
-    function burn(address from, uint256 amount) external;
+    function burn(address from, uint amount) external;
 }

@@ -1,0 +1,15 @@
+# Echidna Configuration for Behodler3 TokenLaunch
+# Simplified configuration for basic property testing
+
+# Test execution parameters
+testLimit: 100 # Number of test sequences to run
+seqLen: 10 # Maximum sequence length per test
+
+# Use Foundry for compilation
+cryticArgs: ["--compile-force-framework", "foundry"]
+
+# Coverage and reporting
+coverage: false # Disable coverage for now to avoid issues
+
+# Test discovery
+sender: ["0x10000", "0x20000", "0x30000"] # Test sender addresses

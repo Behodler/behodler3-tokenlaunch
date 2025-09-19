@@ -17,7 +17,6 @@ import "./echidna/properties/TokenLaunchProperties.sol";
  * - Comprehensive test coverage for property-based testing
  */
 contract PropertyTestHarness is Test {
-
     TokenLaunchProperties public propertyTester;
 
     // Test execution parameters
@@ -73,10 +72,19 @@ contract PropertyTestHarness is Test {
 
         // Validate all properties still hold
         assertTrue(propertyTester.echidna_virtual_k_invariant(), "Virtual K invariant failed after add liquidity");
-        assertTrue(propertyTester.echidna_token_supply_conservation(), "Token supply conservation failed after add liquidity");
-        assertTrue(propertyTester.echidna_virtual_liquidity_non_zero(), "Virtual liquidity non-zero failed after add liquidity");
-        assertTrue(propertyTester.echidna_vault_balance_consistency(), "Vault balance consistency failed after add liquidity");
-        assertTrue(propertyTester.echidna_bonding_token_ownership_consistency(), "Bonding token ownership failed after add liquidity");
+        assertTrue(
+            propertyTester.echidna_token_supply_conservation(), "Token supply conservation failed after add liquidity"
+        );
+        assertTrue(
+            propertyTester.echidna_virtual_liquidity_non_zero(), "Virtual liquidity non-zero failed after add liquidity"
+        );
+        assertTrue(
+            propertyTester.echidna_vault_balance_consistency(), "Vault balance consistency failed after add liquidity"
+        );
+        assertTrue(
+            propertyTester.echidna_bonding_token_ownership_consistency(),
+            "Bonding token ownership failed after add liquidity"
+        );
         assertTrue(propertyTester.echidna_price_monotonicity(), "Price monotonicity failed after add liquidity");
     }
 
@@ -106,10 +114,20 @@ contract PropertyTestHarness is Test {
 
         // Validate all properties still hold after complete cycle
         assertTrue(propertyTester.echidna_virtual_k_invariant(), "Virtual K invariant failed after liquidity cycle");
-        assertTrue(propertyTester.echidna_token_supply_conservation(), "Token supply conservation failed after liquidity cycle");
-        assertTrue(propertyTester.echidna_virtual_liquidity_non_zero(), "Virtual liquidity non-zero failed after liquidity cycle");
-        assertTrue(propertyTester.echidna_vault_balance_consistency(), "Vault balance consistency failed after liquidity cycle");
-        assertTrue(propertyTester.echidna_bonding_token_ownership_consistency(), "Bonding token ownership failed after liquidity cycle");
+        assertTrue(
+            propertyTester.echidna_token_supply_conservation(), "Token supply conservation failed after liquidity cycle"
+        );
+        assertTrue(
+            propertyTester.echidna_virtual_liquidity_non_zero(),
+            "Virtual liquidity non-zero failed after liquidity cycle"
+        );
+        assertTrue(
+            propertyTester.echidna_vault_balance_consistency(), "Vault balance consistency failed after liquidity cycle"
+        );
+        assertTrue(
+            propertyTester.echidna_bonding_token_ownership_consistency(),
+            "Bonding token ownership failed after liquidity cycle"
+        );
         assertTrue(propertyTester.echidna_price_monotonicity(), "Price monotonicity failed after liquidity cycle");
     }
 
@@ -267,12 +285,9 @@ contract PropertyTestHarness is Test {
      * @return true if all properties are valid, false otherwise
      */
     function _validateAllProperties() internal view returns (bool) {
-        return propertyTester.echidna_virtual_k_invariant() &&
-               propertyTester.echidna_token_supply_conservation() &&
-               propertyTester.echidna_virtual_liquidity_non_zero() &&
-               propertyTester.echidna_vault_balance_consistency() &&
-               propertyTester.echidna_bonding_token_ownership_consistency() &&
-               propertyTester.echidna_price_monotonicity();
+        return propertyTester.echidna_virtual_k_invariant() && propertyTester.echidna_token_supply_conservation()
+            && propertyTester.echidna_virtual_liquidity_non_zero() && propertyTester.echidna_vault_balance_consistency()
+            && propertyTester.echidna_bonding_token_ownership_consistency() && propertyTester.echidna_price_monotonicity();
     }
 
     /**

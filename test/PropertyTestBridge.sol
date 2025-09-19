@@ -18,7 +18,6 @@ import "./echidna/properties/TokenLaunchProperties.sol";
  * - Resolves function signature conflicts through composition rather than inheritance
  */
 contract PropertyTestBridge is Test {
-
     // Use composition instead of inheritance to avoid function signature conflicts
     TokenLaunchProperties public propertyTester;
 
@@ -173,7 +172,9 @@ contract PropertyTestBridge is Test {
 
             // Verify all property invariants still hold after operation
             assertTrue(propertyTester.echidna_virtual_k_invariant(), "K invariant violated after removeLiquidity");
-            assertTrue(propertyTester.echidna_vault_balance_consistency(), "Vault consistency violated after removeLiquidity");
+            assertTrue(
+                propertyTester.echidna_vault_balance_consistency(), "Vault consistency violated after removeLiquidity"
+            );
         }
     }
 

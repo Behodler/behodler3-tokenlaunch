@@ -262,9 +262,42 @@ install-echidna: ## Install Echidna binary (requires wget)
 	@echo "✅ Echidna installed to ~/.local/bin/echidna"
 	@echo "💡 Add ~/.local/bin to your PATH for global access"
 
+# ============ FUZZ TESTING TARGETS (Story 024.3) ============
+
+fuzz: ## Run extended fuzz testing campaign (10,000+ runs)
+	@echo "🔍 Running Extended Fuzz Testing Campaign (Story 024.3)..."
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Starting fuzz campaign (timestamp: $$timestamp)..."; \
+	mkdir -p docs/reports; \
+	echo "Starting extended fuzz campaign at $$(date)" | tee docs/reports/fuzz-campaign-$$timestamp.log; \
+	start_time=$$(date +%s); \
+	forge test --match-contract B3FuzzTest -vv 2>&1 | tee -a docs/reports/fuzz-campaign-$$timestamp.log; \
+	end_time=$$(date +%s); \
+	duration=$$((end_time - start_time)); \
+	echo "Campaign completed in $$duration seconds" | tee -a docs/reports/fuzz-campaign-$$timestamp.log; \
+	echo "✅ Extended fuzz testing complete! Report saved to docs/reports/fuzz-campaign-$$timestamp.log"
+
+fuzz-extended: ## Run extended fuzz testing with 50,000 runs using extended profile
+	@echo "🔍 Running EXTENDED Fuzz Testing Campaign (50,000 runs)..."
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Starting extended fuzz campaign (timestamp: $$timestamp)..."; \
+	mkdir -p docs/reports; \
+	echo "Starting extended fuzz campaign (50k runs) at $$(date)" | tee docs/reports/fuzz-extended-$$timestamp.log; \
+	start_time=$$(date +%s); \
+	FOUNDRY_PROFILE=extended forge test --match-contract B3FuzzTest -vv 2>&1 | tee -a docs/reports/fuzz-extended-$$timestamp.log; \
+	end_time=$$(date +%s); \
+	duration=$$((end_time - start_time)); \
+	echo "Extended campaign completed in $$duration seconds" | tee -a docs/reports/fuzz-extended-$$timestamp.log; \
+	echo "✅ Extended fuzz testing (50k runs) complete! Report saved to docs/reports/fuzz-extended-$$timestamp.log"
+
+fuzz-coverage: ## Run fuzz tests with coverage reporting
+	@echo "📊 Running fuzz tests with coverage analysis..."
+	forge test --match-contract B3FuzzTest
+	forge coverage --match-contract B3FuzzTest
+
 # ============ COMPREHENSIVE TARGETS ============
 
-check-all: deps build test quality security-scan static-analysis echidna ## Run comprehensive check suite
+check-all: deps build test quality security-scan static-analysis echidna fuzz ## Run comprehensive check suite including fuzz testing
 	@echo ""
 	@echo "🎉 COMPREHENSIVE CHECK COMPLETE! 🎉"
 	@echo "======================================"
@@ -274,6 +307,7 @@ check-all: deps build test quality security-scan static-analysis echidna ## Run 
 	@echo "✅ Code quality checks passed"
 	@echo "✅ Security scans completed"
 	@echo "✅ Static analysis completed"
+	@echo "✅ Extended fuzz testing completed"
 	@echo ""
 
 dev-setup: install-dev build test ## Complete development environment setup

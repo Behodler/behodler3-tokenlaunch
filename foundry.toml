@@ -10,6 +10,37 @@ evm_version = "london"
 [profile.default.optimizer_details]
 yul = true
 
+# ============ FUZZ TESTING CONFIGURATION ============
+# Story 024.3: Extended Fuzz Testing Campaign
+# Configure for 10,000+ runs per test for comprehensive coverage
+
+[profile.default.fuzz]
+runs = 10000
+max_test_rejects = 65536
+seed = "0x1337"
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+# Extended testing profile for comprehensive campaigns
+[profile.extended]
+src = "src"
+out = "out"
+libs = ["lib"]
+optimizer_runs = 200
+evm_version = "london"
+
+[profile.extended.fuzz]
+runs = 50000
+max_test_rejects = 131072
+seed = "0x1337"
+dictionary_weight = 80
+include_storage = true
+include_push_bytes = true
+
+[profile.extended.optimizer_details]
+yul = true
+
 # Formatter settings
 [fmt]
 line_length = 120

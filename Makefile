@@ -339,6 +339,52 @@ npm-quality: ## Run npm quality script
 npm-quality-fix: ## Run npm quality fix script
 	npm run quality:fix
 
+# ============ SCRIBBLE SPECIFICATION TARGETS ============
+
+scribble-check: ## Check if Scribble is properly installed
+	@echo "🔍 Checking Scribble installation..."
+	@npx scribble --version || (echo "❌ Scribble not installed. Run 'make install-dev'" && exit 1)
+	@echo "✅ Scribble is properly installed!"
+
+scribble-instrument: ## Instrument contracts with Scribble annotations
+	@echo "🔧 Instrumenting contracts with Scribble annotations..."
+	@mkdir -p scribble-output
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Instrumenting contracts (timestamp: $$timestamp)..."; \
+	npx scribble --output-mode files src/ScribbleValidationContract.sol > scribble-output/scribble-validation-$$timestamp.log 2>&1 || true; \
+	echo "✅ Scribble instrumentation complete! Logs saved to scribble-output/"
+
+scribble-instrument-tokenlaunch: ## Instrument TokenLaunch contract (when annotations are added)
+	@echo "🔧 Instrumenting TokenLaunch contract..."
+	@mkdir -p scribble-output
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Instrumenting TokenLaunch (timestamp: $$timestamp)..."; \
+	if [ -f "src/Behodler3Tokenlaunch.sol" ]; then \
+		npx scribble --output-mode files src/Behodler3Tokenlaunch.sol > scribble-output/scribble-tokenlaunch-$$timestamp.log 2>&1 || \
+		echo "ℹ️  No Scribble annotations found in TokenLaunch contract yet"; \
+	else \
+		echo "❌ TokenLaunch contract not found"; \
+	fi
+
+scribble-test: ## Test Scribble-instrumented contracts
+	@echo "🧪 Testing Scribble-instrumented contracts..."
+	@echo "📋 Running validation contract tests..."
+	forge test --match-contract ScribbleValidationTest
+	@echo "✅ Scribble tests complete!"
+
+scribble-validate: ## Validate Scribble configuration and functionality
+	@echo "🔍 Validating Scribble installation and configuration..."
+	@$(MAKE) scribble-check
+	@$(MAKE) scribble-instrument
+	@$(MAKE) scribble-test
+	@echo "✅ Scribble validation complete!"
+
+scribble-clean: ## Clean Scribble instrumented files
+	@echo "🧹 Cleaning Scribble artifacts..."
+	find . -name "*.instrumented" -delete
+	rm -f scribble-output/scribble-*
+	@echo "✅ Scribble cleanup complete!"
+
 # ============ DOCUMENTATION TARGETS ============
 
 docs-lint: ## Check documentation formatting

@@ -36,6 +36,17 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
  * - Emergency disableToken() function allows revoking vault approval if needed
  * - Fallback safety check in addLiquidity ensures vault approval is initialized
  */
+/// #invariant {:msg "Virtual K must be consistent with virtual pair product"} virtualK == 0 || virtualK ==
+/// (virtualInputTokens + alpha) * (virtualL + beta);
+/// #invariant {:msg "Virtual liquidity parameters must be properly initialized together"} (virtualK > 0 && alpha > 0 &&
+/// beta > 0) || (virtualK == 0 && alpha == 0 && beta == 0);
+/// #invariant {:msg "Contract cannot be locked and unlocked simultaneously"} locked == true || locked == false;
+/// #invariant {:msg "Vault approval state must be consistent"} vaultApprovalInitialized == true ||
+/// vaultApprovalInitialized == false;
+/// #invariant {:msg "Funding goal must be greater than seed input when set"} fundingGoal == 0 || fundingGoal >
+/// seedInput;
+/// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 ||
+/// (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     // ============ STATE VARIABLES ============
 
@@ -158,6 +169,22 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param _seedInput Initial seed amount of input tokens (x_0)
      * @param _desiredAveragePrice Desired average price for the sale (P_ave), scaled by 1e18
      */
+    /// #if_succeeds {:msg "Only owner can call this function"} msg.sender == owner();
+    /// #if_succeeds {:msg "Funding goal must be greater than seed input"} _fundingGoal > _seedInput;
+    /// #if_succeeds {:msg "Seed input must be positive"} _seedInput > 0;
+    /// #if_succeeds {:msg "Desired average price must be between 0 and 1e18"} _desiredAveragePrice > 0 &&
+    /// _desiredAveragePrice < 1e18;
+    /// #if_succeeds {:msg "Funding goal should be set correctly"} fundingGoal == _fundingGoal;
+    /// #if_succeeds {:msg "Seed input should be set correctly"} seedInput == _seedInput;
+    /// #if_succeeds {:msg "Desired average price should be set correctly"} desiredAveragePrice == _desiredAveragePrice;
+    /// #if_succeeds {:msg "Alpha should be calculated correctly"} alpha == ((_desiredAveragePrice * _fundingGoal) /
+    /// 1e18 - _seedInput) * 1e18 / (1e18 - _desiredAveragePrice);
+    /// #if_succeeds {:msg "Beta should equal alpha"} beta == alpha;
+    /// #if_succeeds {:msg "Virtual K should be calculated correctly"} virtualK == (_fundingGoal + alpha) *
+    /// (_fundingGoal + alpha);
+    /// #if_succeeds {:msg "Virtual input tokens should be set to seed input"} virtualInputTokens == _seedInput;
+    /// #if_succeeds {:msg "Virtual L should be calculated correctly"} virtualL == virtualK / (_seedInput + alpha) -
+    /// alpha;
     function setGoals(uint _fundingGoal, uint _seedInput, uint _desiredAveragePrice) external onlyOwner {
         require(_fundingGoal > _seedInput, "VL: Funding goal must be greater than seed");
         require(_desiredAveragePrice > 0 && _desiredAveragePrice < 1e18, "VL: Average price must be between 0 and 1");
@@ -401,6 +428,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev MUST be called by owner after vault.setClient(address(this), true)
      *      This defers the approval that would otherwise fail in constructor
      */
+    /// #if_succeeds {:msg "Only owner can initialize vault approval"} msg.sender == owner();
+    /// #if_succeeds {:msg "Vault approval was not already initialized"} !old(vaultApprovalInitialized);
+    /// #if_succeeds {:msg "Vault approval should be initialized after call"} vaultApprovalInitialized == true;
     function initializeVaultApproval() external onlyOwner {
         require(!vaultApprovalInitialized, "B3: Vault approval already initialized");
 
@@ -414,6 +444,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Emergency function to revoke vault approval for the input token
      * @dev Allows owner to disable vault operations in case of emergency
      */
+    /// #if_succeeds {:msg "Only owner can disable token"} msg.sender == owner();
+    /// #if_succeeds {:msg "Vault approval must be initialized before disabling"} old(vaultApprovalInitialized);
+    /// #if_succeeds {:msg "Vault approval should be disabled after call"} vaultApprovalInitialized == false;
     function disableToken() external onlyOwner {
         require(vaultApprovalInitialized, "B3: Vault approval not initialized");
 
@@ -483,6 +516,18 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
      * @return bondingTokensOut Amount of bonding tokens minted
      */
+    /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
+    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
+    /// #if_succeeds {:msg "Vault approval must be initialized"} vaultApprovalInitialized;
+    /// #if_succeeds {:msg "Virtual K must be set (goals initialized)"} virtualK > 0;
+    /// #if_succeeds {:msg "Output must meet minimum requirement"} bondingTokensOut >= minBondingTokens;
+    /// #if_succeeds {:msg "Bonding tokens must be minted to user"} bondingTokensOut > 0 ==>
+    /// bondingToken.balanceOf(msg.sender) >= old(bondingToken.balanceOf(msg.sender)) + bondingTokensOut;
+    /// #if_succeeds {:msg "Virtual input tokens should increase"} virtualInputTokens > old(virtualInputTokens);
+    /// #if_succeeds {:msg "User must have sufficient input token balance"} inputAmount <=
+    /// inputToken.balanceOf(msg.sender);
+    /// #if_succeeds {:msg "User must have sufficient allowance"} inputAmount <= inputToken.allowance(msg.sender,
+    /// address(this));
     function addLiquidity(
         uint inputAmount,
         uint minBondingTokens
@@ -561,6 +606,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param minInputTokens Minimum input tokens to receive (MEV protection)
      * @return inputTokensOut Amount of input tokens received
      */
+    /// #if_succeeds {:msg "Bonding token amount must be positive"} bondingTokenAmount > 0;
+    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
+    /// #if_succeeds {:msg "User must have sufficient bonding tokens"} bondingTokenAmount <=
+    /// bondingToken.balanceOf(msg.sender);
+    /// #if_succeeds {:msg "Output must meet minimum requirement"} inputTokensOut >= minInputTokens;
+    /// #if_succeeds {:msg "User bonding token balance should decrease"} bondingToken.balanceOf(msg.sender) ==
+    /// old(bondingToken.balanceOf(msg.sender)) - bondingTokenAmount;
+    /// #if_succeeds {:msg "Virtual input tokens should decrease if output > 0"} inputTokensOut > 0 ==>
+    /// virtualInputTokens < old(virtualInputTokens);
+    /// #if_succeeds {:msg "Input tokens should be transferred to user if output > 0"} inputTokensOut > 0 ==>
+    /// inputToken.balanceOf(msg.sender) >= old(inputToken.balanceOf(msg.sender)) + inputTokensOut;
     function removeLiquidity(
         uint bondingTokenAmount,
         uint minInputTokens
@@ -675,6 +731,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /**
      * @notice Lock the contract to prevent operations
      */
+    /// #if_succeeds {:msg "Only owner can lock the contract"} msg.sender == owner();
+    /// #if_succeeds {:msg "Contract should be locked after function call"} locked == true;
     function lock() external onlyOwner {
         locked = true;
         emit ContractLocked();
@@ -683,6 +741,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /**
      * @notice Unlock the contract to allow operations
      */
+    /// #if_succeeds {:msg "Only owner can unlock the contract"} msg.sender == owner();
+    /// #if_succeeds {:msg "Contract should be unlocked after function call"} locked == false;
     function unlock() external onlyOwner {
         locked = false;
         emit ContractUnlocked();
@@ -692,6 +752,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Set auto-lock functionality
      * @param _autoLock Whether to enable auto-lock
      */
+    /// #if_succeeds {:msg "Only owner can set auto-lock"} msg.sender == owner();
+    /// #if_succeeds {:msg "Auto-lock should be set to specified value"} autoLock == _autoLock;
     function setAutoLock(bool _autoLock) external onlyOwner {
         autoLock = _autoLock;
     }
@@ -700,6 +762,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Set the bonding curve hook
      * @param _hook The hook contract address
      */
+    /// #if_succeeds {:msg "Only owner can set hook"} msg.sender == owner();
+    /// #if_succeeds {:msg "Hook should be set to specified address"} address(bondingCurveHook) == address(_hook);
     function setHook(IBondingCurveHook _hook) external onlyOwner {
         bondingCurveHook = _hook;
     }

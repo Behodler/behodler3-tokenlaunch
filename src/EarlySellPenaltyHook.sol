@@ -9,6 +9,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @notice Hook that applies time-based penalties to discourage early selling after token purchases
  * @dev Tracks buyer timestamps and applies declining sell fees based on time elapsed since the last buy transaction
  */
+/// #invariant {:msg "Penalty decline rate must be positive if set"} penaltyDeclineRatePerHour == 0 ||
+/// penaltyDeclineRatePerHour > 0;
+/// #invariant {:msg "Max penalty duration must be positive if set"} maxPenaltyDurationHours == 0 ||
+/// maxPenaltyDurationHours > 0;
+/// #invariant {:msg "Penalty parameters must allow penalty to reach zero"} penaltyDeclineRatePerHour == 0 ||
+/// maxPenaltyDurationHours == 0 || penaltyDeclineRatePerHour * maxPenaltyDurationHours >= 1000;
+/// #invariant {:msg "Penalty active state must be consistent"} penaltyActive == true || penaltyActive == false;
 contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     // ============ STATE VARIABLES ============
 
@@ -38,6 +45,11 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @return fee Fee to be applied (always 0 for buy operations)
      * @return deltaBondingToken Adjustment to bonding token amount (always 0)
      */
+    /// #if_succeeds {:msg "Buyer address must not be zero"} buyer != address(0);
+    /// #if_succeeds {:msg "Buy operations never apply fees"} fee == 0;
+    /// #if_succeeds {:msg "Buy operations never adjust bonding tokens"} deltaBondingToken == 0;
+    /// #if_succeeds {:msg "Buyer timestamp should be updated to current block"} buyerLastBuyTimestamp[buyer] ==
+    /// block.timestamp;
     function buy(
         address buyer,
         uint baseBondingToken,
@@ -73,6 +85,12 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @return fee Time-based penalty fee (0-1000 where 1000 = 100%)
      * @return deltaBondingToken Adjustment to bonding token amount (always 0)
      */
+    /// #if_succeeds {:msg "Seller address must not be zero"} seller != address(0);
+    /// #if_succeeds {:msg "Fee must be within valid range"} fee <= 1000;
+    /// #if_succeeds {:msg "Sell operations never adjust bonding tokens"} deltaBondingToken == 0;
+    /// #if_succeeds {:msg "If penalty is inactive, fee should be zero"} !penaltyActive ==> fee == 0;
+    /// #if_succeeds {:msg "If seller never bought, fee should be maximum when penalty active"} penaltyActive &&
+    /// buyerLastBuyTimestamp[seller] == 0 ==> fee == 1000;
     function sell(
         address seller,
         uint baseBondingToken,
@@ -179,6 +197,13 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @param _declineRatePerHour Rate at which penalty declines per hour (1% = 10 in fee units)
      * @param _maxDurationHours Maximum duration in hours after which penalty is 0
      */
+    /// #if_succeeds {:msg "Only owner can set penalty parameters"} msg.sender == owner();
+    /// #if_succeeds {:msg "Decline rate must be positive"} _declineRatePerHour > 0;
+    /// #if_succeeds {:msg "Max duration must be positive"} _maxDurationHours > 0;
+    /// #if_succeeds {:msg "Parameters must allow penalty to reach zero"} _declineRatePerHour * _maxDurationHours >=
+    /// 1000;
+    /// #if_succeeds {:msg "Decline rate should be set correctly"} penaltyDeclineRatePerHour == _declineRatePerHour;
+    /// #if_succeeds {:msg "Max duration should be set correctly"} maxPenaltyDurationHours == _maxDurationHours;
     function setPenaltyParameters(uint _declineRatePerHour, uint _maxDurationHours) external override onlyOwner {
         require(_declineRatePerHour > 0, "EarlySellPenaltyHook: Decline rate must be greater than 0");
         require(_maxDurationHours > 0, "EarlySellPenaltyHook: Max duration must be greater than 0");
@@ -197,6 +222,8 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @notice Set whether penalty is active (owner only)
      * @param _active Whether penalty mechanism is active
      */
+    /// #if_succeeds {:msg "Only owner can set penalty active status"} msg.sender == owner();
+    /// #if_succeeds {:msg "Penalty active should be set to specified value"} penaltyActive == _active;
     function setPenaltyActive(bool _active) external override onlyOwner {
         penaltyActive = _active;
         emit PenaltyStatusChanged(_active);

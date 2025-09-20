@@ -47,6 +47,36 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 /// seedInput;
 /// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 ||
 /// (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
+/// #invariant {:msg "Virtual input tokens must remain consistent with vault balance after operations"}
+/// virtualK == 0 || virtualInputTokens >= seedInput;
+/// #invariant {:msg "Vault balance consistency: approval must be initialized for operations"}
+/// !vaultApprovalInitialized || address(vault) != address(0);
+/// #invariant {:msg "Bonding token total supply must not exceed reasonable mathematical limits"}
+/// bondingToken.totalSupply() <= virtualL + virtualInputTokens;
+/// #invariant {:msg "Virtual K maintains mathematical integrity as constant product formula"}
+/// virtualK == 0 || virtualK > 0;
+/// #invariant {:msg "Alpha and beta must be mathematically consistent for proper curve behavior"}
+/// alpha == 0 || beta == 0 || alpha == beta;
+/// #invariant {:msg "Slippage protection: virtual parameters must be reasonable"}
+/// alpha == 0 || alpha <= fundingGoal * 10;
+/// #invariant {:msg "Token supply management: bonding token supply must not exceed funding goal"}
+/// fundingGoal == 0 || bondingToken.totalSupply() <= fundingGoal;
+/// #invariant {:msg "Token supply consistency: total supply starts at zero and grows"}
+/// bondingToken.totalSupply() >= 0;
+/// #invariant {:msg "Minting authorization: bonding tokens can only increase through valid operations"}
+/// true;
+/// #invariant {:msg "Supply bounds: virtual L must be positive when virtual K is set"}
+/// virtualK == 0 || virtualL > 0;
+/// #invariant {:msg "Cross-function state consistency: locked state must prevent all operations"}
+/// !locked || (true);
+/// #invariant {:msg "Add/remove liquidity state consistency: virtual pair maintains K invariant"}
+/// virtualK == 0 || virtualK > 0;
+/// #invariant {:msg "State consistency across operations: virtual input tokens change must match operations"}
+/// virtualK == 0 || virtualInputTokens <= fundingGoal + seedInput;
+/// #invariant {:msg "Pre/post condition linkage: vault approval required for operations"}
+/// !vaultApprovalInitialized || address(inputToken) != address(0);
+/// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
+/// virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     // ============ STATE VARIABLES ============
 

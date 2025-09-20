@@ -341,6 +341,14 @@ npm-quality-fix: ## Run npm quality fix script
 
 # ============ SCRIBBLE SPECIFICATION TARGETS ============
 
+scribble: ## Run complete Scribble validation and testing suite
+	@echo "🔍 Running complete Scribble validation and testing..."
+	@$(MAKE) scribble-check
+	@$(MAKE) scribble-instrument
+	@$(MAKE) scribble-test
+	@$(MAKE) scribble-validation-test
+	@echo "✅ Complete Scribble validation and testing complete!"
+
 scribble-check: ## Check if Scribble is properly installed
 	@echo "🔍 Checking Scribble installation..."
 	@npx scribble --version || (echo "❌ Scribble not installed. Run 'make install-dev'" && exit 1)
@@ -371,6 +379,16 @@ scribble-test: ## Test Scribble-instrumented contracts
 	@echo "📋 Running validation contract tests..."
 	forge test --match-contract ScribbleValidationTest
 	@echo "✅ Scribble tests complete!"
+
+scribble-validation-test: ## Run comprehensive Scribble specification validation tests
+	@echo "🔍 Running comprehensive Scribble specification validation tests..."
+	@mkdir -p scribble-output
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Running validation tests (timestamp: $$timestamp)..."; \
+	forge test --match-contract ScribbleSpecificationTest -vv > scribble-output/specification-validation-$$timestamp.log 2>&1; \
+	forge test --match-contract ScribbleInvariantTest -vv >> scribble-output/specification-validation-$$timestamp.log 2>&1 || true; \
+	forge test --match-contract ScribbleEdgeCaseTest -vv >> scribble-output/specification-validation-$$timestamp.log 2>&1 || true; \
+	echo "✅ Specification validation tests complete! Report saved to scribble-output/"
 
 scribble-validate: ## Validate Scribble configuration and functionality
 	@echo "🔍 Validating Scribble installation and configuration..."

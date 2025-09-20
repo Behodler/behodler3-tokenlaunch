@@ -1,0 +1,293 @@
+{
+    "sources": {
+        "/home/justin/code/product-owner/worktrees/behodler3-tokenlaunch-RM/security/test/echidna/SimpleTest.sol": {
+            "AST": {
+                "absolutePath": "test/echidna/SimpleTest.sol",
+                "exportedSymbols": { "SimpleTest": [25] },
+                "id": 26,
+                "license": "MIT",
+                "nodeType": "SourceUnit",
+                "nodes": [
+                    {
+                        "id": 1,
+                        "literals": ["solidity", "^", "0.8", ".13"],
+                        "nodeType": "PragmaDirective",
+                        "src": "32:24:0"
+                    },
+                    {
+                        "abstract": false,
+                        "baseContracts": [],
+                        "canonicalName": "SimpleTest",
+                        "contractDependencies": [],
+                        "contractKind": "contract",
+                        "documentation": {
+                            "id": 2,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "58:84:0",
+                            "text": " @title SimpleTest\n @notice Basic Echidna test to verify the setup works"
+                        },
+                        "fullyImplemented": true,
+                        "id": 25,
+                        "linearizedBaseContracts": [25],
+                        "name": "SimpleTest",
+                        "nameLocation": "152:10:0",
+                        "nodeType": "ContractDefinition",
+                        "nodes": [
+                            {
+                                "constant": false,
+                                "functionSelector": "3fa4f245",
+                                "id": 4,
+                                "mutability": "mutable",
+                                "name": "value",
+                                "nameLocation": "181:5:0",
+                                "nodeType": "VariableDeclaration",
+                                "scope": 25,
+                                "src": "169:17:0",
+                                "stateVariable": true,
+                                "storageLocation": "default",
+                                "typeDescriptions": { "typeIdentifier": "t_uint256", "typeString": "uint256" },
+                                "typeName": {
+                                    "id": 3,
+                                    "name": "uint",
+                                    "nodeType": "ElementaryTypeName",
+                                    "src": "169:4:0",
+                                    "typeDescriptions": { "typeIdentifier": "t_uint256", "typeString": "uint256" }
+                                },
+                                "visibility": "public"
+                            },
+                            {
+                                "body": {
+                                    "id": 13,
+                                    "nodeType": "Block",
+                                    "src": "231:31:0",
+                                    "statements": [
+                                        {
+                                            "expression": {
+                                                "id": 11,
+                                                "isConstant": false,
+                                                "isLValue": false,
+                                                "isPure": false,
+                                                "lValueRequested": false,
+                                                "leftHandSide": {
+                                                    "id": 9,
+                                                    "name": "value",
+                                                    "nodeType": "Identifier",
+                                                    "overloadedDeclarations": [],
+                                                    "referencedDeclaration": 4,
+                                                    "src": "241:5:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_uint256",
+                                                        "typeString": "uint256"
+                                                    }
+                                                },
+                                                "nodeType": "Assignment",
+                                                "operator": "=",
+                                                "rightHandSide": {
+                                                    "id": 10,
+                                                    "name": "_value",
+                                                    "nodeType": "Identifier",
+                                                    "overloadedDeclarations": [],
+                                                    "referencedDeclaration": 6,
+                                                    "src": "249:6:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_uint256",
+                                                        "typeString": "uint256"
+                                                    }
+                                                },
+                                                "src": "241:14:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_uint256",
+                                                    "typeString": "uint256"
+                                                }
+                                            },
+                                            "id": 12,
+                                            "nodeType": "ExpressionStatement",
+                                            "src": "241:14:0"
+                                        }
+                                    ]
+                                },
+                                "functionSelector": "55241077",
+                                "id": 14,
+                                "implemented": true,
+                                "kind": "function",
+                                "modifiers": [],
+                                "name": "setValue",
+                                "nameLocation": "202:8:0",
+                                "nodeType": "FunctionDefinition",
+                                "parameters": {
+                                    "id": 7,
+                                    "nodeType": "ParameterList",
+                                    "parameters": [
+                                        {
+                                            "constant": false,
+                                            "id": 6,
+                                            "mutability": "mutable",
+                                            "name": "_value",
+                                            "nameLocation": "216:6:0",
+                                            "nodeType": "VariableDeclaration",
+                                            "scope": 14,
+                                            "src": "211:11:0",
+                                            "stateVariable": false,
+                                            "storageLocation": "default",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_uint256",
+                                                "typeString": "uint256"
+                                            },
+                                            "typeName": {
+                                                "id": 5,
+                                                "name": "uint",
+                                                "nodeType": "ElementaryTypeName",
+                                                "src": "211:4:0",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_uint256",
+                                                    "typeString": "uint256"
+                                                }
+                                            },
+                                            "visibility": "internal"
+                                        }
+                                    ],
+                                    "src": "210:13:0"
+                                },
+                                "returnParameters": {
+                                    "id": 8,
+                                    "nodeType": "ParameterList",
+                                    "parameters": [],
+                                    "src": "231:0:0"
+                                },
+                                "scope": 25,
+                                "src": "193:69:0",
+                                "stateMutability": "nonpayable",
+                                "virtual": false,
+                                "visibility": "public"
+                            },
+                            {
+                                "body": {
+                                    "id": 23,
+                                    "nodeType": "Block",
+                                    "src": "379:36:0",
+                                    "statements": [
+                                        {
+                                            "expression": {
+                                                "commonType": {
+                                                    "typeIdentifier": "t_uint256",
+                                                    "typeString": "uint256"
+                                                },
+                                                "id": 21,
+                                                "isConstant": false,
+                                                "isLValue": false,
+                                                "isPure": false,
+                                                "lValueRequested": false,
+                                                "leftExpression": {
+                                                    "id": 19,
+                                                    "name": "value",
+                                                    "nodeType": "Identifier",
+                                                    "overloadedDeclarations": [],
+                                                    "referencedDeclaration": 4,
+                                                    "src": "396:5:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_uint256",
+                                                        "typeString": "uint256"
+                                                    }
+                                                },
+                                                "nodeType": "BinaryOperation",
+                                                "operator": "<",
+                                                "rightExpression": {
+                                                    "hexValue": "31303030",
+                                                    "id": 20,
+                                                    "isConstant": false,
+                                                    "isLValue": false,
+                                                    "isPure": true,
+                                                    "kind": "number",
+                                                    "lValueRequested": false,
+                                                    "nodeType": "Literal",
+                                                    "src": "404:4:0",
+                                                    "typeDescriptions": {
+                                                        "typeIdentifier": "t_rational_1000_by_1",
+                                                        "typeString": "int_const 1000"
+                                                    },
+                                                    "value": "1000"
+                                                },
+                                                "src": "396:12:0",
+                                                "typeDescriptions": { "typeIdentifier": "t_bool", "typeString": "bool" }
+                                            },
+                                            "functionReturnParameters": 18,
+                                            "id": 22,
+                                            "nodeType": "Return",
+                                            "src": "389:19:0"
+                                        }
+                                    ]
+                                },
+                                "functionSelector": "58728844",
+                                "id": 24,
+                                "implemented": true,
+                                "kind": "function",
+                                "modifiers": [],
+                                "name": "echidna_value_under_1000",
+                                "nameLocation": "325:24:0",
+                                "nodeType": "FunctionDefinition",
+                                "parameters": {
+                                    "id": 15,
+                                    "nodeType": "ParameterList",
+                                    "parameters": [],
+                                    "src": "349:2:0"
+                                },
+                                "returnParameters": {
+                                    "id": 18,
+                                    "nodeType": "ParameterList",
+                                    "parameters": [
+                                        {
+                                            "constant": false,
+                                            "id": 17,
+                                            "mutability": "mutable",
+                                            "name": "",
+                                            "nameLocation": "-1:-1:-1",
+                                            "nodeType": "VariableDeclaration",
+                                            "scope": 24,
+                                            "src": "373:4:0",
+                                            "stateVariable": false,
+                                            "storageLocation": "default",
+                                            "typeDescriptions": { "typeIdentifier": "t_bool", "typeString": "bool" },
+                                            "typeName": {
+                                                "id": 16,
+                                                "name": "bool",
+                                                "nodeType": "ElementaryTypeName",
+                                                "src": "373:4:0",
+                                                "typeDescriptions": { "typeIdentifier": "t_bool", "typeString": "bool" }
+                                            },
+                                            "visibility": "internal"
+                                        }
+                                    ],
+                                    "src": "372:6:0"
+                                },
+                                "scope": 25,
+                                "src": "316:99:0",
+                                "stateMutability": "view",
+                                "virtual": false,
+                                "visibility": "public"
+                            }
+                        ],
+                        "scope": 26,
+                        "src": "143:274:0",
+                        "usedErrors": []
+                    }
+                ],
+                "src": "32:386:0"
+            }
+        }
+    },
+    "sourceList": [
+        "/home/justin/code/product-owner/worktrees/behodler3-tokenlaunch-RM/security/test/echidna/SimpleTest.sol"
+    ],
+    "contracts": {
+        "/home/justin/code/product-owner/worktrees/behodler3-tokenlaunch-RM/security/test/echidna/SimpleTest.sol:SimpleTest": {
+            "srcmap": "143:274:0:-:0;;;;;;;;;;;;;;;;;;;",
+            "srcmap-runtime": "143:274:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;169:17;;;;;;;;;160:25:1;;;148:2;133:18;169:17:0;;;;;;;;193:69;;;;;;:::i;:::-;241:5;:14;193:69;;;316:99;373:4;396:5;404:4;-1:-1:-1;316:99:0;;546:14:1;;539:22;521:41;;509:2;494:18;316:99:0;381:187:1;196:180;255:6;308:2;296:9;287:7;283:23;279:32;276:52;;;324:1;321;314:12;276:52;-1:-1:-1;347:23:1;;196:180;-1:-1:-1;196:180:1:o",
+            "abi": "[{\"inputs\": [], \"name\": \"echidna_value_under_1000\", \"outputs\": [{\"internalType\": \"bool\", \"name\": \"\", \"type\": \"bool\"}], \"stateMutability\": \"view\", \"type\": \"function\"}, {\"inputs\": [{\"internalType\": \"uint256\", \"name\": \"_value\", \"type\": \"uint256\"}], \"name\": \"setValue\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\"}, {\"inputs\": [], \"name\": \"value\", \"outputs\": [{\"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\"}], \"stateMutability\": \"view\", \"type\": \"function\"}]",
+            "bin": "608060405234801561001057600080fd5b5060d28061001f6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80633fa4f2451460415780635524107714605c5780635872884414606e575b600080fd5b604960005481565b6040519081526020015b60405180910390f35b606c60673660046084565b600055565b005b6000546103e81160405190151581526020016053565b600060208284031215609557600080fd5b503591905056fea2646970667358221220ee806451cfe9bb0000f95cdf2ba0f2c179b01eecb6c7381bcbfe8dac880f7feb64736f6c634300080d0033",
+            "bin-runtime": "6080604052348015600f57600080fd5b5060043610603c5760003560e01c80633fa4f2451460415780635524107714605c5780635872884414606e575b600080fd5b604960005481565b6040519081526020015b60405180910390f35b606c60673660046084565b600055565b005b6000546103e81160405190151581526020016053565b600060208284031215609557600080fd5b503591905056fea2646970667358221220ee806451cfe9bb0000f95cdf2ba0f2c179b01eecb6c7381bcbfe8dac880f7feb64736f6c634300080d0033",
+            "userdoc": { "methods": {}, "notice": "Basic Echidna test to verify the setup works" },
+            "devdoc": { "methods": {}, "author": null, "details": null, "title": "SimpleTest" },
+            "libraries": {}
+        }
+    }
+}

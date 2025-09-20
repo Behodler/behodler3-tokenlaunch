@@ -225,6 +225,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns price = (x+α)²/k scaled by 1e18
      * @return price Current marginal price scaled by 1e18
      */
+    /// #if_succeeds {:msg "Virtual K must be set to calculate price"} virtualK > 0;
+    /// #if_succeeds {:msg "Price must be positive when virtual K is set"} virtualK > 0 ==> price > 0;
+    /// #if_succeeds {:msg "Price should be calculated using virtual pair formula"} virtualK > 0 ==>
+    /// price == ((virtualInputTokens + alpha) * (virtualInputTokens + alpha) * 1e18) / virtualK;
     function getCurrentMarginalPrice() external view returns (uint price) {
         return _getCurrentMarginalPriceInternal();
     }
@@ -234,6 +238,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns total tokens raised divided by total bonding tokens issued
      * @return avgPrice Average price scaled by 1e18
      */
+    /// #if_succeeds {:msg "Average price is zero when no bonding tokens exist"} bondingToken.totalSupply() == 0 ==>
+    /// avgPrice == 0;
+    /// #if_succeeds {:msg "Average price calculation must be correct when bonding tokens exist"}
+    /// bondingToken.totalSupply() > 0 ==>
+    /// avgPrice == (getTotalRaised() * 1e18) / bondingToken.totalSupply();
+    /// #if_succeeds {:msg "Average price must be reasonable (not exceed max uint)"} avgPrice <= type(uint).max;
     function getAveragePrice() external view returns (uint avgPrice) {
         uint totalBondingTokens = bondingToken.totalSupply();
         if (totalBondingTokens == 0) return 0;
@@ -248,6 +258,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns difference between current and initial virtual input tokens
      * @return totalRaised Total input tokens raised
      */
+    /// #if_succeeds {:msg "Goals must be set before calculating total raised"} seedInput > 0;
+    /// #if_succeeds {:msg "Virtual input tokens must be at least seed input"} virtualInputTokens >= seedInput;
+    /// #if_succeeds {:msg "Total raised should equal difference between current and seed input"} totalRaised ==
+    /// virtualInputTokens - seedInput;
     function getTotalRaised() public view returns (uint totalRaised) {
         require(seedInput > 0, "VL: Goals not set - call setGoals first");
         return virtualInputTokens - seedInput;
@@ -258,6 +272,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns the theoretical initial price based on goals
      * @return initialPrice Initial marginal price scaled by 1e18
      */
+    /// #if_succeeds {:msg "Desired average price must be set to calculate initial price"} desiredAveragePrice > 0;
+    /// #if_succeeds {:msg "Initial price should equal desired average price squared"} desiredAveragePrice > 0 ==>
+    /// initialPrice == (desiredAveragePrice * desiredAveragePrice) / 1e18;
     function getInitialMarginalPrice() external view returns (uint initialPrice) {
         return _getInitialMarginalPriceInternal();
     }
@@ -267,6 +284,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Returns 1e18 as final price when x = y at funding goal
      * @return finalPrice Final marginal price scaled by 1e18
      */
+    /// #if_succeeds {:msg "Final price must always be 1e18 (representing 1:1 ratio)"} finalPrice == 1e18;
     function getFinalMarginalPrice() external pure returns (uint finalPrice) {
         return 1e18; // Price equals 1 when x = y
     }
@@ -409,6 +427,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Once off approve on vault to save gas
      * @param _token new input token address
      */
+    /// #if_succeeds {:msg "Only owner can set input token"} msg.sender == owner();
+    /// #if_succeeds {:msg "Input token address must not be zero"} _token != address(0);
+    /// #if_succeeds {:msg "Input token should be updated to new address"} address(inputToken) == _token;
     function setInputToken(address _token) external onlyOwner {
         _setInputToken(IERC20(_token));
     }
@@ -461,6 +482,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Owner-only function to update the vault contract address
      * @param _vault The new vault contract address
      */
+    /// #if_succeeds {:msg "Only owner can set vault"} msg.sender == owner();
+    /// #if_succeeds {:msg "Vault address must not be zero"} _vault != address(0);
+    /// #if_succeeds {:msg "Vault should be updated to new address"} address(vault) == _vault;
+    /// #if_succeeds {:msg "Vault approval state should be reset"} vaultApprovalInitialized == false;
     function setVault(address _vault) external onlyOwner {
         _setVault(IVault(_vault));
     }
@@ -702,6 +727,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param inputAmount Amount of input tokens to add
      * @return bondingTokensOut Expected bonding tokens to be minted
      */
+    /// #if_succeeds {:msg "Quote returns zero for zero input"} inputAmount == 0 ==> bondingTokensOut == 0;
+    /// #if_succeeds {:msg "Virtual K must be set to calculate quote"} inputAmount > 0 ==> virtualK > 0;
+    /// #if_succeeds {:msg "Quote should return positive tokens for positive input when K is set"} inputAmount > 0 &&
+    /// virtualK > 0 ==> bondingTokensOut > 0;
+    /// #if_succeeds {:msg "Quote calculation should be consistent with addLiquidity calculation"} true;
     function quoteAddLiquidity(uint inputAmount) external view returns (uint bondingTokensOut) {
         if (inputAmount == 0) return 0;
 
@@ -717,6 +747,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param bondingTokenAmount Amount of bonding tokens to burn
      * @return inputTokensOut Expected input tokens to be received
      */
+    /// #if_succeeds {:msg "Quote returns zero for zero bonding tokens"} bondingTokenAmount == 0 ==> inputTokensOut ==
+    /// 0;
+    /// #if_succeeds {:msg "Virtual K must be set to calculate quote"} bondingTokenAmount > 0 ==> virtualK > 0;
+    /// #if_succeeds {:msg "Quote should return positive tokens for positive input when K is set"} bondingTokenAmount >
+    /// 0 && virtualK > 0 ==> inputTokensOut >= 0;
+    /// #if_succeeds {:msg "Quote calculation should be consistent with removeLiquidity calculation"} true;
     function quoteRemoveLiquidity(uint bondingTokenAmount) external view returns (uint inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
 
@@ -772,6 +808,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Get the current bonding curve hook
      * @return The hook contract address
      */
+    /// #if_succeeds {:msg "Hook should match internal hook storage"} $result == bondingCurveHook;
     function getHook() external view returns (IBondingCurveHook) {
         return bondingCurveHook;
     }
@@ -784,6 +821,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @return lTokens Virtual L tokens in the pair
      * @return k The constant product
      */
+    /// #if_succeeds {:msg "Input tokens should match virtual storage"} inputTokens == virtualInputTokens;
+    /// #if_succeeds {:msg "L tokens should match virtual storage"} lTokens == virtualL;
+    /// #if_succeeds {:msg "K should equal product of virtual pair values"} k == virtualInputTokens * virtualL;
     function getVirtualPair() external view returns (uint inputTokens, uint lTokens, uint k) {
         return (virtualInputTokens, virtualL, virtualInputTokens * virtualL);
     }
@@ -792,6 +832,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Check if virtual pair is properly initialized
      * @return True if initialized correctly
      */
+    /// #if_succeeds {:msg "Initialization requires all virtual parameters to be positive"} $result == (virtualK > 0 &&
+    /// alpha > 0 && beta > 0);
+    /// #if_succeeds {:msg "If initialized, virtual K must be positive"} $result ==> virtualK > 0;
+    /// #if_succeeds {:msg "If initialized, alpha must be positive"} $result ==> alpha > 0;
+    /// #if_succeeds {:msg "If initialized, beta must be positive"} $result ==> beta > 0;
     function isVirtualPairInitialized() external view returns (bool) {
         return virtualK > 0 && alpha > 0 && beta > 0;
     }
@@ -800,6 +845,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @notice Verify that virtualL != bondingToken.totalSupply()
      * @return True if they are different (as expected in virtual pair architecture)
      */
+    /// #if_succeeds {:msg "Result should reflect difference between virtual L and actual supply"} $result == (virtualL
+    /// != bondingToken.totalSupply());
+    /// #if_succeeds {:msg "Virtual pair architecture requires separation of virtual and actual tokens"} true;
     function virtualLDifferentFromTotalSupply() external view returns (bool) {
         return virtualL != bondingToken.totalSupply();
     }
@@ -817,6 +865,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param r The first 32 bytes of the signature
      * @param s The second 32 bytes of the signature
      */
+    /// #if_succeeds {:msg "Permit deadline must not be expired"} deadline >= block.timestamp;
+    /// #if_succeeds {:msg "Owner address must not be zero"} owner != address(0);
+    /// #if_succeeds {:msg "Spender address must not be zero"} spender != address(0);
+    /// #if_succeeds {:msg "Nonce should be incremented after permit"} _nonces[owner] == old(_nonces[owner]) + 1;
     function permit(
         address owner,
         address spender,
@@ -859,6 +911,12 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param s The second 32 bytes of the signature
      * @return bondingTokensOut Amount of bonding tokens minted
      */
+    /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
+    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
+    /// #if_succeeds {:msg "Vault approval must be initialized"} vaultApprovalInitialized;
+    /// #if_succeeds {:msg "Permit deadline must not be expired"} deadline >= block.timestamp;
+    /// #if_succeeds {:msg "Output must meet minimum requirement"} bondingTokensOut >= minBondingTokens;
+    /// #if_succeeds {:msg "Bonding tokens must be minted to user"} bondingTokensOut > 0;
     function addLiquidityWithPermit(
         uint inputAmount,
         uint minBondingTokens,
@@ -950,6 +1008,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param owner The address to query the nonce for
      * @return The current nonce for the owner
      */
+    /// #if_succeeds {:msg "Nonce should match internal nonce mapping"} $result == _nonces[owner];
+    /// #if_succeeds {:msg "Nonce must be non-negative"} $result >= 0;
     function nonces(address owner) external view returns (uint) {
         return _nonces[owner];
     }
@@ -959,6 +1019,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @dev Part of EIP-2612 standard interface
      * @return The domain separator hash
      */
+    /// #if_succeeds {:msg "Domain separator should be valid EIP-712 hash"} $result != bytes32(0);
+    /// #if_succeeds {:msg "Domain separator should match EIP-712 v4 standard"} $result == _domainSeparatorV4();
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
@@ -969,6 +1031,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
      * @param interfaceId The interface identifier to check
      * @return True if the interface is supported
      */
+    /// #if_succeeds {:msg "Should return true for IERC20Permit interface"} interfaceId ==
+    /// type(IERC20Permit).interfaceId ==> $result == true;
+    /// #if_succeeds {:msg "Should return true for EIP-165 interface"} interfaceId == 0x01ffc9a7 ==> $result == true;
+    /// #if_succeeds {:msg "Should return false for unsupported interfaces"} interfaceId !=
+    /// type(IERC20Permit).interfaceId && interfaceId != 0x01ffc9a7 ==> $result == false;
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return interfaceId == type(IERC20Permit).interfaceId || interfaceId == 0x01ffc9a7; // EIP-165 interface ID
     }

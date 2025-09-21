@@ -104,6 +104,36 @@ pre-commit run prettier     # Run specific hook
     make mythril-analysis           # Run Mythril with import callback fix
     ```
 
+#### Formal Verification with Scribble
+
+This project includes comprehensive [Scribble](https://docs.scribble.codes/) specifications for formal verification of contract behavior:
+
+- **Purpose**: Formal verification of contract invariants, preconditions, and postconditions
+- **Coverage**: Complete specifications for all public functions and critical invariants
+- **Documentation**: See `docs/scribble-patterns.md` for detailed patterns and guidelines
+- **Specifications**: See `docs/SCRIBBLE_FUNCTION_SPECIFICATIONS.md` for complete specification reference
+
+**Scribble Targets**:
+
+```shell
+make scribble                   # Run complete Scribble validation suite
+make scribble-check            # Verify Scribble installation
+make scribble-instrument       # Instrument contracts with annotations
+make scribble-test             # Test instrumented contracts
+make scribble-validation-test  # Run comprehensive specification tests
+make scribble-clean            # Clean instrumented files
+```
+
+**Key Features**:
+
+- **Invariants**: Mathematical properties that must always hold (e.g., virtual K consistency)
+- **Preconditions**: Input validation and state requirements for all functions
+- **Postconditions**: Verification of expected outcomes and state changes
+- **Access Control**: Formal verification of permission requirements
+- **Edge Case Testing**: Comprehensive testing of boundary conditions and error states
+
+The Scribble specifications provide formal guarantees about contract behavior and serve as executable documentation of the system's properties.
+
 ### Make Targets Reference
 
 #### Development Setup

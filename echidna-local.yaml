@@ -1,0 +1,56 @@
+# Echidna Configuration for Local Development - Full Testing
+# Part of Story 024.53 - Performance Optimization
+
+# Test execution parameters for thorough local testing
+testLimit: 1000 # Higher limit for comprehensive local testing
+seqLen: 20 # Longer sequences for deeper testing
+
+# Timeout configuration for local development
+timeout: 300 # Allow up to 5 minutes for local runs
+
+# Use Foundry for compilation
+cryticArgs: ["--compile-force-framework", "foundry"]
+
+# Enable coverage for local analysis
+coverage: true
+coverageFormats: ["txt", "html"]
+
+# Parallel execution for local development
+workers: 4 # Use more workers locally
+
+# Comprehensive test discovery for local development
+sender: ["0x10000", "0x20000", "0x30000", "0x40000"] # More addresses for thorough testing
+
+# Corpus and shrinking configuration for local development
+corpusDir: "cache/echidna-local-corpus" # Use cache directory for corpus
+shrinkLimit: 5000 # More shrinking for better counterexamples
+
+# Output configuration for local development
+quiet: false # Keep verbose output for debugging
+format: "text" # Text format for local analysis
+
+# Local development optimizations
+checkAsserts: true # Full assertion checking
+testMode: "assertion" # Assertion testing mode
+
+# Dictionary and constants for better local testing
+constants: [] # Can be populated with project-specific constants
+dictionary: [] # Can be populated with project-specific values
+
+# Solver configuration for local development
+solver: "cvc5" # Fast solver
+smtTimeout: 60 # Longer timeout for local analysis
+
+# Code generation settings
+codegenViaIR: false # Standard compilation
+optimize: true # Keep optimization
+optimizeRuns: 200 # Standard optimization runs
+
+# Multi-ABI support for comprehensive testing
+multi_abi: false
+
+# Campaign configuration for local development
+campaignConf:
+  testLimit: 1000
+  stopOnFail: false # Continue testing after failures
+  estimateGas: true # Enable gas estimation locally

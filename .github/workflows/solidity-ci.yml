@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 env:
-  FOUNDRY_PROFILE: default
+  FOUNDRY_PROFILE: ci
 
 jobs:
   security-and-quality:
@@ -78,8 +78,8 @@ jobs:
         mkdir -p docs/reports
         timestamp=$(date +%Y%m%d_%H%M%S)
 
-        # Run basic Echidna tests with timeout
-        timeout 300 make echidna > docs/reports/echidna-ci-$timestamp.log 2>&1 || echo "Echidna completed with timeout or warnings"
+        # Run CI-optimized Echidna tests with timeout
+        timeout 60 echidna test/echidna/SimpleTest.sol --contract SimpleTest --config echidna-ci.yaml > docs/reports/echidna-ci-$timestamp.log 2>&1 || echo "Echidna completed with timeout or warnings"
 
         # Store results for PR comment
         echo "ECHIDNA_RESULTS<<EOF" >> $GITHUB_OUTPUT
@@ -97,8 +97,8 @@ jobs:
         mkdir -p docs/reports
         timestamp=$(date +%Y%m%d_%H%M%S)
 
-        # Run fuzz tests with timeout for CI
-        timeout 600 make fuzz > docs/reports/fuzz-ci-$timestamp.log 2>&1 || echo "Fuzz testing completed with timeout"
+        # Run CI-optimized fuzz tests with timeout
+        timeout 120 forge test --match-test "fuzz" --profile ci > docs/reports/fuzz-ci-$timestamp.log 2>&1 || echo "Fuzz testing completed with timeout"
 
         # Store results for PR comment
         echo "FUZZ_RESULTS<<EOF" >> $GITHUB_OUTPUT

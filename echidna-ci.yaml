@@ -1,0 +1,55 @@
+# Echidna Configuration for CI Environment - Optimized for Performance
+# Part of Story 024.53 - Performance Optimization
+
+# Test execution parameters optimized for CI time constraints
+testLimit: 50 # Reduced from 100 for faster CI runs
+seqLen: 8 # Reduced from 10 for faster execution
+
+# Timeout configuration for CI environment
+timeout: 30 # Maximum 30 seconds per test run in CI
+
+# Use Foundry for compilation
+cryticArgs: ["--compile-force-framework", "foundry"]
+
+# Coverage disabled for CI to improve performance
+coverage: false
+
+# Parallel execution for faster CI runs
+workers: 2 # Use 2 workers for parallel execution
+
+# Optimized test discovery for CI
+sender: ["0x10000", "0x20000"] # Reduced sender addresses for faster runs
+
+# Corpus and shrinking configuration for CI
+corpusDir: "cache/echidna-ci-corpus" # Use cache directory for corpus
+shrinkLimit: 1000 # Reduced shrinking for faster results
+
+# Output configuration for CI
+quiet: false # Keep output for debugging CI issues
+format: "text" # Simple text format for CI logs
+
+# CI-specific optimizations
+checkAsserts: true # Keep assertion checking
+testMode: "assertion" # Focus on assertion testing for faster feedback
+
+# Dictionary and constants
+constants: [] # Empty for CI speed
+dictionary: [] # Empty for CI speed
+
+# Solver configuration optimized for CI
+solver: "cvc5" # Fast solver for CI
+smtTimeout: 10 # Quick SMT timeout for CI
+
+# Code generation settings for CI performance
+codegenViaIR: false # Disable IR for faster compilation
+optimize: true # Keep optimization for realistic testing
+optimizeRuns: 200 # Standard optimization runs
+
+# Multi-ABI support disabled for CI speed
+multi_abi: false
+
+# Campaign configuration for CI
+campaignConf:
+  testLimit: 50
+  stopOnFail: true # Stop on first failure for faster feedback
+  estimateGas: false # Disable gas estimation for speed

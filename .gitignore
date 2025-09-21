@@ -1,7 +1,19 @@
 out/
-cache
+cache/
 lib/
-.gas-snapshotdocs/reports/*.json
-
-docs/reports
+.gas-snapshot
+docs/reports/*.json
+docs/reports/
 *.log
+node_modules/
+
+# Test caching directories
+cache/build/
+cache/test/
+cache/echidna/
+cache/scribble/
+
+# Performance optimization artifacts
+performance-*.json
+benchmark-*.md
+scribble-output/

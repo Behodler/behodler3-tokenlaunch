@@ -48,17 +48,20 @@ repos:
         files: \.sol$
         pass_filenames: false
 
-  # Quick test runner for fast feedback (optimized for speed)
+  # Adaptive test runner for environment-aware testing
   - repo: local
     hooks:
-      - id: forge-test-quick
-        name: Run quick Forge tests
+      - id: adaptive-test-quick
+        name: Run adaptive quick tests
         entry: bash
         language: system
         files: \.sol$
         pass_filenames: false
         args:
-          ["-c", 'timeout 10 forge test --no-gas-report || echo "Warning: Quick test timeout (normal for pre-commit)"']
+          [
+            "-c",
+            'FOUNDRY_PROFILE=quick ./adaptive-test-runner.sh core || echo "Warning: Quick test timeout (normal for pre-commit)"',
+          ]
 
   # Security analysis tools integrated into pre-commit workflow
 

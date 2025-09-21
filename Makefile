@@ -230,15 +230,42 @@ pre-commit-update: ## Update pre-commit hook versions
 
 # ============ PROPERTY-BASED TESTING (ECHIDNA) ============
 
-echidna: ## Run Echidna property-based tests
-	@echo "🔍 Running Echidna property-based tests..."
+echidna: ## Run Echidna property-based tests (local configuration)
+	@echo "🔍 Running Echidna property-based tests (local)..."
 	@if command -v echidna >/dev/null 2>&1; then \
 		export PATH="/home/justin/.local/bin:$$PATH"; \
-		echo "Running basic Echidna functionality test..."; \
-		echidna test/echidna/SimpleTest.sol --contract SimpleTest --test-limit 100; \
+		echo "Running local Echidna tests with full configuration..."; \
+		echidna test/echidna/SimpleTest.sol --contract SimpleTest --config echidna-local.yaml; \
 		echo ""; \
-		echo "💡 Echidna core setup is functional!"; \
-		echo "📝 Note: Complex TokenLaunch property tests require dependency resolution"; \
+		echo "💡 Echidna local testing complete!"; \
+	else \
+		echo "⚠️  Echidna not found. Install from: https://github.com/crytic/echidna/releases"; \
+		echo "💡 You can also run: make install-echidna"; \
+		exit 1; \
+	fi
+
+echidna-ci: ## Run Echidna property-based tests (CI-optimized)
+	@echo "🔍 Running Echidna property-based tests (CI-optimized)..."
+	@if command -v echidna >/dev/null 2>&1; then \
+		export PATH="/home/justin/.local/bin:$$PATH"; \
+		echo "Running CI-optimized Echidna tests..."; \
+		echidna test/echidna/SimpleTest.sol --contract SimpleTest --config echidna-ci.yaml; \
+		echo ""; \
+		echo "💡 Echidna CI testing complete!"; \
+	else \
+		echo "⚠️  Echidna not found. Install from: https://github.com/crytic/echidna/releases"; \
+		echo "💡 You can also run: make install-echidna"; \
+		exit 1; \
+	fi
+
+echidna-quick: ## Run Echidna property-based tests (quick validation)
+	@echo "🔍 Running Echidna property-based tests (quick)..."
+	@if command -v echidna >/dev/null 2>&1; then \
+		export PATH="/home/justin/.local/bin:$$PATH"; \
+		echo "Running quick Echidna validation..."; \
+		echidna test/echidna/SimpleTest.sol --contract SimpleTest --test-limit 20 --seq-len 5; \
+		echo ""; \
+		echo "💡 Echidna quick validation complete!"; \
 	else \
 		echo "⚠️  Echidna not found. Install from: https://github.com/crytic/echidna/releases"; \
 		echo "💡 You can also run: make install-echidna"; \
@@ -264,18 +291,44 @@ install-echidna: ## Install Echidna binary (requires wget)
 
 # ============ FUZZ TESTING TARGETS (Story 024.3) ============
 
-fuzz: ## Run extended fuzz testing campaign (10,000+ runs)
-	@echo "🔍 Running Extended Fuzz Testing Campaign (Story 024.3)..."
+fuzz: ## Run fuzz testing campaign (local profile)
+	@echo "🔍 Running Fuzz Testing Campaign (local profile)..."
 	@timestamp=$$(date +%Y%m%d_%H%M%S); \
 	echo "📊 Starting fuzz campaign (timestamp: $$timestamp)..."; \
 	mkdir -p docs/reports; \
-	echo "Starting extended fuzz campaign at $$(date)" | tee docs/reports/fuzz-campaign-$$timestamp.log; \
+	echo "Starting local fuzz campaign at $$(date)" | tee docs/reports/fuzz-campaign-$$timestamp.log; \
 	start_time=$$(date +%s); \
-	forge test --match-contract B3FuzzTest -vv 2>&1 | tee -a docs/reports/fuzz-campaign-$$timestamp.log; \
+	FOUNDRY_PROFILE=local forge test --match-test "fuzz" -vv 2>&1 | tee -a docs/reports/fuzz-campaign-$$timestamp.log; \
 	end_time=$$(date +%s); \
 	duration=$$((end_time - start_time)); \
 	echo "Campaign completed in $$duration seconds" | tee -a docs/reports/fuzz-campaign-$$timestamp.log; \
-	echo "✅ Extended fuzz testing complete! Report saved to docs/reports/fuzz-campaign-$$timestamp.log"
+	echo "✅ Local fuzz testing complete! Report saved to docs/reports/fuzz-campaign-$$timestamp.log"
+
+fuzz-ci: ## Run fuzz testing campaign (CI-optimized profile)
+	@echo "🔍 Running Fuzz Testing Campaign (CI-optimized)..."
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Starting CI fuzz campaign (timestamp: $$timestamp)..."; \
+	mkdir -p docs/reports; \
+	echo "Starting CI fuzz campaign at $$(date)" | tee docs/reports/fuzz-ci-$$timestamp.log; \
+	start_time=$$(date +%s); \
+	FOUNDRY_PROFILE=ci forge test --match-test "fuzz" -vv 2>&1 | tee -a docs/reports/fuzz-ci-$$timestamp.log; \
+	end_time=$$(date +%s); \
+	duration=$$((end_time - start_time)); \
+	echo "CI campaign completed in $$duration seconds" | tee -a docs/reports/fuzz-ci-$$timestamp.log; \
+	echo "✅ CI fuzz testing complete! Report saved to docs/reports/fuzz-ci-$$timestamp.log"
+
+fuzz-quick: ## Run quick fuzz testing for rapid feedback
+	@echo "🔍 Running Quick Fuzz Testing..."
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	echo "📊 Starting quick fuzz campaign (timestamp: $$timestamp)..."; \
+	mkdir -p docs/reports; \
+	echo "Starting quick fuzz campaign at $$(date)" | tee docs/reports/fuzz-quick-$$timestamp.log; \
+	start_time=$$(date +%s); \
+	FOUNDRY_PROFILE=quick forge test --match-test "fuzz" -vv 2>&1 | tee -a docs/reports/fuzz-quick-$$timestamp.log; \
+	end_time=$$(date +%s); \
+	duration=$$((end_time - start_time)); \
+	echo "Quick campaign completed in $$duration seconds" | tee -a docs/reports/fuzz-quick-$$timestamp.log; \
+	echo "✅ Quick fuzz testing complete! Report saved to docs/reports/fuzz-quick-$$timestamp.log"
 
 fuzz-extended: ## Run extended fuzz testing with 50,000 runs using extended profile
 	@echo "🔍 Running EXTENDED Fuzz Testing Campaign (50,000 runs)..."
@@ -421,7 +474,59 @@ git-hooks-test: ## Test git hooks without committing
 git-pre-push: build test quality ## Pre-push validation
 	@echo "🚀 Pre-push validation complete!"
 
+# ============ ADAPTIVE TESTING TARGETS ============
+
+test-adaptive: ## Run adaptive tests (environment-aware)
+	@echo "🎯 Running adaptive tests..."
+	./adaptive-test-runner.sh
+
+test-adaptive-core: ## Run adaptive core tests only
+	@echo "🏗️  Running adaptive core tests..."
+	./adaptive-test-runner.sh core
+
+test-adaptive-security: ## Run adaptive security tests
+	@echo "🔒 Running adaptive security tests..."
+	./adaptive-test-runner.sh security
+
+test-adaptive-fuzz: ## Run adaptive fuzz tests
+	@echo "🎲 Running adaptive fuzz tests..."
+	./adaptive-test-runner.sh fuzz
+
+# ============ CACHED TESTING TARGETS ============
+
+test-cached: ## Run comprehensive cached tests
+	@echo "🚀 Running cached tests..."
+	./cached-test-runner.sh
+
+test-cached-quick: ## Run quick cached tests
+	@echo "🏃 Running quick cached tests..."
+	./cached-test-runner.sh quick
+
+test-cached-security: ## Run security tests with caching
+	@echo "🔒 Running cached security tests..."
+	./cached-test-runner.sh security
+
+cache-status: ## Show cache status
+	@echo "📊 Showing cache status..."
+	./test-cache-manager.sh status
+
+cache-clean: ## Clean all caches (interactive)
+	@echo "🧹 Cleaning caches..."
+	./cached-test-runner.sh clean
+
+cache-clean-build: ## Clean build cache
+	@echo "🧹 Cleaning build cache..."
+	./test-cache-manager.sh clean build
+
+cache-clean-test: ## Clean test cache
+	@echo "🧹 Cleaning test cache..."
+	./test-cache-manager.sh clean test
+
 # ============ PERFORMANCE TARGETS ============
+
+performance-benchmark: ## Run comprehensive performance benchmarks
+	@echo "📊 Running performance benchmarks..."
+	./performance-benchmark.sh
 
 gas-snapshot: ## Create gas usage snapshot
 	@echo "⛽ Creating gas snapshot..."

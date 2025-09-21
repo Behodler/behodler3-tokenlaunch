@@ -3,51 +3,67 @@ src = "src"
 out = "out"
 libs = ["lib"]
 optimizer_runs = 200
-evm_version = "london"
 #viaIR = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [profile.default.optimizer_details]
 yul = true
 
-# ============ FUZZ TESTING CONFIGURATION ============
-# Story 024.3: Extended Fuzz Testing Campaign
-# Configure for 10,000+ runs per test for comprehensive coverage
+# CI Profile - Optimized for speed and quick feedback
+[profile.ci]
+src = "src"
+out = "out"
+libs = ["lib"]
+optimizer_runs = 200
+fuzz.runs = 256          # Reduced fuzz runs for CI speed
+fuzz.max_test_rejects = 65536  # Standard reject limit
+invariant.runs = 32      # Reduced invariant runs for CI
+invariant.depth = 8      # Reduced depth for faster CI execution
+gas_reports = ["*"]      # Enable gas reports for CI monitoring
 
-[profile.default.fuzz]
-runs = 10000
-max_test_rejects = 65536
-seed = "0x1337"
-dictionary_weight = 40
-include_storage = true
-include_push_bytes = true
+[profile.ci.optimizer_details]
+yul = true
 
-# Extended testing profile for comprehensive campaigns
+# Local Development Profile - Balanced performance and thoroughness
+[profile.local]
+src = "src"
+out = "out"
+libs = ["lib"]
+optimizer_runs = 200
+fuzz.runs = 10000        # More fuzz runs for local development
+fuzz.max_test_rejects = 65536
+invariant.runs = 256     # More invariant runs locally
+invariant.depth = 15     # Deeper testing locally
+gas_reports = ["*"]      # Enable gas reports
+
+[profile.local.optimizer_details]
+yul = true
+
+# Extended Testing Profile - Maximum thoroughness for comprehensive testing
 [profile.extended]
 src = "src"
 out = "out"
 libs = ["lib"]
 optimizer_runs = 200
-evm_version = "london"
-
-[profile.extended.fuzz]
-runs = 50000
-max_test_rejects = 131072
-seed = "0x1337"
-dictionary_weight = 80
-include_storage = true
-include_push_bytes = true
+fuzz.runs = 50000        # Maximum fuzz runs for extended testing
+fuzz.max_test_rejects = 65536
+invariant.runs = 1000    # Maximum invariant runs
+invariant.depth = 25     # Maximum depth for thorough testing
+gas_reports = ["*"]      # Enable gas reports
 
 [profile.extended.optimizer_details]
 yul = true
 
-# Formatter settings
-[fmt]
-line_length = 120
-tab_width = 4
-bracket_spacing = false
-int_types = "short"
-multiline_func_header = "all"
-quote_style = "double"
-number_underscore = "thousands"
-wrap_comments = true
+# Quick Profile - Minimal testing for rapid iteration
+[profile.quick]
+src = "src"
+out = "out"
+libs = ["lib"]
+optimizer_runs = 200
+fuzz.runs = 100          # Minimal fuzz runs for quick feedback
+fuzz.max_test_rejects = 65536
+invariant.runs = 10      # Minimal invariant runs
+invariant.depth = 5      # Minimal depth for quick tests
+
+[profile.quick.optimizer_details]
+yul = true

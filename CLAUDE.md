@@ -101,3 +101,4 @@ When a feature requires changes to a mutable dependency:
 - Use Foundry testing tools exclusively (no Hardhat or Truffle)
 - If you need to change a mutable dependency, use the change request process
 - docs/reports must remain in .gitignore. Never add it to source control!
+- never allow node_modules to be removed from .gitignore. There is never a reason it should be added to source control

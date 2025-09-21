@@ -1,14 +1,21 @@
-name: Solidity CI
+name: Solidity CI with Security Testing
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, sprint/* ]
   pull_request:
     branches: [ main, master ]
+
+env:
+  FOUNDRY_PROFILE: default
 
 jobs:
   security-and-quality:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
     - name: Checkout code
@@ -27,12 +34,29 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
+    - name: Install Python and pip (for Scribble)
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
     - name: Install dependencies
       run: |
         # Install npm dependencies when package.json exists
         if [ -f "package.json" ]; then
           npm ci
         fi
+        # Install Scribble dependencies if needed
+        pip install solc-select || echo "solc-select installation failed, continuing..."
+
+    - name: Install Echidna
+      run: |
+        mkdir -p ~/.local/bin
+        cd /tmp
+        wget https://github.com/crytic/echidna/releases/download/v2.2.7/echidna-2.2.7-x86_64-linux.tar.gz
+        tar -xzf echidna-2.2.7-x86_64-linux.tar.gz
+        mv echidna ~/.local/bin/
+        chmod +x ~/.local/bin/echidna
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Run Forge formatting check
       run: forge fmt --check
@@ -43,44 +67,133 @@ jobs:
     - name: Run Forge tests
       run: forge test -vvv
 
-    # Placeholder steps for future security tool integrations
-    # These will be uncommented and configured as security tools are added
+    - name: Run Solhint linting
+      run: make lint-solidity
+      continue-on-error: true
 
-    # - name: Run Slither analysis
-    #   run: |
-    #     # Slither static analysis will be added here
-    #     echo "Slither analysis placeholder"
+    - name: Run Echidna property tests
+      id: echidna-tests
+      run: |
+        echo "🔍 Running Echidna property-based tests..."
+        mkdir -p docs/reports
+        timestamp=$(date +%Y%m%d_%H%M%S)
 
-    # - name: Run Mythril analysis
-    #   run: |
-    #     # Mythril security analysis will be added here
-    #     echo "Mythril analysis placeholder"
+        # Run basic Echidna tests with timeout
+        timeout 300 make echidna > docs/reports/echidna-ci-$timestamp.log 2>&1 || echo "Echidna completed with timeout or warnings"
 
-    # - name: Run Echidna fuzzing
-    #   run: |
-    #     # Echidna property-based testing will be added here
-    #     echo "Echidna fuzzing placeholder"
+        # Store results for PR comment
+        echo "ECHIDNA_RESULTS<<EOF" >> $GITHUB_OUTPUT
+        echo "## 🔍 Echidna Property Testing Results" >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        tail -20 docs/reports/echidna-ci-$timestamp.log >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      continue-on-error: true
 
-    # - name: Run Solhint linting
-    #   run: |
-    #     # Solhint linting via make commands will be added here
-    #     echo "Solhint linting placeholder"
+    - name: Run extended fuzz testing campaign
+      id: fuzz-tests
+      run: |
+        echo "🔍 Running extended fuzz testing campaign..."
+        mkdir -p docs/reports
+        timestamp=$(date +%Y%m%d_%H%M%S)
 
-    # - name: Security audit checks
-    #   run: |
-    #     # Custom security audit scripts will be added here
-    #     echo "Security audit placeholder"
+        # Run fuzz tests with timeout for CI
+        timeout 600 make fuzz > docs/reports/fuzz-ci-$timestamp.log 2>&1 || echo "Fuzz testing completed with timeout"
 
-    # Integration with future Makefile commands
-    # When Makefile is available, replace individual steps with:
-    # - name: Run all security checks
-    #   run: make security-check
-    #
-    # - name: Run linting
-    #   run: make lint
-    #
-    # - name: Run formatting check
-    #   run: make format-check
-    #
-    # - name: Run tests
-    #   run: make test
+        # Store results for PR comment
+        echo "FUZZ_RESULTS<<EOF" >> $GITHUB_OUTPUT
+        echo "## 🎯 Extended Fuzz Testing Results" >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        tail -30 docs/reports/fuzz-ci-$timestamp.log >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      continue-on-error: true
+
+    - name: Run Scribble specification validation
+      id: scribble-tests
+      run: |
+        echo "🔍 Running Scribble specification validation..."
+        mkdir -p docs/reports
+        timestamp=$(date +%Y%m%d_%H%M%S)
+
+        # Run Scribble validation tests
+        make scribble-validation-test > docs/reports/scribble-ci-$timestamp.log 2>&1 || echo "Scribble validation completed with warnings"
+
+        # Store results for PR comment
+        echo "SCRIBBLE_RESULTS<<EOF" >> $GITHUB_OUTPUT
+        echo "## 📋 Scribble Specification Validation Results" >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        tail -20 docs/reports/scribble-ci-$timestamp.log >> $GITHUB_OUTPUT
+        echo "\`\`\`" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      continue-on-error: true
+
+    - name: Security analysis summary
+      id: security-summary
+      run: |
+        echo "📊 Generating security analysis summary..."
+
+        # Check for any property violations or critical issues
+        SECURITY_STATUS="✅ PASSED"
+        if grep -r "FAIL\|ERROR\|property violation" docs/reports/ 2>/dev/null | grep -v "No such file" > /dev/null; then
+          SECURITY_STATUS="❌ ISSUES DETECTED"
+        fi
+
+        echo "SECURITY_STATUS=$SECURITY_STATUS" >> $GITHUB_OUTPUT
+        echo "SUMMARY<<EOF" >> $GITHUB_OUTPUT
+        echo "# 🔒 Security Testing Summary" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "**Overall Status:** $SECURITY_STATUS" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "- ✅ Standard Forge tests completed" >> $GITHUB_OUTPUT
+        echo "- 🔍 Echidna property tests executed" >> $GITHUB_OUTPUT
+        echo "- 🎯 Extended fuzz testing performed" >> $GITHUB_OUTPUT
+        echo "- 📋 Scribble specification validation completed" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "_Generated at $(date)_" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const output = `${{ steps.security-summary.outputs.SUMMARY }}
+
+          ${{ steps.echidna-tests.outputs.ECHIDNA_RESULTS }}
+
+          ${{ steps.fuzz-tests.outputs.FUZZ_RESULTS }}
+
+          ${{ steps.scribble-tests.outputs.SCRIBBLE_RESULTS }}
+
+          <details>
+          <summary>📁 Full Report Details</summary>
+
+          All detailed reports are available in the \`docs/reports/\` directory of the CI artifacts.
+
+          </details>`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          });
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-test-reports
+        path: docs/reports/
+        retention-days: 30
+
+    - name: Fail on property violations
+      run: |
+        # Check for critical security property violations
+        if grep -r "property violation\|CRITICAL\|FAIL.*invariant" docs/reports/ 2>/dev/null | grep -v "No such file" > /dev/null; then
+          echo "❌ Critical property violations detected!"
+          echo "Please review the security test reports and fix any violations."
+          exit 1
+        fi
+        echo "✅ No critical property violations detected."

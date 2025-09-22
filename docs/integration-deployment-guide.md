@@ -1,17 +1,15 @@
-# EarlySellPenaltyHook Integration and Deployment Guide
+# Behodler3 TokenLaunch Integration and Deployment Guide
 
 ## Overview
 
-This guide provides step-by-step instructions for deploying and integrating the EarlySellPenaltyHook with the Behodler3 TokenLaunch platform. The hook system allows for configurable penalties to discourage early selling while maintaining system flexibility.
+This guide provides step-by-step instructions for deploying the Behodler3 TokenLaunch platform. The platform provides a simplified architecture using standard ERC20 approve/transfer patterns without EIP-2612 permit functionality for enhanced security and compatibility.
 
 ## Prerequisites
 
 ### Required Contracts
 
-- `Behodler3Tokenlaunch.sol` - Main platform contract (from stories 004-005)
-- `IEarlySellPenaltyHook.sol` - Hook interface
-- `EarlySellPenaltyHook.sol` - Penalty implementation
-- `IBondingCurveHook.sol` - Base hook interface
+- `Behodler3Tokenlaunch.sol` - Main platform contract with simplified architecture
+- Hook contracts (optional) - For configurable trading behaviors
 
 ### Development Environment
 
@@ -43,32 +41,30 @@ forge test --match-contract EarlySellPenaltyHookTest
 
 Expected output should show all tests passing with no compilation errors.
 
-### Step 2: Deploy EarlySellPenaltyHook Contract
+### Step 2: Deploy Behodler3Tokenlaunch Contract
 
 #### Using Forge Script (Recommended)
 
-Create deployment script `script/DeployPenaltyHook.s.sol`:
+The deployment script is located at `script/Deploy.s.sol`:
 
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/EarlySellPenaltyHook.sol";
+import "../src/Behodler3Tokenlaunch.sol";
 
-contract DeployPenaltyHook is Script {
+contract Deploy is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy the penalty hook contract
-        EarlySellPenaltyHook penaltyHook = new EarlySellPenaltyHook();
+        // Deploy the TokenLaunch contract
+        Behodler3Tokenlaunch tokenLaunch = new Behodler3Tokenlaunch();
 
-        console.log("EarlySellPenaltyHook deployed to:", address(penaltyHook));
-        console.log("Default parameters:");
-        console.log("- Decline rate per hour:", penaltyHook.penaltyDeclineRatePerHour());
-        console.log("- Max penalty duration:", penaltyHook.maxPenaltyDurationHours());
-        console.log("- Penalty active:", penaltyHook.penaltyActive());
+        console.log("Behodler3Tokenlaunch deployed to:", address(tokenLaunch));
+        console.log("Owner:", tokenLaunch.owner());
+        console.log("Contract deployed without permit functionality");
 
         vm.stopBroadcast();
     }
@@ -83,17 +79,17 @@ export PRIVATE_KEY=0x... # Your deployer private key
 export RPC_URL=https://... # Your RPC endpoint
 
 # Deploy to testnet
-forge script script/DeployPenaltyHook.s.sol --rpc-url $RPC_URL --broadcast --verify
+forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast --verify
 
 # Deploy to mainnet (add --legacy if needed)
-forge script script/DeployPenaltyHook.s.sol --rpc-url $MAINNET_RPC_URL --broadcast --verify --legacy
+forge script script/Deploy.s.sol --rpc-url $MAINNET_RPC_URL --broadcast --verify --legacy
 ```
 
 #### Manual Deployment via Forge Create
 
 ```bash
 # Deploy contract directly
-forge create src/EarlySellPenaltyHook.sol:EarlySellPenaltyHook \
+forge create src/Behodler3Tokenlaunch.sol:Behodler3Tokenlaunch \
     --rpc-url $RPC_URL \
     --private-key $PRIVATE_KEY \
     --verify
@@ -109,227 +105,166 @@ After deployment, verify the contract is properly initialized:
 
 ```bash
 # Using cast to check deployment
-export PENALTY_HOOK_ADDRESS=0x... # Address from deployment
-
-# Verify default parameters
-cast call $PENALTY_HOOK_ADDRESS "penaltyDeclineRatePerHour()" --rpc-url $RPC_URL
-# Expected: 10 (representing 1% per hour)
-
-cast call $PENALTY_HOOK_ADDRESS "maxPenaltyDurationHours()" --rpc-url $RPC_URL
-# Expected: 100
-
-cast call $PENALTY_HOOK_ADDRESS "penaltyActive()" --rpc-url $RPC_URL
-# Expected: true
+export TOKEN_LAUNCH_ADDRESS=0x... # Address from deployment
 
 # Verify owner
-cast call $PENALTY_HOOK_ADDRESS "owner()" --rpc-url $RPC_URL
+cast call $TOKEN_LAUNCH_ADDRESS "owner()" --rpc-url $RPC_URL
 # Expected: Your deployer address
+
+# Verify contract state
+cast call $TOKEN_LAUNCH_ADDRESS "totalSupply()" --rpc-url $RPC_URL
+# Should show current total supply
+
+# Test basic functionality (read-only)
+cast call $TOKEN_LAUNCH_ADDRESS "name()" --rpc-url $RPC_URL
+cast call $TOKEN_LAUNCH_ADDRESS "symbol()" --rpc-url $RPC_URL
 ```
 
-## Integration with TokenLaunch Platform
+## Platform Configuration
 
-### Step 4: Connect Hook to TokenLaunch Contract
+### Step 4: Basic Configuration
 
-The TokenLaunch platform includes a `setHook()` function from the configurable hook system (story 005):
+The TokenLaunch platform uses standard ERC20 patterns without permit functionality:
 
-```solidity
-function setHook(IBondingCurveHook _hook) external onlyOwner {
-    hook = _hook;
-    emit HookSet(address(_hook));
-}
-```
+- Users interact with the contract using standard `approve()` and `transferFrom()` functions
+- No permit signatures are required or supported
+- Enhanced security through simplified approval mechanisms
 
-#### Integration Script
+#### Usage Patterns
 
-Create integration script `script/IntegratePenaltyHook.s.sol`:
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
-
-import "forge-std/Script.sol";
-import "../src/interfaces/IBondingCurveHook.sol";
-
-interface ITokenLaunch {
-    function setHook(IBondingCurveHook _hook) external;
-    function hook() external view returns (IBondingCurveHook);
-    function owner() external view returns (address);
-}
-
-contract IntegratePenaltyHook is Script {
-    function run() external {
-        uint256 ownerPrivateKey = vm.envUint("PLATFORM_OWNER_PRIVATE_KEY");
-        address tokenLaunchAddress = vm.envAddress("TOKEN_LAUNCH_ADDRESS");
-        address penaltyHookAddress = vm.envAddress("PENALTY_HOOK_ADDRESS");
-
-        vm.startBroadcast(ownerPrivateKey);
-
-        ITokenLaunch tokenLaunch = ITokenLaunch(tokenLaunchAddress);
-        IBondingCurveHook penaltyHook = IBondingCurveHook(penaltyHookAddress);
-
-        // Set the penalty hook
-        tokenLaunch.setHook(penaltyHook);
-
-        // Verify integration
-        IBondingCurveHook currentHook = tokenLaunch.hook();
-        require(address(currentHook) == penaltyHookAddress, "Hook integration failed");
-
-        console.log("Successfully integrated penalty hook:");
-        console.log("- TokenLaunch:", tokenLaunchAddress);
-        console.log("- PenaltyHook:", penaltyHookAddress);
-        console.log("- Current hook:", address(currentHook));
-
-        vm.stopBroadcast();
-    }
-}
-```
-
-Execute integration:
+Standard ERC20 interaction patterns:
 
 ```bash
-# Set integration environment variables
-export PLATFORM_OWNER_PRIVATE_KEY=0x... # TokenLaunch owner key
-export TOKEN_LAUNCH_ADDRESS=0x... # TokenLaunch contract address
-export PENALTY_HOOK_ADDRESS=0x... # Deployed penalty hook address
+# Approve tokens for spending (if needed)
+cast send $TOKEN_ADDRESS "approve(address,uint256)" $TOKEN_LAUNCH_ADDRESS 1000000000000000000 \
+    --rpc-url $RPC_URL --private-key $USER_PRIVATE_KEY
 
-# Run integration
-forge script script/IntegratePenaltyHook.s.sol --rpc-url $RPC_URL --broadcast
+# Check allowance
+cast call $TOKEN_ADDRESS "allowance(address,address)" $USER_ADDRESS $TOKEN_LAUNCH_ADDRESS \
+    --rpc-url $RPC_URL
+
+# Interact with TokenLaunch contract
+cast send $TOKEN_LAUNCH_ADDRESS "buy(uint256)" 1000000000000000000 \
+    --rpc-url $RPC_URL --private-key $USER_PRIVATE_KEY --value 0.1ether
 ```
 
-### Step 5: Verify Integration
+### Step 5: Verify Deployment
 
-Confirm the hook is properly connected and functional:
+Confirm the contract is deployed and functional:
 
 ```bash
-# Check hook is set in TokenLaunch
-cast call $TOKEN_LAUNCH_ADDRESS "hook()" --rpc-url $RPC_URL
-# Should return: PENALTY_HOOK_ADDRESS
+# Test basic functionality
+cast call $TOKEN_LAUNCH_ADDRESS "name()" --rpc-url $RPC_URL
+cast call $TOKEN_LAUNCH_ADDRESS "symbol()" --rpc-url $RPC_URL
+cast call $TOKEN_LAUNCH_ADDRESS "decimals()" --rpc-url $RPC_URL
 
-# Test hook functionality with a read-only call
-cast call $PENALTY_HOOK_ADDRESS "calculatePenaltyFee(address)" $TEST_ADDRESS --rpc-url $RPC_URL
-# Should return penalty amount (1000 for first-time seller)
+# Verify ownership and access controls
+cast call $TOKEN_LAUNCH_ADDRESS "owner()" --rpc-url $RPC_URL
 ```
 
-## Configuration and Customization
+## Post-Deployment Configuration
 
-### Step 6: Adjust Penalty Parameters (Optional)
+### Step 6: Owner Functions
 
-Customize the penalty mechanism for your specific tokenomics:
-
-#### Standard Configuration (Default)
-
-- **Decline rate**: 1% per hour (10 basis points)
-- **Maximum duration**: 100 hours
-- **Initial penalty**: 100%
-
-#### Conservative Configuration (Longer holding incentive)
+Configure the TokenLaunch contract after deployment:
 
 ```bash
-# Set more gradual decline (0.5% per hour, 200 hours total)
-cast send $PENALTY_HOOK_ADDRESS "setPenaltyParameters(uint256,uint256)" 5 200 \
-    --rpc-url $RPC_URL --private-key $HOOK_OWNER_PRIVATE_KEY
+# Configure platform parameters (if applicable)
+# Example: Setting fees, limits, or other configurable parameters
+cast send $TOKEN_LAUNCH_ADDRESS "setParameter(uint256)" 100 \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
+
+# Transfer ownership (if needed)
+cast send $TOKEN_LAUNCH_ADDRESS "transferOwnership(address)" $NEW_OWNER_ADDRESS \
+    --rpc-url $RPC_URL --private-key $CURRENT_OWNER_PRIVATE_KEY
 ```
 
-#### Aggressive Configuration (Shorter holding requirement)
+### Step 7: Emergency Controls
+
+Access emergency functionality if implemented:
 
 ```bash
-# Set faster decline (2% per hour, 50 hours total)
-cast send $PENALTY_HOOK_ADDRESS "setPenaltyParameters(uint256,uint256)" 20 50 \
-    --rpc-url $RPC_URL --private-key $HOOK_OWNER_PRIVATE_KEY
-```
+# Pause contract operations (if pause functionality exists)
+cast send $TOKEN_LAUNCH_ADDRESS "pause()" \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
 
-#### Parameter Validation
-
-The contract automatically validates parameters:
-
-```solidity
-require(declineRate * maxDuration >= 1000, "Parameters must allow penalty to reach 0");
-```
-
-### Step 7: Emergency Controls Setup
-
-Configure emergency pause functionality:
-
-```bash
-# Pause penalty application (emergency)
-cast send $PENALTY_HOOK_ADDRESS "setPenaltyActive(bool)" false \
-    --rpc-url $RPC_URL --private-key $HOOK_OWNER_PRIVATE_KEY
-
-# Re-enable penalty application
-cast send $PENALTY_HOOK_ADDRESS "setPenaltyActive(bool)" true \
-    --rpc-url $RPC_URL --private-key $HOOK_OWNER_PRIVATE_KEY
+# Unpause contract operations
+cast send $TOKEN_LAUNCH_ADDRESS "unpause()" \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
 ```
 
 ## Post-Deployment Verification
 
 ### Step 8: End-to-End Testing
 
-Perform comprehensive testing to ensure the integration works correctly:
+Perform comprehensive testing to ensure the contract works correctly:
 
 #### Test Buy Operation
 
 ```bash
-# Simulate buy transaction (should record timestamp)
-# This will trigger the penalty hook's buy() function
+# Simulate buy transaction
 cast send $TOKEN_LAUNCH_ADDRESS "buy(uint256)" 1000000000000000000 \
     --rpc-url $RPC_URL --private-key $TEST_USER_PRIVATE_KEY --value 0.1ether
+
+# Verify transaction success
+cast receipt $BUY_TX_HASH --rpc-url $RPC_URL
 ```
 
-#### Verify Timestamp Recording
+#### Test Standard ERC20 Operations
 
 ```bash
-# Check that buyer timestamp was recorded
-cast call $PENALTY_HOOK_ADDRESS "getBuyerTimestamp(address)" $TEST_USER_ADDRESS --rpc-url $RPC_URL
-# Should return recent timestamp (block.timestamp from buy transaction)
+# Check token balance after purchase
+cast call $TOKEN_LAUNCH_ADDRESS "balanceOf(address)" $TEST_USER_ADDRESS --rpc-url $RPC_URL
+
+# Test standard approve/transfer pattern
+cast send $TOKEN_LAUNCH_ADDRESS "approve(address,uint256)" $SPENDER_ADDRESS 1000000 \
+    --rpc-url $RPC_URL --private-key $TEST_USER_PRIVATE_KEY
+
+# Check allowance
+cast call $TOKEN_LAUNCH_ADDRESS "allowance(address,address)" $TEST_USER_ADDRESS $SPENDER_ADDRESS \
+    --rpc-url $RPC_URL
 ```
 
 #### Test Sell Operation
 
 ```bash
-# Simulate sell transaction (should apply penalty)
+# Simulate sell transaction
 cast send $TOKEN_LAUNCH_ADDRESS "sell(uint256)" 500000000000000000 \
     --rpc-url $RPC_URL --private-key $TEST_USER_PRIVATE_KEY
-```
 
-#### Verify Penalty Application
-
-Check transaction logs for `PenaltyApplied` events:
-
-```bash
-# Get recent transaction receipt
+# Verify transaction success and events
 cast receipt $SELL_TX_HASH --rpc-url $RPC_URL
-# Look for PenaltyApplied(address seller, uint256 fee, uint256 hoursElapsed) events
 ```
 
 ## Monitoring and Maintenance
 
 ### Step 9: Event Monitoring Setup
 
-Monitor hook events for operational insights:
+Monitor contract events for operational insights:
 
 #### Key Events to Track
 
 ```solidity
-event BuyerTimestampRecorded(address indexed buyer, uint256 timestamp);
-event PenaltyApplied(address indexed seller, uint256 fee, uint256 hoursElapsed);
-event PenaltyParametersUpdated(uint256 declineRatePerHour, uint256 maxDurationHours);
-event PenaltyStatusChanged(bool active);
+event Transfer(address indexed from, address indexed to, uint256 value);
+event Approval(address indexed owner, address indexed spender, uint256 value);
+event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+// Additional custom events specific to TokenLaunch functionality
 ```
 
 #### Example Monitoring Script
 
 ```javascript
 // Using ethers.js or web3.js
-const penaltyHook = new ethers.Contract(PENALTY_HOOK_ADDRESS, abi, provider);
+const tokenLaunch = new ethers.Contract(TOKEN_LAUNCH_ADDRESS, abi, provider);
 
-// Monitor penalty applications
-penaltyHook.on("PenaltyApplied", (seller, fee, hoursElapsed, event) => {
-    console.log(`Penalty applied: ${seller}, Fee: ${fee / 10}%, Hours: ${hoursElapsed}`);
+// Monitor transfers
+tokenLaunch.on("Transfer", (from, to, value, event) => {
+    console.log(`Transfer: ${from} -> ${to}, Amount: ${value}`);
 });
 
-// Monitor timestamp recordings
-penaltyHook.on("BuyerTimestampRecorded", (buyer, timestamp, event) => {
-    console.log(`Timestamp recorded: ${buyer}, Time: ${new Date(timestamp * 1000)}`);
+// Monitor approvals
+tokenLaunch.on("Approval", (owner, spender, value, event) => {
+    console.log(`Approval: ${owner} approved ${spender} for ${value}`);
 });
 ```
 
@@ -395,22 +330,21 @@ penaltyHook.on("BuyerTimestampRecorded", (buyer, timestamp, event) => {
 
 ## Summary
 
-The EarlySellPenaltyHook integration process involves:
+The Behodler3 TokenLaunch deployment process involves:
 
-1. **Deployment**: Deploy the penalty hook contract with proper verification
-2. **Integration**: Connect the hook to the TokenLaunch platform using `setHook()`
-3. **Configuration**: Adjust penalty parameters for desired tokenomics
-4. **Verification**: Test end-to-end functionality with buy/sell operations
-5. **Monitoring**: Set up event monitoring for operational oversight
-6. **Maintenance**: Regular parameter review and performance monitoring
+1. **Deployment**: Deploy the TokenLaunch contract with proper verification
+2. **Configuration**: Set up owner permissions and basic parameters
+3. **Verification**: Test end-to-end functionality with buy/sell operations
+4. **Monitoring**: Set up event monitoring for operational oversight
+5. **Maintenance**: Regular performance monitoring and security updates
 
-This system provides a flexible, configurable penalty mechanism that can be adapted to various token launch scenarios while maintaining administrative control and emergency response capabilities.
+This simplified system provides enhanced security through the removal of permit functionality, using standard ERC20 approve/transfer patterns that are well-tested and secure.
 
 ## Additional Resources
 
-- **Interface Documentation**: See `IEarlySellPenaltyHook.sol` for complete function signatures
-- **Test Examples**: Review `test/EarlySellPenaltyHookTest.sol` for integration patterns
-- **Parameter Calculator**: Use the penalty calculation formula to model different configurations
-- **Gas Analysis**: See `gas-analysis.md` for detailed cost breakdowns
+- **Contract Documentation**: See `src/Behodler3Tokenlaunch.sol` for complete implementation
+- **Test Examples**: Review `test/` directory for testing patterns and integration examples
+- **Gas Analysis**: See `docs/gas-analysis.md` for detailed cost breakdowns
+- **Performance Tuning**: See `docs/PERFORMANCE-TUNING.md` for optimization guidance
 
 For additional support or custom configurations, refer to the main TokenLaunch documentation or contact the development team.

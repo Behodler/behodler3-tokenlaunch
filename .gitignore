@@ -1,6 +1,5 @@
 out/
 cache/
-lib/
 .gas-snapshot
 docs/reports/*.json
 docs/reports/

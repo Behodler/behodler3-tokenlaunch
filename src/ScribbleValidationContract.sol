@@ -7,26 +7,26 @@ pragma solidity ^0.8.13;
 ///  #invariant {:msg "Total deposits must be non-negative"} totalDeposits >= 0;
 ///  #invariant {:msg "Balance must be non-negative"} balance >= 0;
 contract ScribbleValidationContract {
-    event Deposit(address indexed user, uint amount);
+    event Deposit(address indexed user, uint256 amount);
 
-    event Withdraw(address indexed user, uint amount);
+    event Withdraw(address indexed user, uint256 amount);
 
     struct vars1 {
-        uint old_0;
-        uint old_1;
-        uint old_2;
+        uint256 old_0;
+        uint256 old_1;
+        uint256 old_2;
     }
 
     struct vars2 {
-        uint old_3;
-        uint old_4;
+        uint256 old_3;
+        uint256 old_4;
     }
 
-    uint public balance;
-    uint public totalDeposits;
-    mapping(address => uint) public userDeposits;
+    uint256 public balance;
+    uint256 public totalDeposits;
+    mapping(address => uint256) public userDeposits;
 
-    function deposit(uint amount) external {
+    function deposit(uint256 amount) external {
         vars1 memory _v;
         __ScribbleUtilsLib__127.setInContract(true);
         unchecked {
@@ -55,7 +55,7 @@ contract ScribbleValidationContract {
         __ScribbleUtilsLib__127.setInContract(false);
     }
 
-    function _original_ScribbleValidationContract_deposit(uint amount) internal {
+    function _original_ScribbleValidationContract_deposit(uint256 amount) internal {
         require(amount > 0, "Amount must be positive");
         balance += amount;
         totalDeposits += amount;
@@ -63,7 +63,7 @@ contract ScribbleValidationContract {
         emit Deposit(msg.sender, amount);
     }
 
-    function withdraw(uint amount) external {
+    function withdraw(uint256 amount) external {
         vars2 memory _v;
         __ScribbleUtilsLib__127.setInContract(true);
         unchecked {
@@ -85,7 +85,7 @@ contract ScribbleValidationContract {
         __ScribbleUtilsLib__127.setInContract(false);
     }
 
-    function _original_ScribbleValidationContract_withdraw(uint amount) internal {
+    function _original_ScribbleValidationContract_withdraw(uint256 amount) internal {
         require(amount > 0, "Amount must be positive");
         require(userDeposits[msg.sender] >= amount, "Insufficient user balance");
         require(balance >= amount, "Insufficient contract balance");
@@ -94,11 +94,11 @@ contract ScribbleValidationContract {
         emit Withdraw(msg.sender, amount);
     }
 
-    function getBalance() external view returns (uint) {
+    function getBalance() external view returns (uint256) {
         return balance;
     }
 
-    function getUserDeposit(address user) external view returns (uint) {
+    function getUserDeposit(address user) external view returns (uint256) {
         return userDeposits[user];
     }
 
@@ -137,13 +137,13 @@ contract ScribbleValidationContract {
 library __ScribbleUtilsLib__127 {
     event AssertionFailed(string message);
 
-    event AssertionFailedData(int eventId, bytes encodingData);
+    event AssertionFailedData(int256 eventId, bytes encodingData);
 
     function assertionFailed(string memory arg_0) internal {
         emit AssertionFailed(arg_0);
     }
 
-    function assertionFailedData(int arg_0, bytes memory arg_1) internal {
+    function assertionFailedData(int256 arg_0, bytes memory arg_1) internal {
         emit AssertionFailedData(arg_0, arg_1);
     }
 

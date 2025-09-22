@@ -20,10 +20,10 @@ contract ScribbleSpecificationTest is Test {
      * @notice Test that preconditions and postconditions work for deposit function
      */
     function testDepositSpecifications() public {
-        uint depositAmount = 100;
-        uint initialBalance = testContract.balance();
-        uint initialTotalDeposits = testContract.totalDeposits();
-        uint initialUserDeposit = testContract.getUserDeposit(address(this));
+        uint256 depositAmount = 100;
+        uint256 initialBalance = testContract.balance();
+        uint256 initialTotalDeposits = testContract.totalDeposits();
+        uint256 initialUserDeposit = testContract.getUserDeposit(address(this));
 
         // This should succeed and trigger postcondition checks
         testContract.deposit(depositAmount);
@@ -51,14 +51,14 @@ contract ScribbleSpecificationTest is Test {
      * @notice Test withdraw postconditions
      */
     function testWithdrawSpecifications() public {
-        uint depositAmount = 200;
-        uint withdrawAmount = 100;
+        uint256 depositAmount = 200;
+        uint256 withdrawAmount = 100;
 
         // First deposit to have something to withdraw
         testContract.deposit(depositAmount);
 
-        uint balanceBeforeWithdraw = testContract.balance();
-        uint userDepositBeforeWithdraw = testContract.getUserDeposit(address(this));
+        uint256 balanceBeforeWithdraw = testContract.balance();
+        uint256 userDepositBeforeWithdraw = testContract.getUserDeposit(address(this));
 
         // Withdraw and check postconditions
         testContract.withdraw(withdrawAmount);

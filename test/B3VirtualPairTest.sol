@@ -29,9 +29,9 @@ contract B3VirtualPairTest is Test {
     address public user2 = address(0x3);
 
     // Virtual Liquidity Test Parameters
-    uint public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
-    uint public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
+    uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
+    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
         vm.startPrank(owner);
@@ -83,12 +83,12 @@ contract B3VirtualPairTest is Test {
 
     function testKConstantCalculation() public view {
         // Test that virtual K constant is calculated correctly from goals
-        uint actualVirtualK = b3.virtualK();
-        uint actualAlpha = b3.alpha();
+        uint256 actualVirtualK = b3.virtualK();
+        uint256 actualAlpha = b3.alpha();
 
         // K should equal (x_fin + alpha)^2
-        uint xFinPlusAlpha = FUNDING_GOAL + actualAlpha;
-        uint expectedVirtualK = xFinPlusAlpha * xFinPlusAlpha;
+        uint256 xFinPlusAlpha = FUNDING_GOAL + actualAlpha;
+        uint256 expectedVirtualK = xFinPlusAlpha * xFinPlusAlpha;
 
         assertEq(actualVirtualK, expectedVirtualK, "Virtual K should equal (x_fin + alpha)^2");
     }
@@ -100,11 +100,11 @@ contract B3VirtualPairTest is Test {
 
     function testVirtualLInitialization() public view {
         // Test virtual L tokens are calculated correctly: y_0 = k/(x_0 + alpha) - alpha
-        uint actualVirtualL = b3.virtualL();
-        uint alpha = b3.alpha();
-        uint virtualK = b3.virtualK();
-        uint x0PlusAlpha = SEED_INPUT + alpha;
-        uint expectedVirtualL = virtualK / x0PlusAlpha - alpha;
+        uint256 actualVirtualL = b3.virtualL();
+        uint256 alpha = b3.alpha();
+        uint256 virtualK = b3.virtualK();
+        uint256 x0PlusAlpha = SEED_INPUT + alpha;
+        uint256 expectedVirtualL = virtualK / x0PlusAlpha - alpha;
 
         assertEq(actualVirtualL, expectedVirtualL, "Virtual L should be calculated correctly");
     }
@@ -118,8 +118,8 @@ contract B3VirtualPairTest is Test {
             b3.virtualLDifferentFromTotalSupply(), "VirtualL should be different from bonding token total supply"
         );
 
-        uint virtualL = b3.virtualL();
-        uint totalSupply = bondingToken.totalSupply();
+        uint256 virtualL = b3.virtualL();
+        uint256 totalSupply = bondingToken.totalSupply();
         assertTrue(virtualL != totalSupply, "VirtualL should not equal total supply");
     }
 
@@ -137,7 +137,7 @@ contract B3VirtualPairTest is Test {
 
         vm.stopPrank();
 
-        (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+        (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
         assertEq(inputTokens, SEED_INPUT, "Virtual input tokens should remain at seed input");
         assertGt(lTokens, 0, "Virtual L tokens should be positive");
         assertEq(k, inputTokens * lTokens, "K should equal input * L for compatibility");
@@ -148,11 +148,11 @@ contract B3VirtualPairTest is Test {
 
     function testVirtualPairStateAfterBondingTokenMinting() public {
         // Test virtual pair state after bonding tokens are minted
-        uint mintAmount = 50_000;
+        uint256 mintAmount = 50_000;
         bondingToken.mint(user1, mintAmount);
 
         // Virtual pair should be independent from external bonding token supply
-        (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+        (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
         assertEq(inputTokens, SEED_INPUT, "Virtual input tokens should remain at seed input after external minting");
         assertGt(lTokens, 0, "Virtual L tokens should be positive after external minting");
         assertEq(k, inputTokens * lTokens, "K should equal input * L for compatibility after external minting");
@@ -167,19 +167,19 @@ contract B3VirtualPairTest is Test {
 
     function testKConsistencyAfterVirtualPairUpdates() public {
         // Test that virtual liquidity invariant (x+alpha)(y+beta)=k always holds
-        (uint inputTokens, uint lTokens,) = b3.getVirtualPair();
-        uint alpha = b3.alpha();
-        uint beta = b3.beta();
-        uint virtualK = b3.virtualK();
+        (uint256 inputTokens, uint256 lTokens,) = b3.getVirtualPair();
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 virtualK = b3.virtualK();
 
-        uint leftSide = (inputTokens + alpha) * (lTokens + beta);
+        uint256 leftSide = (inputTokens + alpha) * (lTokens + beta);
         assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold"); // 0.1% tolerance
     }
 
     function testVirtualPairPreservesKAfterOperations() public {
         // Test that virtual pair operations preserve the constant product
         // This test will be more meaningful after addLiquidity is implemented
-        uint initialVirtualK = b3.virtualK();
+        uint256 initialVirtualK = b3.virtualK();
 
         // Attempt to add liquidity (will fail in RED phase but test the concept)
         vm.startPrank(user1);
@@ -187,7 +187,7 @@ contract B3VirtualPairTest is Test {
 
         try b3.addLiquidity(1000 * 1e18, 0) {
             // After operation, check that K is preserved in some form
-            (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+            (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
             assertEq(k, inputTokens * lTokens, "K should be preserved after operations");
         } catch {
             // Expected to fail in RED phase
@@ -200,7 +200,7 @@ contract B3VirtualPairTest is Test {
 
     function testVirtualPairWithZeroValues() public {
         // Test behavior when virtual pair has zero values (should not happen in correct implementation)
-        (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+        (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
 
         // In RED phase, these will be zero, but that's wrong
         if (inputTokens == 0 || lTokens == 0) {
@@ -211,20 +211,20 @@ contract B3VirtualPairTest is Test {
 
     function testVirtualPairConsistency() public view {
         // Test internal consistency of virtual liquidity parameters
-        uint virtualInput = b3.virtualInputTokens();
-        uint virtualL = b3.virtualL();
-        uint virtualK = b3.virtualK();
+        uint256 virtualInput = b3.virtualInputTokens();
+        uint256 virtualL = b3.virtualL();
+        uint256 virtualK = b3.virtualK();
 
-        (uint returnedInput, uint returnedL, uint returnedK) = b3.getVirtualPair();
+        (uint256 returnedInput, uint256 returnedL, uint256 returnedK) = b3.getVirtualPair();
 
         assertEq(virtualInput, returnedInput, "Virtual input tokens should be consistent");
         assertEq(virtualL, returnedL, "Virtual L tokens should be consistent");
         assertEq(returnedK, virtualInput * virtualL, "Returned K should equal input * L for compatibility");
 
         // Also check virtual liquidity invariant consistency
-        uint alpha = b3.alpha();
-        uint beta = b3.beta();
-        uint leftSide = (virtualInput + alpha) * (virtualL + beta);
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 leftSide = (virtualInput + alpha) * (virtualL + beta);
         assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold");
     }
 
@@ -234,7 +234,7 @@ contract B3VirtualPairTest is Test {
         // This test documents the expected virtual liquidity architecture
         // Virtual liquidity uses (x+alpha)(y+beta)=k formula instead of traditional xy=k
 
-        (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+        (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
 
         // Input tokens should be initialized to seed input
         assertEq(inputTokens, SEED_INPUT, "Virtual liquidity architecture: input should equal seed input");
@@ -246,10 +246,10 @@ contract B3VirtualPairTest is Test {
         assertEq(k, inputTokens * lTokens, "Virtual liquidity architecture: k should equal input * L");
 
         // Verify virtual liquidity invariant (x+alpha)(y+beta)=virtualK
-        uint alpha = b3.alpha();
-        uint beta = b3.beta();
-        uint virtualK = b3.virtualK();
-        uint leftSide = (inputTokens + alpha) * (lTokens + beta);
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 virtualK = b3.virtualK();
+        uint256 leftSide = (inputTokens + alpha) * (lTokens + beta);
         assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold");
     }
 
@@ -257,8 +257,8 @@ contract B3VirtualPairTest is Test {
         // Test that this is NOT a standard bonding curve
         // Standard bonding curves use actual token supplies, virtual pair uses virtual amounts
 
-        uint bondingSupply = bondingToken.totalSupply();
-        uint virtualL = b3.virtualL();
+        uint256 bondingSupply = bondingToken.totalSupply();
+        uint256 virtualL = b3.virtualL();
 
         // In a standard bonding curve, virtualL would equal bondingSupply
         // In virtual pair architecture, they should be different

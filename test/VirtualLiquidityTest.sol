@@ -23,17 +23,22 @@ contract VirtualLiquidityTest is Test {
     address public user2 = address(0x3);
 
     // Test constants for example parameters
-    uint constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint constant SEED_INPUT = 1000 * 1e18; // 1K tokens
-    uint constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
+    uint256 constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
+    uint256 constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     // Expected calculated values
-    uint public expectedAlpha;
-    uint public expectedVirtualK;
-    uint public expectedInitialPrice;
+    uint256 public expectedAlpha;
+    uint256 public expectedVirtualK;
+    uint256 public expectedInitialPrice;
 
     event VirtualLiquidityGoalsSet(
-        uint fundingGoal, uint seedInput, uint desiredAveragePrice, uint alpha, uint beta, uint virtualK
+        uint256 fundingGoal,
+        uint256 seedInput,
+        uint256 desiredAveragePrice,
+        uint256 alpha,
+        uint256 beta,
+        uint256 virtualK
     );
 
     function setUp() public {
@@ -53,12 +58,12 @@ contract VirtualLiquidityTest is Test {
 
         // Calculate expected values for tests
         // alpha = (P_ave * x_fin - x_0) / (1 - P_ave)
-        uint numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
-        uint denominator = 1e18 - DESIRED_AVG_PRICE;
+        uint256 numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
+        uint256 denominator = 1e18 - DESIRED_AVG_PRICE;
         expectedAlpha = (numerator * 1e18) / denominator;
 
         // k = (x_fin + alpha)^2
-        uint xFinPlusAlpha = FUNDING_GOAL + expectedAlpha;
+        uint256 xFinPlusAlpha = FUNDING_GOAL + expectedAlpha;
         expectedVirtualK = (xFinPlusAlpha * xFinPlusAlpha) / 1e18;
 
         // P_0 = (P_ave)^2
@@ -81,22 +86,22 @@ contract VirtualLiquidityTest is Test {
         assertEq(b3.desiredAveragePrice(), DESIRED_AVG_PRICE, "Desired average price should match");
 
         // Get actual values from contract for verification
-        uint actualAlpha = b3.alpha();
-        uint actualBeta = b3.beta();
-        uint actualVirtualK = b3.virtualK();
+        uint256 actualAlpha = b3.alpha();
+        uint256 actualBeta = b3.beta();
+        uint256 actualVirtualK = b3.virtualK();
 
         assertEq(actualBeta, actualAlpha, "Beta should equal alpha");
         assertTrue(b3.isVirtualPairInitialized(), "Virtual liquidity should be initialized");
 
         // Verify alpha calculation: alpha = (P_ave * x_fin - x_0) / (1 - P_ave)
-        uint numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
-        uint denominator = 1e18 - DESIRED_AVG_PRICE;
-        uint expectedAlphaCalculated = (numerator * 1e18) / denominator;
+        uint256 numerator = (DESIRED_AVG_PRICE * FUNDING_GOAL) / 1e18 - SEED_INPUT;
+        uint256 denominator = 1e18 - DESIRED_AVG_PRICE;
+        uint256 expectedAlphaCalculated = (numerator * 1e18) / denominator;
         assertEq(actualAlpha, expectedAlphaCalculated, "Alpha should be calculated correctly");
 
         // Verify K calculation: k = (x_fin + alpha)^2
-        uint xFinPlusAlpha = FUNDING_GOAL + actualAlpha;
-        uint expectedVirtualKCalculated = xFinPlusAlpha * xFinPlusAlpha;
+        uint256 xFinPlusAlpha = FUNDING_GOAL + actualAlpha;
+        uint256 expectedVirtualKCalculated = xFinPlusAlpha * xFinPlusAlpha;
         assertEq(actualVirtualK, expectedVirtualKCalculated, "Virtual K should be calculated correctly");
     }
 
@@ -131,7 +136,7 @@ contract VirtualLiquidityTest is Test {
         vm.prank(owner);
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
-        uint initialPrice = b3.getInitialMarginalPrice();
+        uint256 initialPrice = b3.getInitialMarginalPrice();
         assertEq(initialPrice, expectedInitialPrice, "Initial price should equal P_ave squared");
 
         // Verify it equals 0.81e18 for 0.9e18 average price
@@ -145,11 +150,11 @@ contract VirtualLiquidityTest is Test {
         vm.prank(owner);
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
-        uint currentPrice = b3.getCurrentMarginalPrice();
-        uint initialPrice = b3.getInitialMarginalPrice();
+        uint256 currentPrice = b3.getCurrentMarginalPrice();
+        uint256 initialPrice = b3.getInitialMarginalPrice();
 
         // Allow for small rounding differences
-        uint tolerance = 1e15; // 0.001
+        uint256 tolerance = 1e15; // 0.001
         assertApproxEqAbs(currentPrice, initialPrice, tolerance, "Current price should start at initial price");
     }
 
@@ -157,7 +162,7 @@ contract VirtualLiquidityTest is Test {
      * @notice Test final marginal price is 1.0
      */
     function test_FinalMarginalPrice_IsOne() public {
-        uint finalPrice = b3.getFinalMarginalPrice();
+        uint256 finalPrice = b3.getFinalMarginalPrice();
         assertEq(finalPrice, 1e18, "Final price should be 1.0");
     }
 
@@ -183,10 +188,10 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
-        uint inputAmount = 10_000 * 1e18;
+        uint256 inputAmount = 10_000 * 1e18;
 
         // Get virtual liquidity quote
-        uint virtualQuote = b3.quoteAddLiquidity(inputAmount);
+        uint256 virtualQuote = b3.quoteAddLiquidity(inputAmount);
 
         // Quote should be positive and reasonable
         assertGt(virtualQuote, 0, "Quote should be positive");
@@ -202,16 +207,16 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Give user tokens
-        uint inputAmount = 5000 * 1e18;
+        uint256 inputAmount = 5000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
-        uint bondingTokensBefore = bondingToken.balanceOf(user1);
-        uint quotedTokens = b3.quoteAddLiquidity(inputAmount);
+        uint256 bondingTokensBefore = bondingToken.balanceOf(user1);
+        uint256 quotedTokens = b3.quoteAddLiquidity(inputAmount);
 
-        uint actualTokens = b3.addLiquidity(inputAmount, 0);
+        uint256 actualTokens = b3.addLiquidity(inputAmount, 0);
 
         assertEq(actualTokens, quotedTokens, "Actual tokens should match quote");
         assertEq(
@@ -229,18 +234,18 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Give user tokens and add liquidity first
-        uint inputAmount = 5000 * 1e18;
+        uint256 inputAmount = 5000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
-        uint bondingTokens = b3.addLiquidity(inputAmount, 0);
+        uint256 bondingTokens = b3.addLiquidity(inputAmount, 0);
 
         // Now test removing liquidity
-        uint inputTokensBefore = inputToken.balanceOf(user1);
-        uint quotedInput = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 inputTokensBefore = inputToken.balanceOf(user1);
+        uint256 quotedInput = b3.quoteRemoveLiquidity(bondingTokens);
 
-        uint actualInput = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInput = b3.removeLiquidity(bondingTokens, 0);
 
         assertEq(actualInput, quotedInput, "Actual input should match quote");
         assertEq(inputToken.balanceOf(user1), inputTokensBefore + actualInput, "User should receive input tokens");
@@ -257,9 +262,9 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Price should be within bounds initially
-        uint currentPrice = b3.getCurrentMarginalPrice();
-        uint initialPrice = b3.getInitialMarginalPrice();
-        uint finalPrice = b3.getFinalMarginalPrice();
+        uint256 currentPrice = b3.getCurrentMarginalPrice();
+        uint256 initialPrice = b3.getInitialMarginalPrice();
+        uint256 finalPrice = b3.getFinalMarginalPrice();
 
         assertGe(currentPrice, initialPrice, "Current price should be >= initial price");
         assertLe(currentPrice, finalPrice, "Current price should be <= final price");
@@ -276,7 +281,7 @@ contract VirtualLiquidityTest is Test {
         assertEq(b3.getTotalRaised(), 0, "Initially no tokens raised");
 
         // Add some liquidity
-        uint inputAmount = 5000 * 1e18;
+        uint256 inputAmount = 5000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
@@ -285,7 +290,7 @@ contract VirtualLiquidityTest is Test {
         vm.stopPrank();
 
         // Should now show tokens raised
-        uint totalRaised = b3.getTotalRaised();
+        uint256 totalRaised = b3.getTotalRaised();
         assertGt(totalRaised, 0, "Should have raised some tokens");
         assertLe(totalRaised, inputAmount, "Raised amount should not exceed input");
     }
@@ -301,7 +306,7 @@ contract VirtualLiquidityTest is Test {
         assertEq(b3.getAveragePrice(), 0, "Initially no average price");
 
         // Add some liquidity
-        uint inputAmount = 5000 * 1e18;
+        uint256 inputAmount = 5000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
@@ -310,7 +315,7 @@ contract VirtualLiquidityTest is Test {
         vm.stopPrank();
 
         // Should now have an average price
-        uint avgPrice = b3.getAveragePrice();
+        uint256 avgPrice = b3.getAveragePrice();
         assertGt(avgPrice, 0, "Should have positive average price");
     }
 
@@ -322,12 +327,12 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Add some liquidity
-        uint inputAmount = 5000 * 1e18;
+        uint256 inputAmount = 5000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
-        uint bondingTokens = b3.addLiquidity(inputAmount, 0);
+        uint256 bondingTokens = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
 
         // Try to remove more liquidity than added (should fail due to balance check)
@@ -345,11 +350,11 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Verify initial marginal price is 0.81
-        uint initialPrice = b3.getInitialMarginalPrice();
+        uint256 initialPrice = b3.getInitialMarginalPrice();
         assertEq(initialPrice, 0.81e18, "Initial price should be 0.81");
 
         // Verify final marginal price is 1.0
-        uint finalPrice = b3.getFinalMarginalPrice();
+        uint256 finalPrice = b3.getFinalMarginalPrice();
         assertEq(finalPrice, 1e18, "Final price should be 1.0");
 
         // Verify goals are stored correctly
@@ -366,17 +371,17 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // Get initial state
-        (uint virtualInputTokens, uint virtualL,) = b3.getVirtualPair();
-        uint alpha = b3.alpha();
-        uint beta = b3.beta();
-        uint virtualK = b3.virtualK();
+        (uint256 virtualInputTokens, uint256 virtualL,) = b3.getVirtualPair();
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 virtualK = b3.virtualK();
 
         // Check initial invariant
-        uint leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
+        uint256 leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
         assertApproxEqRel(leftSide, virtualK, 1e15, "Initial invariant should hold"); // 0.1% tolerance
 
         // Add liquidity and check invariant still holds
-        uint inputAmount = 1000 * 1e18;
+        uint256 inputAmount = 1000 * 1e18;
         deal(address(inputToken), user1, inputAmount);
 
         vm.startPrank(user1);
@@ -397,14 +402,14 @@ contract VirtualLiquidityTest is Test {
         vm.prank(owner);
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
-        uint smallAmount = 1e18; // 1 token
+        uint256 smallAmount = 1e18; // 1 token
         deal(address(inputToken), user1, smallAmount);
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), smallAmount);
 
         // Should not revert
-        uint bondingTokens = b3.addLiquidity(smallAmount, 0);
+        uint256 bondingTokens = b3.addLiquidity(smallAmount, 0);
         assertGt(bondingTokens, 0, "Should receive some bonding tokens");
 
         vm.stopPrank();
@@ -418,7 +423,7 @@ contract VirtualLiquidityTest is Test {
         b3.setGoals(1000e18, 100e18, 0.9e18); // Smaller numbers for testing
 
         // Add liquidity close to funding goal
-        uint largeAmount = 850e18; // Close to goal
+        uint256 largeAmount = 850e18; // Close to goal
         deal(address(inputToken), user1, largeAmount);
 
         vm.startPrank(user1);
@@ -427,8 +432,8 @@ contract VirtualLiquidityTest is Test {
         // Should not revert and price should remain bounded
         b3.addLiquidity(largeAmount, 0);
 
-        uint currentPrice = b3.getCurrentMarginalPrice();
-        uint finalPrice = b3.getFinalMarginalPrice();
+        uint256 currentPrice = b3.getCurrentMarginalPrice();
+        uint256 finalPrice = b3.getFinalMarginalPrice();
 
         assertLe(currentPrice, finalPrice, "Price should not exceed final price");
 

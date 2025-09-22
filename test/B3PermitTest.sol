@@ -21,21 +21,21 @@ contract B3PermitTest is Test {
     MockVault public vault;
 
     // Private keys for testing
-    uint private constant USER1_PRIVATE_KEY = 0x1234;
-    uint private constant USER2_PRIVATE_KEY = 0x5678;
+    uint256 private constant USER1_PRIVATE_KEY = 0x1234;
+    uint256 private constant USER2_PRIVATE_KEY = 0x5678;
 
     // Addresses derived from private keys
     address public user1 = vm.addr(USER1_PRIVATE_KEY);
     address public user2 = vm.addr(USER2_PRIVATE_KEY);
     address public contractOwner = address(this);
 
-    uint private constant INITIAL_SUPPLY = 1_000_000e18;
-    uint private constant TYPICAL_AMOUNT = 1000e18;
-    uint private constant FUNDING_GOAL = 1_000_000e18;
-    uint private constant SEED_INPUT = 1000e18;
-    uint private constant DESIRED_AVERAGE_PRICE = 9e17; // 0.9
+    uint256 private constant INITIAL_SUPPLY = 1_000_000e18;
+    uint256 private constant TYPICAL_AMOUNT = 1000e18;
+    uint256 private constant FUNDING_GOAL = 1_000_000e18;
+    uint256 private constant SEED_INPUT = 1000e18;
+    uint256 private constant DESIRED_AVERAGE_PRICE = 9e17; // 0.9
 
-    event PermitUsed(address indexed owner, address indexed spender, uint value, uint nonce, uint deadline);
+    event PermitUsed(address indexed owner, address indexed spender, uint256 value, uint256 nonce, uint256 deadline);
 
     function setUp() public {
         // Deploy mock contracts
@@ -73,9 +73,9 @@ contract B3PermitTest is Test {
      * @notice Test basic permit functionality with valid signature
      */
     function test_PermitBasic_WithValidSignature() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
-        uint b3Nonce = b3.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
+        uint256 b3Nonce = b3.nonces(user1);
 
         // Create permit signature for the input token (not B3 contract)
         (uint8 v, bytes32 r, bytes32 s) =
@@ -99,8 +99,8 @@ contract B3PermitTest is Test {
      * @notice Test permit fails with expired deadline
      */
     function test_PermitFails_WithExpiredDeadline() public {
-        uint deadline = block.timestamp - 1; // Expired
-        uint nonce = b3.nonces(user1);
+        uint256 deadline = block.timestamp - 1; // Expired
+        uint256 nonce = b3.nonces(user1);
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, nonce, deadline);
@@ -113,8 +113,8 @@ contract B3PermitTest is Test {
      * @notice Test permit fails with invalid signature
      */
     function test_PermitFails_WithInvalidSignature() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         // Create signature with wrong private key
         (uint8 v, bytes32 r, bytes32 s) =
@@ -128,8 +128,8 @@ contract B3PermitTest is Test {
      * @notice Test permit fails with wrong nonce (replay protection)
      */
     function test_PermitFails_WithWrongNonce() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint wrongNonce = inputToken.nonces(user1) + 1; // Wrong nonce
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 wrongNonce = inputToken.nonces(user1) + 1; // Wrong nonce
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, wrongNonce, deadline);
@@ -142,7 +142,7 @@ contract B3PermitTest is Test {
      * @notice Test permit fails with zero owner address
      */
     function test_PermitFails_WithZeroOwner() public {
-        uint deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.timestamp + 1 hours;
 
         vm.expectRevert("B3: Invalid owner");
         b3.permit(address(0), address(b3), TYPICAL_AMOUNT, deadline, 0, bytes32(0), bytes32(0));
@@ -152,7 +152,7 @@ contract B3PermitTest is Test {
      * @notice Test permit fails with zero spender address
      */
     function test_PermitFails_WithZeroSpender() public {
-        uint deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.timestamp + 1 hours;
 
         vm.expectRevert("B3: Invalid spender");
         b3.permit(user1, address(0), TYPICAL_AMOUNT, deadline, 0, bytes32(0), bytes32(0));
@@ -164,9 +164,9 @@ contract B3PermitTest is Test {
      * @notice Test nonce increments correctly after permit
      */
     function test_NonceIncrementsCorrectly() public {
-        uint initialB3Nonce = b3.nonces(user1);
-        uint tokenNonce = inputToken.nonces(user1);
-        uint deadline = block.timestamp + 1 hours;
+        uint256 initialB3Nonce = b3.nonces(user1);
+        uint256 tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, tokenNonce, deadline);
@@ -180,8 +180,8 @@ contract B3PermitTest is Test {
      * @notice Test replay attack prevention
      */
     function test_ReplayAttackPrevention() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, tokenNonce, deadline);
@@ -198,15 +198,15 @@ contract B3PermitTest is Test {
      * @notice Test multiple users have independent nonces
      */
     function test_IndependentNoncesForMultipleUsers() public {
-        uint deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.timestamp + 1 hours;
 
         // User1 permit
-        uint nonce1 = b3.nonces(user1);
+        uint256 nonce1 = b3.nonces(user1);
         (uint8 v1, bytes32 r1, bytes32 s1) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, nonce1, deadline);
 
         // User2 permit (different address, same nonce value should work)
-        uint nonce2 = b3.nonces(user2);
+        uint256 nonce2 = b3.nonces(user2);
         (uint8 v2, bytes32 r2, bytes32 s2) =
             _createPermitSignature(user2, USER2_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, nonce2, deadline);
 
@@ -229,16 +229,16 @@ contract B3PermitTest is Test {
      * @notice Test addLiquidityWithPermit with valid permit signature
      */
     function test_AddLiquidityWithPermit_ValidSignature() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
-        uint b3Nonce = b3.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
+        uint256 b3Nonce = b3.nonces(user1);
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, tokenNonce, deadline);
 
         vm.startPrank(user1);
 
-        uint bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
+        uint256 bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
 
         vm.stopPrank();
 
@@ -254,7 +254,7 @@ contract B3PermitTest is Test {
      * @notice Test addLiquidityWithPermit falls back to checking allowance when permit fails
      */
     function test_AddLiquidityWithPermit_FallsBackToAllowance() public {
-        uint deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.timestamp + 1 hours;
 
         // Pre-approve tokens (standard flow)
         vm.prank(user1);
@@ -267,7 +267,7 @@ contract B3PermitTest is Test {
         vm.startPrank(user1);
 
         // Should succeed despite permit failure due to pre-existing allowance
-        uint bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
+        uint256 bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
 
         vm.stopPrank();
 
@@ -279,7 +279,7 @@ contract B3PermitTest is Test {
      * @notice Test addLiquidityWithPermit fails when both permit and allowance are insufficient
      */
     function test_AddLiquidityWithPermit_FailsWithoutPermitOrAllowance() public {
-        uint deadline = block.timestamp + 1 hours;
+        uint256 deadline = block.timestamp + 1 hours;
 
         // Use invalid signature and no pre-approval
         (uint8 v, bytes32 r, bytes32 s) =
@@ -340,14 +340,14 @@ contract B3PermitTest is Test {
      */
     function test_GasOptimization_PermitVsApprove() public {
         // Simplified test - just ensure permit version works
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         (uint8 v, bytes32 r, bytes32 s) =
             _createPermitSignature(user1, USER1_PRIVATE_KEY, address(b3), TYPICAL_AMOUNT, tokenNonce, deadline);
 
         vm.prank(user1);
-        uint bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
+        uint256 bondingTokensOut = b3.addLiquidityWithPermit(TYPICAL_AMOUNT, 0, deadline, v, r, s);
 
         // Verify permit version works
         assertGt(bondingTokensOut, 0);
@@ -368,8 +368,8 @@ contract B3PermitTest is Test {
         vault.setClient(address(b3NonPermit), true);
         b3NonPermit.initializeVaultApproval();
 
-        uint deadline = block.timestamp + 1 hours;
-        uint nonce = b3NonPermit.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = b3NonPermit.nonces(user1);
 
         (uint8 v, bytes32 r, bytes32 s) = _createPermitSignatureForContract(
             address(b3NonPermit), user1, USER1_PRIVATE_KEY, address(b3NonPermit), TYPICAL_AMOUNT, nonce, deadline
@@ -385,8 +385,8 @@ contract B3PermitTest is Test {
      * @notice Test permit with different values in signature vs function call fails
      */
     function test_SecurityTest_SignatureValueMismatch() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         // Create signature for one amount
         (uint8 v, bytes32 r, bytes32 s) =
@@ -401,8 +401,8 @@ contract B3PermitTest is Test {
      * @notice Test permit with different spender in signature vs function call fails
      */
     function test_SecurityTest_SignatureSpenderMismatch() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         // Create signature for one spender
         (uint8 v, bytes32 r, bytes32 s) =
@@ -417,8 +417,8 @@ contract B3PermitTest is Test {
      * @notice Test permit with different deadline in signature vs function call fails
      */
     function test_SecurityTest_SignatureDeadlineMismatch() public {
-        uint deadline = block.timestamp + 1 hours;
-        uint tokenNonce = inputToken.nonces(user1);
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 tokenNonce = inputToken.nonces(user1);
 
         // Create signature for one deadline
         (uint8 v, bytes32 r, bytes32 s) =
@@ -436,16 +436,12 @@ contract B3PermitTest is Test {
      */
     function _createPermitSignature(
         address owner,
-        uint privateKey,
+        uint256 privateKey,
         address spender,
-        uint value,
-        uint nonce,
-        uint deadline
-    )
-        internal
-        view
-        returns (uint8 v, bytes32 r, bytes32 s)
-    {
+        uint256 value,
+        uint256 nonce,
+        uint256 deadline
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         return _createTokenPermitSignature(address(inputToken), owner, privateKey, spender, value, nonce, deadline);
     }
 
@@ -455,16 +451,12 @@ contract B3PermitTest is Test {
     function _createTokenPermitSignature(
         address tokenAddr,
         address owner,
-        uint privateKey,
+        uint256 privateKey,
         address spender,
-        uint value,
-        uint nonce,
-        uint deadline
-    )
-        internal
-        view
-        returns (uint8 v, bytes32 r, bytes32 s)
-    {
+        uint256 value,
+        uint256 nonce,
+        uint256 deadline
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 domainSeparator = ERC20PermitMock(tokenAddr).DOMAIN_SEPARATOR();
 
         bytes32 structHash = keccak256(
@@ -489,16 +481,12 @@ contract B3PermitTest is Test {
     function _createPermitSignatureForContract(
         address contractAddr,
         address owner,
-        uint privateKey,
+        uint256 privateKey,
         address spender,
-        uint value,
-        uint nonce,
-        uint deadline
-    )
-        internal
-        view
-        returns (uint8 v, bytes32 r, bytes32 s)
-    {
+        uint256 value,
+        uint256 nonce,
+        uint256 deadline
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 domainSeparator = Behodler3Tokenlaunch(contractAddr).DOMAIN_SEPARATOR();
 
         bytes32 structHash = keccak256(
@@ -522,11 +510,14 @@ contract B3PermitTest is Test {
  * @notice Mock ERC20 token with permit functionality for testing
  */
 contract ERC20PermitMock is ERC20Permit {
-    constructor(string memory name, string memory symbol, uint initialSupply) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol, uint256 initialSupply)
+        ERC20(name, symbol)
+        ERC20Permit(name)
+    {
         _mint(msg.sender, initialSupply);
     }
 
-    function mint(address to, uint amount) external {
+    function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
 }

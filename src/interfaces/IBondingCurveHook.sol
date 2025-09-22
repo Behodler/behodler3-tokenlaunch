@@ -17,13 +17,9 @@ interface IBondingCurveHook {
      * @return fee Fee to be applied (0-1000 where 1000 = 100%, 5 = 0.5%)
      * @return deltaBondingToken Adjustment to bonding token amount (can be positive or negative)
      */
-    function buy(
-        address buyer,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
         external
-        returns (uint fee, int deltaBondingToken);
+        returns (uint256 fee, int256 deltaBondingToken);
 
     /**
      * @notice Hook called during remove liquidity operations (sell)
@@ -34,11 +30,7 @@ interface IBondingCurveHook {
      * @return fee Fee to be applied (0-1000 where 1000 = 100%, 5 = 0.5%)
      * @return deltaBondingToken Adjustment to required bonding tokens (can be positive or negative)
      */
-    function sell(
-        address seller,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
         external
-        returns (uint fee, int deltaBondingToken);
+        returns (uint256 fee, int256 deltaBondingToken);
 }

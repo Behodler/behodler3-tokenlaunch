@@ -32,8 +32,8 @@ contract B3BuySellHooksTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
-    uint constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
-    uint constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
+    uint256 constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
+    uint256 constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
 
     function setUp() public {
         // Deploy mock contracts
@@ -56,9 +56,9 @@ contract B3BuySellHooksTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        uint fundingGoal = 1_000_000 * 1e18; // 1M tokens
-        uint seedInput = 1000 * 1e18; // 1K tokens
-        uint desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
+        uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
+        uint256 seedInput = 1000 * 1e18; // 1K tokens
+        uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
         b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
 
         vm.stopPrank();
@@ -75,9 +75,9 @@ contract B3BuySellHooksTest is Test {
 
         // Approve spending
         vm.prank(user1);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
         vm.prank(user2);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
     }
 
     // ============ HOOK STORAGE AND MANAGEMENT TESTS (SHOULD FAIL) ============
@@ -118,7 +118,7 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint initialBuyCallCount = buyHook.buyCallCount();
+        uint256 initialBuyCallCount = buyHook.buyCallCount();
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -132,7 +132,7 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -156,7 +156,7 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint expectedAmount = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedAmount = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
@@ -189,9 +189,9 @@ contract B3BuySellHooksTest is Test {
 
         // First add liquidity
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint initialSellCallCount = sellHook.sellCallCount();
+        uint256 initialSellCallCount = sellHook.sellCallCount();
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
@@ -207,9 +207,9 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint expectedInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 expectedInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
@@ -225,7 +225,7 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
@@ -241,7 +241,7 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
@@ -259,9 +259,9 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint expectedInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 expectedInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
@@ -282,12 +282,12 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
-        uint expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000; // 0.5%
-        uint expectedBondingTokensAfterFee = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000; // 0.5%
+        uint256 expectedBondingTokensAfterFee = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because fee logic doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokensAfterFee, "Fee should be applied to input tokens");
@@ -303,13 +303,13 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint expectedFee = (bondingTokens * 10) / 1000; // 1%
-        uint expectedInputTokensAfterFee = b3.quoteRemoveLiquidity(bondingTokens - expectedFee);
+        uint256 expectedFee = (bondingTokens * 10) / 1000; // 1%
+        uint256 expectedInputTokensAfterFee = b3.quoteRemoveLiquidity(bondingTokens - expectedFee);
 
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because fee logic doesn't exist
         assertEq(actualInputTokens, expectedInputTokensAfterFee, "Fee should be applied to bonding token input");
@@ -323,10 +323,10 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(zeroHook)));
 
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because fee logic doesn't exist (even with zero fee)
         assertEq(actualBondingTokens, baseBondingTokens, "Zero fee should result in base calculation");
@@ -357,11 +357,11 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
-        uint expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
+        uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
+        uint256 expectedBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because fee logic doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokens, "Typical fee should be applied correctly");
@@ -377,11 +377,11 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
-        uint expectedBondingTokens = baseBondingTokens + 1000;
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedBondingTokens = baseBondingTokens + 1000;
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because adjustment logic doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokens, "Positive delta should increase minted tokens");
@@ -395,11 +395,11 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
-        uint expectedBondingTokens = baseBondingTokens - 500;
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedBondingTokens = baseBondingTokens - 500;
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because adjustment logic doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokens, "Negative delta should decrease minted tokens");
@@ -415,15 +415,15 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
-        uint adjustedBondingTokens = bondingTokens + 300;
-        uint expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
+        uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 adjustedBondingTokens = bondingTokens + 300;
+        uint256 expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
 
         // Positive delta increases effective bonding amount, giving more output
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Should get more output with positive delta
         assertGt(actualInputTokens, baseInputTokens, "Positive delta should increase output");
@@ -432,22 +432,22 @@ contract B3BuySellHooksTest is Test {
     function test_NegativeDeltaBondingTokenDecreasesRequiredTokensOnSell_ShouldFail() public {
         // Add liquidity first without hook
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Configure hook with larger negative delta to see the effect (10% of bonding tokens)
-        int negativeDelta = -int(bondingTokens / 10);
+        int256 negativeDelta = -int256(bondingTokens / 10);
         sellHook.setSellParams(0, negativeDelta);
 
         // Set the hook after adding liquidity
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(sellHook)));
 
-        uint baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
-        uint adjustedBondingTokens = uint(int(bondingTokens) + negativeDelta);
-        uint expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
+        uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 adjustedBondingTokens = uint256(int256(bondingTokens) + negativeDelta);
+        uint256 expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
 
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Negative delta reduces output (acts like a fee)
         assertLt(actualInputTokens, baseInputTokens, "Negative delta should reduce output");
@@ -457,10 +457,10 @@ contract B3BuySellHooksTest is Test {
     // ============ REVERT CONDITION TESTS (SHOULD FAIL) ============
 
     function test_BuyRevertsWhenNegativeDeltaExceedsBaseMinting_ShouldFail() public {
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         // Configure hook with negative delta larger than base minting
-        buyHook.setBuyParams(0, -int(baseBondingTokens + 1));
+        buyHook.setBuyParams(0, -int256(baseBondingTokens + 1));
 
         // Set the hook
         vm.prank(owner);
@@ -476,10 +476,10 @@ contract B3BuySellHooksTest is Test {
     function test_SellRevertsWhenAdjustmentsResultInZeroOrNegative_ShouldFail() public {
         // Configure hook with large negative delta to make effective amount negative
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Set hook with negative delta larger than bonding tokens
-        sellHook.setSellParams(0, -int(bondingTokens + 1));
+        sellHook.setSellParams(0, -int256(bondingTokens + 1));
 
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(sellHook)));
@@ -490,10 +490,10 @@ contract B3BuySellHooksTest is Test {
     }
 
     function test_EdgeCaseDeltaEqualsNegativeBaseAmount_ShouldFail() public {
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         // Configure hook with delta exactly equal to negative base amount
-        buyHook.setBuyParams(0, -int(baseBondingTokens));
+        buyHook.setBuyParams(0, -int256(baseBondingTokens));
 
         // Set the hook
         vm.prank(owner);
@@ -510,10 +510,10 @@ contract B3BuySellHooksTest is Test {
 
     function test_BuyOperationSkipsHookWhenAddressIsZero_ShouldFail() public {
         // Don't set any hook (should be zero address by default)
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because zero-address check doesn't exist
         // When no hook is set, should behave normally
@@ -523,12 +523,12 @@ contract B3BuySellHooksTest is Test {
     function test_SellOperationSkipsHookWhenAddressIsZero_ShouldFail() public {
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
 
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because zero-address check doesn't exist
         assertEq(actualInputTokens, baseInputTokens, "Should work normally with no hook set");
@@ -537,10 +537,10 @@ contract B3BuySellHooksTest is Test {
     function test_NoRevertWithUnsetHooksDuringNormalOperations_ShouldFail() public {
         // This test ensures the contract doesn't revert when hooks are unset
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         vm.prank(user1);
-        uint inputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 inputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because hook handling doesn't exist
         assertGt(bondingTokens, 0, "Add liquidity should work without hooks");
@@ -557,12 +557,12 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
-        uint expectedBondingTokens = baseBondingTokens + 1000;
+        uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 5) / 1000;
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT - expectedFee);
+        uint256 expectedBondingTokens = baseBondingTokens + 1000;
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because hook integration doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokens, "Complete buy flow should work");
@@ -579,14 +579,14 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint expectedFee = (bondingTokens * 8) / 1000;
-        uint adjustedBondingTokens = bondingTokens - expectedFee - 200;
-        uint expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
+        uint256 expectedFee = (bondingTokens * 8) / 1000;
+        uint256 adjustedBondingTokens = bondingTokens - expectedFee - 200;
+        uint256 expectedInputTokens = b3.quoteRemoveLiquidity(adjustedBondingTokens);
 
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because hook integration doesn't exist
         assertEq(actualInputTokens, expectedInputTokens, "Complete sell flow should work");
@@ -601,11 +601,11 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
-        uint expectedBondingTokens = baseBondingTokens + 5000;
+        uint256 baseBondingTokens = b3.quoteAddLiquidity(TYPICAL_INPUT_AMOUNT);
+        uint256 expectedBondingTokens = baseBondingTokens + 5000;
 
         vm.prank(user1);
-        uint actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 actualBondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Should fail because adjustment logic doesn't exist
         assertEq(actualBondingTokens, expectedBondingTokens, "Positive delta bonus should work");
@@ -621,13 +621,13 @@ contract B3BuySellHooksTest is Test {
 
         // Add liquidity first
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
-        uint adjustedInputTokens = b3.quoteRemoveLiquidity(bondingTokens + 1000);
+        uint256 baseInputTokens = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 adjustedInputTokens = b3.quoteRemoveLiquidity(bondingTokens + 1000);
 
         vm.prank(user1);
-        uint actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualInputTokens = b3.removeLiquidity(bondingTokens, 0);
 
         // Positive delta acts as bonus, increasing output
         assertGt(actualInputTokens, baseInputTokens, "Positive delta should act as discount/bonus");
@@ -659,7 +659,7 @@ contract B3BuySellHooksTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(buyHook)));
 
-        uint expectedFee = (TYPICAL_INPUT_AMOUNT * 10) / 1000;
+        uint256 expectedFee = (TYPICAL_INPUT_AMOUNT * 10) / 1000;
 
         // Should fail because events don't exist
         vm.expectEmit(true, true, true, true);
@@ -688,7 +688,7 @@ contract B3BuySellHooksTest is Test {
     // ============ EVENT DEFINITIONS (FOR COMPILATION) ============
 
     // These events don't exist in the contract yet, but are needed for compilation
-    event HookCalled(address indexed hook, address indexed user, string operation, uint fee, int delta);
-    event FeeApplied(address indexed user, uint fee, string operation);
-    event BondingTokenAdjusted(address indexed user, int adjustment, string operation);
+    event HookCalled(address indexed hook, address indexed user, string operation, uint256 fee, int256 delta);
+    event FeeApplied(address indexed user, uint256 fee, string operation);
+    event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
 }

@@ -17,7 +17,7 @@ contract ScribbleValidationTest is Test {
     }
 
     function testBasicDeposit() public {
-        uint amount = 100;
+        uint256 amount = 100;
 
         // Test the original contract (without instrumentation)
         contract_.deposit(amount);
@@ -28,7 +28,7 @@ contract ScribbleValidationTest is Test {
     }
 
     function testBasicWithdraw() public {
-        uint amount = 100;
+        uint256 amount = 100;
 
         // First deposit
         contract_.deposit(amount);
@@ -42,8 +42,8 @@ contract ScribbleValidationTest is Test {
     }
 
     function testMultipleDeposits() public {
-        uint amount1 = 50;
-        uint amount2 = 75;
+        uint256 amount1 = 50;
+        uint256 amount2 = 75;
 
         contract_.deposit(amount1);
         contract_.deposit(amount2);

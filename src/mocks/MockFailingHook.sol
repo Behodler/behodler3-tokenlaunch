@@ -15,8 +15,8 @@ contract MockFailingHook is IBondingCurveHook {
     bool public shouldSellFail;
 
     // Call tracking
-    uint public buyCallCount;
-    uint public sellCallCount;
+    uint256 public buyCallCount;
+    uint256 public sellCallCount;
 
     constructor(
         bool _shouldBuyFail,
@@ -30,7 +30,7 @@ contract MockFailingHook is IBondingCurveHook {
         sellRevertMessage = _sellRevertMessage;
     }
 
-    function buy(address, uint, uint) external override returns (uint, int) {
+    function buy(address, uint256, uint256) external override returns (uint256, int256) {
         buyCallCount++;
 
         if (shouldBuyFail) {
@@ -40,7 +40,7 @@ contract MockFailingHook is IBondingCurveHook {
         return (0, 0);
     }
 
-    function sell(address, uint, uint) external override returns (uint, int) {
+    function sell(address, uint256, uint256) external override returns (uint256, int256) {
         sellCallCount++;
 
         if (shouldSellFail) {

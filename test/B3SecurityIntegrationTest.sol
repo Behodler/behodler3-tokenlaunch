@@ -113,7 +113,7 @@ contract B3SecurityIntegrationTest is Test {
         vm.startPrank(user1);
         inputToken.approve(address(b3), 1000 * 1e18);
 
-        uint bondingTokensOut = b3.addLiquidity(1000 * 1e18, 0);
+        uint256 bondingTokensOut = b3.addLiquidity(1000 * 1e18, 0);
         assertTrue(bondingTokensOut > 0, "Should allow add liquidity when unlocked");
 
         vm.stopPrank();
@@ -286,7 +286,7 @@ contract B3SecurityIntegrationTest is Test {
         // Now operations should work again
         vm.startPrank(user1);
         inputToken.approve(address(b3), 50);
-        uint bondingTokensOut = b3.addLiquidity(50, 0);
+        uint256 bondingTokensOut = b3.addLiquidity(50, 0);
         assertTrue(bondingTokensOut > 0, "Should work after reinitializing approval");
         vm.stopPrank();
     }
@@ -338,7 +338,7 @@ contract B3SecurityIntegrationTest is Test {
         inputToken.approve(address(b3), 1000 * 1e18);
 
         // Call should succeed normally
-        uint bondingTokensOut = b3.addLiquidity(1000 * 1e18, 0);
+        uint256 bondingTokensOut = b3.addLiquidity(1000 * 1e18, 0);
         assertTrue(bondingTokensOut > 0, "Normal call should succeed");
 
         vm.stopPrank();
@@ -351,7 +351,7 @@ contract B3SecurityIntegrationTest is Test {
         b3.addLiquidity(1000 * 1e18, 0);
 
         // Call should succeed normally
-        uint inputTokensOut = b3.removeLiquidity(10_000, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(10_000, 0);
         assertTrue(inputTokensOut > 0, "Normal call should succeed");
 
         vm.stopPrank();
@@ -360,28 +360,28 @@ contract B3SecurityIntegrationTest is Test {
     // ============ INTEGRATION TESTS ============
 
     function testCompleteUserFlow() public {
-        uint inputAmount = 1000 * 1e18;
+        uint256 inputAmount = 1000 * 1e18;
 
         vm.startPrank(user1);
 
         // 1. Check quotes
-        uint quotedBonding = b3.quoteAddLiquidity(inputAmount);
+        uint256 quotedBonding = b3.quoteAddLiquidity(inputAmount);
         assertTrue(quotedBonding > 0, "Should get valid quote");
 
         // 2. Add liquidity
         inputToken.approve(address(b3), inputAmount);
-        uint actualBonding = b3.addLiquidity(inputAmount, quotedBonding);
+        uint256 actualBonding = b3.addLiquidity(inputAmount, quotedBonding);
         assertEq(actualBonding, quotedBonding, "Actual should match quote");
 
         // 3. Check bonding token balance
         assertEq(bondingToken.balanceOf(user1), actualBonding, "Should have bonding tokens");
 
         // 4. Quote removal
-        uint quotedInput = b3.quoteRemoveLiquidity(actualBonding);
+        uint256 quotedInput = b3.quoteRemoveLiquidity(actualBonding);
         assertTrue(quotedInput > 0, "Should get valid removal quote");
 
         // 5. Remove liquidity
-        uint actualInput = b3.removeLiquidity(actualBonding, 0);
+        uint256 actualInput = b3.removeLiquidity(actualBonding, 0);
         assertEq(actualInput, quotedInput, "Removal should match quote");
 
         // 6. Check final state
@@ -391,18 +391,18 @@ contract B3SecurityIntegrationTest is Test {
     }
 
     function testMultipleUsersInteraction() public {
-        uint inputAmount = 50; // Use small amounts proportional to virtual pair scale
+        uint256 inputAmount = 50; // Use small amounts proportional to virtual pair scale
 
         // User 1 adds liquidity
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
-        uint user1Bonding = b3.addLiquidity(inputAmount, 0);
+        uint256 user1Bonding = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
 
         // User 2 adds liquidity (should get different amount due to virtual pair)
         vm.startPrank(user2);
         inputToken.approve(address(b3), inputAmount);
-        uint user2Bonding = b3.addLiquidity(inputAmount, 0);
+        uint256 user2Bonding = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
 
         // Verify both users have bonding tokens
@@ -411,8 +411,8 @@ contract B3SecurityIntegrationTest is Test {
 
         // For very small amounts with large virtual parameters, the difference might be minimal
         // Apply precision tolerance: if amounts are very close, consider them effectively equal
-        uint difference = user1Bonding > user2Bonding ? user1Bonding - user2Bonding : user2Bonding - user1Bonding;
-        uint tolerance = user1Bonding / 10_000; // 0.01% tolerance
+        uint256 difference = user1Bonding > user2Bonding ? user1Bonding - user2Bonding : user2Bonding - user1Bonding;
+        uint256 tolerance = user1Bonding / 10_000; // 0.01% tolerance
 
         if (difference > tolerance) {
             assertTrue(user2Bonding < user1Bonding, "User 2 should get fewer tokens (outside tolerance)");
@@ -423,25 +423,25 @@ contract B3SecurityIntegrationTest is Test {
 
         // Both users remove liquidity
         vm.startPrank(user1);
-        uint user1Input = b3.removeLiquidity(user1Bonding, 0);
+        uint256 user1Input = b3.removeLiquidity(user1Bonding, 0);
         assertTrue(user1Input > 0, "User 1 should get input tokens back");
         vm.stopPrank();
 
         vm.startPrank(user2);
-        uint user2Input = b3.removeLiquidity(user2Bonding, 0);
+        uint256 user2Input = b3.removeLiquidity(user2Bonding, 0);
         assertTrue(user2Input > 0, "User 2 should get input tokens back");
         vm.stopPrank();
     }
 
     function testVaultFailureHandling() public {
         // This test simulates vault failures
-        uint inputAmount = 1000 * 1e18;
+        uint256 inputAmount = 1000 * 1e18;
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
         // If vault is broken/fails, operations should handle it gracefully
-        try b3.addLiquidity(inputAmount, 0) returns (uint result) {
+        try b3.addLiquidity(inputAmount, 0) returns (uint256 result) {
             assertTrue(result > 0, "Should handle vault operations");
         } catch Error(string memory reason) {
             // If it fails, it should fail gracefully with meaningful error
@@ -454,14 +454,14 @@ contract B3SecurityIntegrationTest is Test {
     // ============ EDGE CASE TESTS ============
 
     function testOverflowProtection() public {
-        uint maxAmount = type(uint).max / 2;
+        uint256 maxAmount = type(uint256).max / 2;
 
         vm.startPrank(user1);
         inputToken.mint(user1, maxAmount);
         inputToken.approve(address(b3), maxAmount);
 
         // Should either handle large amounts or revert gracefully
-        try b3.addLiquidity(maxAmount, 0) returns (uint result) {
+        try b3.addLiquidity(maxAmount, 0) returns (uint256 result) {
             assertTrue(result > 0, "Should handle large amounts");
         } catch {
             // Acceptable if it reverts due to overflow protection
@@ -499,20 +499,20 @@ contract B3SecurityIntegrationTest is Test {
         vm.startPrank(user1);
         inputToken.approve(address(b3), 500); // Use appropriate amount for virtual pair scale
 
-        for (uint i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             // Add liquidity with small amounts that work with virtual pair scale
             b3.addLiquidity(20, 0); // Small incremental amounts
 
             // Check virtual pair integrity
-            (uint vInput, uint vL, uint k) = b3.getVirtualPair();
+            (uint256 vInput, uint256 vL, uint256 k) = b3.getVirtualPair();
             assertEq(k, vInput * vL, "K should always equal vInput * vL");
 
             // K should be approximately the constant (allowing for rounding)
             // Check virtual liquidity invariant instead of old K
-            uint alpha = b3.alpha();
-            uint beta = b3.beta();
-            uint virtualK = b3.virtualK();
-            uint leftSide = (vInput + alpha) * (vL + beta);
+            uint256 alpha = b3.alpha();
+            uint256 beta = b3.beta();
+            uint256 virtualK = b3.virtualK();
+            uint256 leftSide = (vInput + alpha) * (vL + beta);
             assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold"); // 0.1% tolerance
 
             // Virtual L should be different from bonding token supply
@@ -525,14 +525,14 @@ contract B3SecurityIntegrationTest is Test {
     // ============ GAS OPTIMIZATION TESTS ============
 
     function testGasUsageAddLiquidity() public {
-        uint inputAmount = 1000 * 1e18;
+        uint256 inputAmount = 1000 * 1e18;
 
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         b3.addLiquidity(inputAmount, 0);
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         // Document gas usage (adjust limits based on requirements)
         assertTrue(gasUsed < 500_000, "Add liquidity should use reasonable gas");
@@ -546,9 +546,9 @@ contract B3SecurityIntegrationTest is Test {
         inputToken.approve(address(b3), 1000 * 1e18);
         b3.addLiquidity(1000 * 1e18, 0);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         b3.removeLiquidity(10_000, 0);
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         // Document gas usage
         assertTrue(gasUsed < 500_000, "Remove liquidity should use reasonable gas");

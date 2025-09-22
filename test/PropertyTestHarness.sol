@@ -20,9 +20,9 @@ contract PropertyTestHarness is Test {
     TokenLaunchProperties public propertyTester;
 
     // Test execution parameters
-    uint constant FUZZ_RUNS = 100;
-    uint constant MAX_TEST_AMOUNT = 1000 * 1e18;
-    uint constant MIN_TEST_AMOUNT = 1e15;
+    uint256 constant FUZZ_RUNS = 100;
+    uint256 constant MAX_TEST_AMOUNT = 1000 * 1e18;
+    uint256 constant MIN_TEST_AMOUNT = 1e15;
 
     // ============ SETUP AND INITIALIZATION ============
 
@@ -61,7 +61,7 @@ contract PropertyTestHarness is Test {
      * @dev Validates invariants hold after state modification
      */
     function test_properties_after_add_liquidity() public {
-        uint testAmount = 100 * 1e18;
+        uint256 testAmount = 100 * 1e18;
 
         // Ensure property tester has sufficient tokens
         propertyTester.inputToken().transfer(address(propertyTester), testAmount);
@@ -93,7 +93,7 @@ contract PropertyTestHarness is Test {
      * @dev Validates invariants hold through complete operation cycle
      */
     function test_properties_after_liquidity_cycle() public {
-        uint addAmount = 200 * 1e18;
+        uint256 addAmount = 200 * 1e18;
 
         // Ensure property tester has sufficient tokens
         propertyTester.inputToken().transfer(address(propertyTester), addAmount);
@@ -103,9 +103,9 @@ contract PropertyTestHarness is Test {
         propertyTester.addLiquidity(addAmount);
 
         // Get bonding token balance for removal
-        uint bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
         if (bondingBalance > 0) {
-            uint removeAmount = bondingBalance / 2;
+            uint256 removeAmount = bondingBalance / 2;
 
             // Remove half the liquidity
             vm.prank(address(propertyTester));
@@ -138,7 +138,7 @@ contract PropertyTestHarness is Test {
      * @dev Uses Foundry's built-in fuzzing to test properties across random inputs
      * @param amount Random amount for add liquidity operation
      */
-    function testFuzz_add_liquidity_properties(uint amount) public {
+    function testFuzz_add_liquidity_properties(uint256 amount) public {
         // Bound the amount to reasonable range (similar to Echidna's bound function)
         amount = bound(amount, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT);
 
@@ -181,16 +181,16 @@ contract PropertyTestHarness is Test {
      * @dev Uses Foundry's built-in fuzzing to test properties across random inputs
      * @param bondingAmount Random bonding amount for remove liquidity operation
      */
-    function testFuzz_remove_liquidity_properties(uint bondingAmount) public {
+    function testFuzz_remove_liquidity_properties(uint256 bondingAmount) public {
         // First add some liquidity to ensure we have bonding tokens to remove
-        uint addAmount = 500 * 1e18;
+        uint256 addAmount = 500 * 1e18;
         propertyTester.inputToken().transfer(address(propertyTester), addAmount);
 
         vm.prank(address(propertyTester));
         try propertyTester.addLiquidity(addAmount) {} catch {}
 
         // Get actual bonding balance
-        uint actualBondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 actualBondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
         if (actualBondingBalance == 0) {
             return; // Skip test if no bonding tokens available
         }
@@ -232,7 +232,9 @@ contract PropertyTestHarness is Test {
      * @param addAmount2 Second add amount
      * @param removePercent Percentage of bonding tokens to remove (0-100)
      */
-    function testFuzz_operation_sequence_properties(uint addAmount1, uint addAmount2, uint removePercent) public {
+    function testFuzz_operation_sequence_properties(uint256 addAmount1, uint256 addAmount2, uint256 removePercent)
+        public
+    {
         // Bound inputs
         addAmount1 = bound(addAmount1, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT / 2);
         addAmount2 = bound(addAmount2, MIN_TEST_AMOUNT, MAX_TEST_AMOUNT / 2);
@@ -249,7 +251,7 @@ contract PropertyTestHarness is Test {
         }
 
         // Ensure sufficient tokens
-        uint totalNeeded = addAmount1 + addAmount2;
+        uint256 totalNeeded = addAmount1 + addAmount2;
         propertyTester.inputToken().transfer(address(propertyTester), totalNeeded);
 
         // Validate initial state
@@ -266,9 +268,9 @@ contract PropertyTestHarness is Test {
         assertTrue(_validateAllProperties(), "Properties should be valid after second add");
 
         // Remove liquidity based on percentage
-        uint bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
         if (bondingBalance > 0 && removePercent > 0) {
-            uint removeAmount = (bondingBalance * removePercent) / 100;
+            uint256 removeAmount = (bondingBalance * removePercent) / 100;
             if (removeAmount > 0) {
                 vm.prank(address(propertyTester));
                 try propertyTester.removeLiquidity(removeAmount) {} catch {}

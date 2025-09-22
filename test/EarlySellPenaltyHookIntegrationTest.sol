@@ -25,10 +25,10 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
-    uint constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
-    uint constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
-    uint constant ONE_HOUR = 3600;
-    uint constant ONE_DAY = 24 * ONE_HOUR;
+    uint256 constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
+    uint256 constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
+    uint256 constant ONE_HOUR = 3600;
+    uint256 constant ONE_DAY = 24 * ONE_HOUR;
 
     function setUp() public {
         // Deploy mock contracts
@@ -54,9 +54,9 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        uint fundingGoal = 1_000_000 * 1e18; // 1M tokens
-        uint seedInput = 1000 * 1e18; // 1K tokens
-        uint desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
+        uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
+        uint256 seedInput = 1000 * 1e18; // 1K tokens
+        uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
         b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
 
         vm.stopPrank();
@@ -67,9 +67,9 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
         // Approve spending
         vm.prank(user1);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
         vm.prank(user2);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
     }
 
     /**
@@ -78,7 +78,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
      * @param testUser The user that should make a purchase
      * @return bondingTokens The amount of bonding tokens the test user received
      */
-    function _setupTestScenario(address testUser) internal returns (uint bondingTokens) {
+    function _setupTestScenario(address testUser) internal returns (uint256 bondingTokens) {
         // Set penalty hook
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
@@ -88,7 +88,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Verify test user got normal timestamp
-        uint testUserTimestamp = penaltyHook.getBuyerTimestamp(testUser);
+        uint256 testUserTimestamp = penaltyHook.getBuyerTimestamp(testUser);
         assertGt(testUserTimestamp, 0, "Buyer should have non-zero timestamp");
 
         return bondingTokens;
@@ -101,7 +101,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         _setupTestScenario(user2);
 
         // Test user2 should have a normal timestamp recorded
-        uint recordedTimestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 recordedTimestamp = penaltyHook.getBuyerTimestamp(user2);
 
         assertGt(recordedTimestamp, 0, "Timestamp should be recorded for buyer");
         assertLe(recordedTimestamp, block.timestamp, "Timestamp should not be in the future");
@@ -114,14 +114,14 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // User2 first buy
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
 
         // Wait some time and buy again
         vm.warp(block.timestamp + ONE_HOUR);
 
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
 
         assertGt(secondTimestamp, firstTimestamp, "Timestamp should be updated on subsequent buy");
         assertLe(secondTimestamp, block.timestamp, "Timestamp should not be in the future");
@@ -134,14 +134,14 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // User1 buys first
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint timestamp1 = penaltyHook.getBuyerTimestamp(user1);
+        uint256 timestamp1 = penaltyHook.getBuyerTimestamp(user1);
 
         // Wait and then user2 buys
         vm.warp(block.timestamp + ONE_HOUR);
 
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint timestamp2 = penaltyHook.getBuyerTimestamp(user2);
+        uint256 timestamp2 = penaltyHook.getBuyerTimestamp(user2);
 
         // Both users should have valid timestamps, with user2's being later
         assertGt(timestamp1, 0, "First buyer should have valid timestamp");
@@ -150,7 +150,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
     }
 
     function test_FirstTimeBuyerHasZeroTimestamp() public {
-        uint timestamp = penaltyHook.getBuyerTimestamp(user1);
+        uint256 timestamp = penaltyHook.getBuyerTimestamp(user1);
         assertEq(timestamp, 0, "First-time buyer should have zero timestamp");
     }
 
@@ -158,19 +158,19 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
     function test_ImmediateSellHasMaximumPenalty() public {
         // Setup test scenario
-        uint bondingTokens = _setupTestScenario(user2);
+        uint256 bondingTokens = _setupTestScenario(user2);
 
-        uint baseOutputWithoutHook = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 baseOutputWithoutHook = b3.quoteRemoveLiquidity(bondingTokens);
 
         // Immediately sell (should get 100% penalty)
         vm.prank(user2);
-        uint actualOutput = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualOutput = b3.removeLiquidity(bondingTokens, 0);
 
         // With 100% penalty, effective bonding tokens used should be 0, so output should be minimal
         assertLt(actualOutput, baseOutputWithoutHook, "Should receive less due to penalty");
 
         // Check penalty calculation directly
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 1000, "Immediate sell should have maximum penalty (100%)");
     }
 
@@ -181,13 +181,13 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Wait 10 hours and check penalty (should have 90% penalty)
         vm.warp(block.timestamp + (10 * ONE_HOUR));
 
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 900, "10-hour wait should result in 90% penalty");
 
         // Wait another 10 hours (20 hours total, should have 80% penalty)
         vm.warp(block.timestamp + (10 * ONE_HOUR));
 
-        uint penaltyFee2 = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee2 = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee2, 800, "20-hour wait should result in 80% penalty");
     }
 
@@ -197,18 +197,18 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait 100+ hours and sell (should have no penalty)
         vm.warp(block.timestamp + (101 * ONE_HOUR));
 
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user1);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user1);
         assertEq(penaltyFee, 0, "Sell after max duration should have no penalty");
 
         // Verify selling actually works without penalty
-        uint baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
         vm.prank(user1);
-        uint actualOutput = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualOutput = b3.removeLiquidity(bondingTokens, 0);
 
         assertEq(actualOutput, baseOutput, "Should receive full amount with no penalty");
     }
@@ -218,7 +218,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
 
         // Check penalty for user who never bought
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 1000, "First-time seller should get maximum penalty");
     }
 
@@ -228,7 +228,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         vm.prank(owner);
         penaltyHook.setPenaltyParameters(15, 80); // 1.5% per hour, 80-hour max
 
-        (uint declineRate, uint maxDuration, bool active) = penaltyHook.getPenaltyParameters();
+        (uint256 declineRate, uint256 maxDuration, bool active) = penaltyHook.getPenaltyParameters();
         assertEq(declineRate, 15, "Decline rate should be updated");
         assertEq(maxDuration, 80, "Max duration should be updated");
         assertTrue(active, "Penalty should be active by default");
@@ -244,17 +244,17 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
         // Buy and immediately sell
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
 
         vm.prank(user1);
-        uint actualOutput = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualOutput = b3.removeLiquidity(bondingTokens, 0);
 
         assertEq(actualOutput, baseOutput, "Deactivated penalty should result in no fee");
 
         // Verify penalty calculation returns 0
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user1);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user1);
         assertEq(penaltyFee, 0, "Deactivated penalty should calculate 0 fee");
     }
 
@@ -269,13 +269,13 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Wait 5 hours and check penalty (should have 90% penalty with 2% decline rate)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
 
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 900, "Custom 2% rate should result in 90% penalty after 5 hours");
 
         // Wait until penalty should be zero (50 hours = 100% decline at 2% per hour)
         vm.warp(block.timestamp + (45 * ONE_HOUR)); // Total 50 hours
 
-        uint penaltyFeeZero = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFeeZero = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFeeZero, 0, "Penalty should be zero after max duration");
     }
 
@@ -283,21 +283,21 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
     function test_PenaltyHookIntegratesWithBehodler3() public {
         // Setup test scenario
-        uint bondingTokens = _setupTestScenario(user2);
+        uint256 bondingTokens = _setupTestScenario(user2);
 
         // Verify hook is set
         assertEq(address(b3.getHook()), address(penaltyHook), "Hook should be set");
 
         // Verify timestamp was recorded
-        uint timestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 timestamp = penaltyHook.getBuyerTimestamp(user2);
         assertGt(timestamp, 0, "Timestamp should be recorded");
         assertLe(timestamp, block.timestamp, "Timestamp should not be in the future");
 
         // Sell tokens immediately and verify penalty is applied
-        uint baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
+        uint256 baseOutput = b3.quoteRemoveLiquidity(bondingTokens);
 
         vm.prank(user2);
-        uint actualOutput = b3.removeLiquidity(bondingTokens, 0);
+        uint256 actualOutput = b3.removeLiquidity(bondingTokens, 0);
 
         assertLt(actualOutput, baseOutput, "Should receive less due to penalty");
     }
@@ -309,20 +309,20 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // User2 first buy
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 firstTimestamp = penaltyHook.getBuyerTimestamp(user2);
 
         // Wait and second buy (should reset timestamp)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
 
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
+        uint256 secondTimestamp = penaltyHook.getBuyerTimestamp(user2);
 
         assertGt(secondTimestamp, firstTimestamp, "Timestamp should be updated on second buy");
         assertLe(secondTimestamp, block.timestamp, "Timestamp should not be in the future");
 
         // Immediately sell (penalty should be based on second buy)
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 1000, "Penalty should be based on most recent buy");
     }
 
@@ -332,14 +332,14 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(penaltyHook)));
 
-        uint initialTimestamp = penaltyHook.getBuyerTimestamp(user1);
+        uint256 initialTimestamp = penaltyHook.getBuyerTimestamp(user1);
 
         // Try to buy with zero amount (should revert before hook is called)
         vm.prank(user1);
         vm.expectRevert("B3: Input amount must be greater than 0");
         b3.addLiquidity(0, 0);
 
-        uint afterTimestamp = penaltyHook.getBuyerTimestamp(user1);
+        uint256 afterTimestamp = penaltyHook.getBuyerTimestamp(user1);
 
         assertEq(afterTimestamp, initialTimestamp, "Zero amount buy should not update timestamp");
     }
@@ -351,13 +351,13 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         // Wait exactly 1 hour
         vm.warp(block.timestamp + ONE_HOUR);
 
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 990, "Exactly 1 hour should result in 99% penalty");
 
         // Wait exactly 100 hours
         vm.warp(block.timestamp + (99 * ONE_HOUR)); // Total 100 hours
 
-        uint penaltyFeeAtMax = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFeeAtMax = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFeeAtMax, 0, "Exactly 100 hours should result in 0% penalty");
     }
 
@@ -372,7 +372,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
         vm.prank(owner);
         penaltyHook.setPenaltyParameters(15, 80);
 
-        (uint declineRate, uint maxDuration,) = penaltyHook.getPenaltyParameters();
+        (uint256 declineRate, uint256 maxDuration,) = penaltyHook.getPenaltyParameters();
         assertEq(declineRate, 15, "Owner should be able to set decline rate");
         assertEq(maxDuration, 80, "Owner should be able to set max duration");
     }
@@ -425,7 +425,7 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
     function test_PenaltyAppliedEventEmitted() public {
         // Setup test scenario
-        uint bondingTokens = _setupTestScenario(user2);
+        uint256 bondingTokens = _setupTestScenario(user2);
 
         // Wait 2 hours
         vm.warp(block.timestamp + (2 * ONE_HOUR));
@@ -457,37 +457,37 @@ contract EarlySellPenaltyHookIntegrationTest is Test {
 
     function test_CompleteScenario_BuyWaitSellWithPenalty() public {
         // Record balance before any operations
-        uint initialBalance = inputToken.balanceOf(user2);
+        uint256 initialBalance = inputToken.balanceOf(user2);
 
         // Setup test scenario
-        uint bondingTokens = _setupTestScenario(user2);
+        uint256 bondingTokens = _setupTestScenario(user2);
 
         // Record balance after setup (to know how much was spent)
-        uint balanceAfterBuy = inputToken.balanceOf(user2);
-        uint inputSpent = initialBalance - balanceAfterBuy;
+        uint256 balanceAfterBuy = inputToken.balanceOf(user2);
+        uint256 inputSpent = initialBalance - balanceAfterBuy;
 
         // Wait 25 hours (should have 75% penalty)
         vm.warp(block.timestamp + (25 * ONE_HOUR));
 
         // Sell tokens
         vm.prank(user2);
-        uint outputReceived = b3.removeLiquidity(bondingTokens, 0);
+        uint256 outputReceived = b3.removeLiquidity(bondingTokens, 0);
 
-        uint finalBalance = inputToken.balanceOf(user2);
-        uint totalReceived = finalBalance - balanceAfterBuy;
+        uint256 finalBalance = inputToken.balanceOf(user2);
+        uint256 totalReceived = finalBalance - balanceAfterBuy;
 
         assertEq(totalReceived, outputReceived, "Balance should reflect output received");
         assertLt(totalReceived, inputSpent, "Should receive less than input due to penalty");
 
         // Verify penalty was 75%
-        uint penaltyFee = penaltyHook.calculatePenaltyFee(user2);
+        uint256 penaltyFee = penaltyHook.calculatePenaltyFee(user2);
         assertEq(penaltyFee, 750, "25-hour wait should result in 75% penalty");
     }
 
     // ============ EVENT DEFINITIONS FOR COMPILATION ============
 
-    event BuyerTimestampRecorded(address indexed buyer, uint timestamp);
-    event PenaltyApplied(address indexed seller, uint penaltyFee, uint hoursElapsed);
-    event PenaltyParametersUpdated(uint declineRatePerHour, uint maxDurationHours);
+    event BuyerTimestampRecorded(address indexed buyer, uint256 timestamp);
+    event PenaltyApplied(address indexed seller, uint256 penaltyFee, uint256 hoursElapsed);
+    event PenaltyParametersUpdated(uint256 declineRatePerHour, uint256 maxDurationHours);
     event PenaltyStatusChanged(bool active);
 }

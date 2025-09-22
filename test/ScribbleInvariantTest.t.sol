@@ -91,15 +91,15 @@ contract ScribbleInvariantTest is Test {
      */
     function testTokenLaunchVirtualKInvariant() public {
         // After setting goals, virtual K should be properly calculated
-        uint virtualK = tokenLaunch.virtualK();
-        uint virtualInputTokens = tokenLaunch.virtualInputTokens();
-        uint virtualL = tokenLaunch.virtualL();
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 virtualK = tokenLaunch.virtualK();
+        uint256 virtualInputTokens = tokenLaunch.virtualInputTokens();
+        uint256 virtualL = tokenLaunch.virtualL();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // Check virtual K consistency invariant
         if (virtualK > 0) {
-            uint expectedK = (virtualInputTokens + alpha) * (virtualL + beta);
+            uint256 expectedK = (virtualInputTokens + alpha) * (virtualL + beta);
             assertEq(virtualK, expectedK, "Virtual K should equal (virtualInputTokens + alpha) * (virtualL + beta)");
         }
     }
@@ -108,8 +108,8 @@ contract ScribbleInvariantTest is Test {
      * @notice Test that funding goal is greater than seed input
      */
     function testFundingGoalInvariant() public {
-        uint fundingGoal = tokenLaunch.fundingGoal();
-        uint seedInput = tokenLaunch.seedInput();
+        uint256 fundingGoal = tokenLaunch.fundingGoal();
+        uint256 seedInput = tokenLaunch.seedInput();
 
         // Invariant: funding goal must be greater than seed input when set
         if (fundingGoal > 0) {
@@ -121,9 +121,9 @@ contract ScribbleInvariantTest is Test {
      * @notice Test virtual liquidity parameter initialization consistency
      */
     function testVirtualLiquidityParameterConsistency() public {
-        uint virtualK = tokenLaunch.virtualK();
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 virtualK = tokenLaunch.virtualK();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // Check initialization consistency invariant
         if (virtualK > 0) {
@@ -152,9 +152,9 @@ contract ScribbleInvariantTest is Test {
      * @notice Test bonding token supply bounds
      */
     function testBondingTokenSupplyBounds() public {
-        uint virtualL = tokenLaunch.virtualL();
-        uint virtualInputTokens = tokenLaunch.virtualInputTokens();
-        uint totalSupply = bondingToken.totalSupply();
+        uint256 virtualL = tokenLaunch.virtualL();
+        uint256 virtualInputTokens = tokenLaunch.virtualInputTokens();
+        uint256 totalSupply = bondingToken.totalSupply();
 
         // Bonding token total supply must not exceed reasonable mathematical limits
         assertTrue(totalSupply <= virtualL + virtualInputTokens, "Bonding token supply must not exceed virtual limits");
@@ -165,8 +165,8 @@ contract ScribbleInvariantTest is Test {
      * @notice Test alpha and beta mathematical consistency
      */
     function testAlphaBetaConsistency() public {
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // Alpha and beta must be mathematically consistent
         if (alpha > 0 || beta > 0) {
@@ -178,8 +178,8 @@ contract ScribbleInvariantTest is Test {
      * @notice Test slippage protection parameters
      */
     function testSlippageProtection() public {
-        uint alpha = tokenLaunch.alpha();
-        uint fundingGoal = tokenLaunch.fundingGoal();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 fundingGoal = tokenLaunch.fundingGoal();
 
         // Slippage protection: virtual parameters must be reasonable
         if (alpha > 0) {
@@ -207,7 +207,7 @@ contract ScribbleInvariantTest is Test {
     /**
      * @notice Test fuzz testing against invariants
      */
-    function testFuzzInvariantPreservation(uint depositAmount) public {
+    function testFuzzInvariantPreservation(uint256 depositAmount) public {
         // Bound the fuzz input to reasonable values
         depositAmount = bound(depositAmount, 1, 1_000_000);
 
@@ -226,7 +226,7 @@ contract ScribbleInvariantTest is Test {
      */
     function testMaximumValueInvariants() public {
         // Test with maximum reasonable values
-        uint maxDeposit = type(uint128).max; // Use uint128 max to avoid overflow
+        uint256 maxDeposit = type(uint128).max; // Use uint128 max to avoid overflow
 
         try validationContract.deposit(maxDeposit) {
             assertTrue(validationContract.balance() <= validationContract.totalDeposits());
@@ -242,7 +242,7 @@ contract ScribbleInvariantTest is Test {
      */
     function testArithmeticOverflowProtection() public {
         // Deposit a large amount
-        uint largeAmount = type(uint).max / 2;
+        uint256 largeAmount = type(uint256).max / 2;
 
         try validationContract.deposit(largeAmount) {
             // If successful, invariants should still hold

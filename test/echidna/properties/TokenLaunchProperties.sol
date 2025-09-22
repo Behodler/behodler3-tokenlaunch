@@ -13,30 +13,30 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 contract MockVault is IVault {
     mapping(address => bool) public clients;
-    mapping(address => mapping(address => uint)) public accountBalances;
+    mapping(address => mapping(address => uint256)) public accountBalances;
 
     function setClient(address client, bool authorized) external override {
         clients[client] = authorized;
     }
 
-    function deposit(address token, uint amount, address recipient) external override {
+    function deposit(address token, uint256 amount, address recipient) external override {
         require(clients[msg.sender], "Not authorized");
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         accountBalances[token][recipient] += amount;
     }
 
-    function withdraw(address token, uint amount, address recipient) external override {
+    function withdraw(address token, uint256 amount, address recipient) external override {
         require(clients[msg.sender], "Not authorized");
         require(accountBalances[token][recipient] >= amount, "Insufficient balance");
         accountBalances[token][recipient] -= amount;
         IERC20(token).transfer(recipient, amount);
     }
 
-    function balanceOf(address token, address account) external view override returns (uint) {
+    function balanceOf(address token, address account) external view override returns (uint256) {
         return accountBalances[token][account];
     }
 
-    function emergencyWithdraw(uint amount) external override {
+    function emergencyWithdraw(uint256 amount) external override {
         // Simplified for testing
     }
 
@@ -57,16 +57,16 @@ contract TokenLaunchProperties {
     MockVault public vault;
 
     // Test state tracking
-    mapping(address => uint) public userInputBalanceBefore;
-    mapping(address => uint) public userBondingBalanceBefore;
-    uint public totalInputSupplied;
-    uint public totalBondingMinted;
+    mapping(address => uint256) public userInputBalanceBefore;
+    mapping(address => uint256) public userBondingBalanceBefore;
+    uint256 public totalInputSupplied;
+    uint256 public totalBondingMinted;
 
     // Constants for testing
-    uint constant INITIAL_TOKEN_SUPPLY = 1_000_000 * 1e18;
-    uint constant TEST_FUNDING_GOAL = 50_000 * 1e18;
-    uint constant TEST_SEED_INPUT = 1000 * 1e18;
-    uint constant TEST_DESIRED_PRICE = 0.9e18; // 0.9 (90% of final price, must be < 1)
+    uint256 constant INITIAL_TOKEN_SUPPLY = 1_000_000 * 1e18;
+    uint256 constant TEST_FUNDING_GOAL = 50_000 * 1e18;
+    uint256 constant TEST_SEED_INPUT = 1000 * 1e18;
+    uint256 constant TEST_DESIRED_PRICE = 0.9e18; // 0.9 (90% of final price, must be < 1)
 
     constructor() {
         // Initialize mock tokens
@@ -94,9 +94,9 @@ contract TokenLaunchProperties {
     function _distributeTokens() internal {
         address[3] memory testUsers = [address(0x10000), address(0x20000), address(0x30000)];
 
-        for (uint i = 0; i < testUsers.length; i++) {
+        for (uint256 i = 0; i < testUsers.length; i++) {
             inputToken.transfer(testUsers[i], INITIAL_TOKEN_SUPPLY / 10);
-            inputToken.approve(address(tokenLaunch), type(uint).max);
+            inputToken.approve(address(tokenLaunch), type(uint256).max);
         }
     }
 
@@ -107,10 +107,10 @@ contract TokenLaunchProperties {
      * @dev Virtual pair constant product should follow expected constraints
      */
     function echidna_virtual_k_invariant() public view returns (bool) {
-        uint virtualInput = tokenLaunch.virtualInputTokens();
-        uint virtualL = tokenLaunch.virtualL();
-        uint currentK = virtualInput * virtualL;
-        uint expectedK = tokenLaunch.virtualK();
+        uint256 virtualInput = tokenLaunch.virtualInputTokens();
+        uint256 virtualL = tokenLaunch.virtualL();
+        uint256 currentK = virtualInput * virtualL;
+        uint256 expectedK = tokenLaunch.virtualK();
 
         // K should match expected virtual K (allowing for rounding)
         return currentK >= expectedK - 1000 && currentK <= expectedK + 1000;
@@ -123,8 +123,8 @@ contract TokenLaunchProperties {
     function echidna_token_supply_conservation() public view returns (bool) {
         if (!tokenLaunch.vaultApprovalInitialized()) return true;
 
-        uint vaultBalance = inputToken.balanceOf(address(vault));
-        uint bondingSupply = bondingToken.totalSupply();
+        uint256 vaultBalance = inputToken.balanceOf(address(vault));
+        uint256 bondingSupply = bondingToken.totalSupply();
 
         // If no operations yet, both should be zero
         if (bondingSupply == 0) {
@@ -151,8 +151,8 @@ contract TokenLaunchProperties {
      * @dev Vault balance should always be reasonable relative to operations
      */
     function echidna_vault_balance_consistency() public view returns (bool) {
-        uint vaultBalance = inputToken.balanceOf(address(vault));
-        uint contractBalance = inputToken.balanceOf(address(tokenLaunch));
+        uint256 vaultBalance = inputToken.balanceOf(address(vault));
+        uint256 contractBalance = inputToken.balanceOf(address(tokenLaunch));
 
         // Contract itself should not hold input tokens (they go to vault)
         return contractBalance == 0;
@@ -163,13 +163,13 @@ contract TokenLaunchProperties {
      * @dev Total bonding tokens distributed should equal total supply
      */
     function echidna_bonding_token_ownership_consistency() public view returns (bool) {
-        uint totalSupply = bondingToken.totalSupply();
+        uint256 totalSupply = bondingToken.totalSupply();
 
         // Calculate total held by test addresses
-        uint totalHeld = 0;
+        uint256 totalHeld = 0;
         address[3] memory testUsers = [address(0x10000), address(0x20000), address(0x30000)];
 
-        for (uint i = 0; i < testUsers.length; i++) {
+        for (uint256 i = 0; i < testUsers.length; i++) {
             totalHeld += bondingToken.balanceOf(testUsers[i]);
         }
 
@@ -186,8 +186,8 @@ contract TokenLaunchProperties {
     function echidna_price_monotonicity() public view returns (bool) {
         if (!tokenLaunch.vaultApprovalInitialized()) return true;
 
-        uint virtualInput = tokenLaunch.virtualInputTokens();
-        uint virtualL = tokenLaunch.virtualL();
+        uint256 virtualInput = tokenLaunch.virtualInputTokens();
+        uint256 virtualL = tokenLaunch.virtualL();
 
         // Basic sanity check - if virtual L decreases, virtual input should increase
         // This is a simplified version of price monotonicity
@@ -200,7 +200,7 @@ contract TokenLaunchProperties {
      * @notice Test addLiquidity operation with random amounts
      * @dev Echidna will call this with random inputs
      */
-    function addLiquidity(uint amount) public {
+    function addLiquidity(uint256 amount) public {
         // Bound the amount to reasonable range
         amount = bound(amount, 1e15, 1000 * 1e18); // 0.001 to 1000 tokens
 
@@ -211,9 +211,9 @@ contract TokenLaunchProperties {
         if (inputToken.balanceOf(msg.sender) < amount) return;
 
         // Store state before operation
-        uint userInputBefore = inputToken.balanceOf(msg.sender);
-        uint userBondingBefore = bondingToken.balanceOf(msg.sender);
-        uint vaultBefore = inputToken.balanceOf(address(vault));
+        uint256 userInputBefore = inputToken.balanceOf(msg.sender);
+        uint256 userBondingBefore = bondingToken.balanceOf(msg.sender);
+        uint256 vaultBefore = inputToken.balanceOf(address(vault));
 
         // Approve tokens
         inputToken.approve(address(tokenLaunch), amount);
@@ -221,9 +221,9 @@ contract TokenLaunchProperties {
         // Try to add liquidity
         try tokenLaunch.addLiquidity(amount, 0) {
             // Verify state changes are reasonable
-            uint userInputAfter = inputToken.balanceOf(msg.sender);
-            uint userBondingAfter = bondingToken.balanceOf(msg.sender);
-            uint vaultAfter = inputToken.balanceOf(address(vault));
+            uint256 userInputAfter = inputToken.balanceOf(msg.sender);
+            uint256 userBondingAfter = bondingToken.balanceOf(msg.sender);
+            uint256 vaultAfter = inputToken.balanceOf(address(vault));
 
             // Input should decrease, bonding should increase, vault should increase
             assert(userInputAfter <= userInputBefore);
@@ -238,25 +238,25 @@ contract TokenLaunchProperties {
      * @notice Test removeLiquidity operation
      * @dev Echidna will call this with random inputs
      */
-    function removeLiquidity(uint bondingAmount) public {
+    function removeLiquidity(uint256 bondingAmount) public {
         if (!tokenLaunch.vaultApprovalInitialized()) return;
         if (tokenLaunch.locked()) return;
 
-        uint userBondingBalance = bondingToken.balanceOf(msg.sender);
+        uint256 userBondingBalance = bondingToken.balanceOf(msg.sender);
         if (userBondingBalance == 0) return;
 
         // Bound to available balance
         bondingAmount = bound(bondingAmount, 1, userBondingBalance);
 
         // Store state before operation
-        uint userInputBefore = inputToken.balanceOf(msg.sender);
-        uint userBondingBefore = bondingToken.balanceOf(msg.sender);
+        uint256 userInputBefore = inputToken.balanceOf(msg.sender);
+        uint256 userBondingBefore = bondingToken.balanceOf(msg.sender);
 
         // Try to remove liquidity
         try tokenLaunch.removeLiquidity(bondingAmount, 0) {
             // Verify state changes are reasonable
-            uint userInputAfter = inputToken.balanceOf(msg.sender);
-            uint userBondingAfter = bondingToken.balanceOf(msg.sender);
+            uint256 userInputAfter = inputToken.balanceOf(msg.sender);
+            uint256 userBondingAfter = bondingToken.balanceOf(msg.sender);
 
             // Input should increase, bonding should decrease
             assert(userInputAfter >= userInputBefore);
@@ -271,7 +271,7 @@ contract TokenLaunchProperties {
     /**
      * @notice Bound function for constraining random inputs
      */
-    function bound(uint x, uint min, uint max) internal pure returns (uint) {
+    function bound(uint256 x, uint256 min, uint256 max) internal pure returns (uint256) {
         if (x < min) return min;
         if (x > max) return max;
         return x;

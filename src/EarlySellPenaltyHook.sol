@@ -20,13 +20,13 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     // ============ STATE VARIABLES ============
 
     /// @notice Mapping of buyer addresses to their last buy timestamps
-    mapping(address => uint) private buyerLastBuyTimestamp;
+    mapping(address => uint256) private buyerLastBuyTimestamp;
 
     /// @notice Rate at which penalty declines per hour (1% = 10 in fee units)
-    uint public penaltyDeclineRatePerHour = 10;
+    uint256 public penaltyDeclineRatePerHour = 10;
 
     /// @notice Maximum duration in hours after which penalty is 0
-    uint public maxPenaltyDurationHours = 100;
+    uint256 public maxPenaltyDurationHours = 100;
 
     /// @notice Whether penalty mechanism is currently active
     bool public penaltyActive = true;
@@ -50,14 +50,10 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     /// #if_succeeds {:msg "Buy operations never adjust bonding tokens"} deltaBondingToken == 0;
     /// #if_succeeds {:msg "Buyer timestamp should be updated to current block"} buyerLastBuyTimestamp[buyer] ==
     /// block.timestamp;
-    function buy(
-        address buyer,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         // TIMESTAMP STORAGE LOGIC:
         // Store the current block timestamp for the buyer. This timestamp serves as the
@@ -91,14 +87,10 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     /// #if_succeeds {:msg "If penalty is inactive, fee should be zero"} !penaltyActive ==> fee == 0;
     /// #if_succeeds {:msg "If seller never bought, fee should be maximum when penalty active"} penaltyActive &&
     /// buyerLastBuyTimestamp[seller] == 0 ==> fee == 1000;
-    function sell(
-        address seller,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         // PENALTY ACTIVATION CHECK:
         // Allow owner to temporarily disable penalty mechanism for emergencies,
@@ -110,13 +102,13 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // PENALTY CALCULATION:
         // Calculate the time-based penalty using the core penalty algorithm
         // This accounts for time elapsed, first-time seller checks, and parameter limits
-        uint penaltyFee = calculatePenaltyFee(seller);
+        uint256 penaltyFee = calculatePenaltyFee(seller);
 
         // EVENT EMISSION FOR MONITORING:
         // Only emit penalty events when a penalty is actually applied
         // This helps with gas efficiency and event log clarity
         if (penaltyFee > 0) {
-            uint hoursElapsed = _getHoursElapsed(seller);
+            uint256 hoursElapsed = _getHoursElapsed(seller);
             emit PenaltyApplied(seller, penaltyFee, hoursElapsed);
         }
 
@@ -133,7 +125,7 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @param buyer Address of the buyer to query
      * @return timestamp Last buy timestamp for the buyer (0 if never bought)
      */
-    function getBuyerTimestamp(address buyer) external view override returns (uint timestamp) {
+    function getBuyerTimestamp(address buyer) external view override returns (uint256 timestamp) {
         return buyerLastBuyTimestamp[buyer];
     }
 
@@ -143,7 +135,12 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @return maxDuration Maximum penalty duration in hours
      * @return active Whether penalty is currently active
      */
-    function getPenaltyParameters() external view override returns (uint declineRate, uint maxDuration, bool active) {
+    function getPenaltyParameters()
+        external
+        view
+        override
+        returns (uint256 declineRate, uint256 maxDuration, bool active)
+    {
         return (penaltyDeclineRatePerHour, maxPenaltyDurationHours, penaltyActive);
     }
 
@@ -152,14 +149,14 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @param seller Address of the seller
      * @return penaltyFee Fee amount (0-1000 where 1000 = 100%)
      */
-    function calculatePenaltyFee(address seller) public view override returns (uint penaltyFee) {
+    function calculatePenaltyFee(address seller) public view override returns (uint256 penaltyFee) {
         // EMERGENCY PAUSE CHECK:
         // If penalty is deactivated, return zero regardless of time elapsed
         if (!penaltyActive) {
             return 0;
         }
 
-        uint lastBuyTimestamp = buyerLastBuyTimestamp[seller];
+        uint256 lastBuyTimestamp = buyerLastBuyTimestamp[seller];
 
         // FIRST-TIME SELLER PROTECTION:
         // Users who never bought tokens (airdrop recipients, transfers, etc.)
@@ -169,7 +166,7 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
             return 1000; // 100% penalty
         }
 
-        uint hoursElapsed = _getHoursElapsed(seller);
+        uint256 hoursElapsed = _getHoursElapsed(seller);
 
         // 96-HOUR WINDOW IMPLEMENTATION:
         // After the maximum penalty duration, no penalty is applied
@@ -182,7 +179,7 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // Implements linear decay: penalty = max(0, 100% - (hours × decline_rate))
         // Default: 100% - (hours × 1%) = penalty that reaches 0% at 100 hours
         // Formula ensures penalty declines predictably and reaches zero at max duration
-        uint penalty = 1000 - (hoursElapsed * penaltyDeclineRatePerHour);
+        uint256 penalty = 1000 - (hoursElapsed * penaltyDeclineRatePerHour);
 
         // UNDERFLOW PROTECTION:
         // Mathematical safety check - with proper parameters this should never trigger
@@ -204,7 +201,7 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
     /// 1000;
     /// #if_succeeds {:msg "Decline rate should be set correctly"} penaltyDeclineRatePerHour == _declineRatePerHour;
     /// #if_succeeds {:msg "Max duration should be set correctly"} maxPenaltyDurationHours == _maxDurationHours;
-    function setPenaltyParameters(uint _declineRatePerHour, uint _maxDurationHours) external override onlyOwner {
+    function setPenaltyParameters(uint256 _declineRatePerHour, uint256 _maxDurationHours) external override onlyOwner {
         require(_declineRatePerHour > 0, "EarlySellPenaltyHook: Decline rate must be greater than 0");
         require(_maxDurationHours > 0, "EarlySellPenaltyHook: Max duration must be greater than 0");
         require(
@@ -236,8 +233,8 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
      * @param seller Address of the seller
      * @return hoursElapsed Number of complete hours since last buy
      */
-    function _getHoursElapsed(address seller) internal view returns (uint hoursElapsed) {
-        uint lastBuyTimestamp = buyerLastBuyTimestamp[seller];
+    function _getHoursElapsed(address seller) internal view returns (uint256 hoursElapsed) {
+        uint256 lastBuyTimestamp = buyerLastBuyTimestamp[seller];
 
         // FIRST-TIME SELLER HANDLING:
         // If no timestamp exists, return 0 hours elapsed
@@ -250,7 +247,7 @@ contract EarlySellPenaltyHook is IEarlySellPenaltyHook, Ownable {
         // Convert seconds elapsed to complete hours (truncates partial hours)
         // This creates clear hourly boundaries for penalty reductions
         // Example: 3599 seconds = 0 hours, 3600 seconds = 1 hour, 7199 seconds = 1 hour
-        uint timeElapsed = block.timestamp - lastBuyTimestamp;
+        uint256 timeElapsed = block.timestamp - lastBuyTimestamp;
         return timeElapsed / 3600; // 3600 seconds = 1 hour
     }
 }

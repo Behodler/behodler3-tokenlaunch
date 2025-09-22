@@ -39,8 +39,8 @@ contract AutoDolaVaultIntegration is Test {
     // ============ GAS BENCHMARKING VARIABLES ============
 
     struct GasBenchmark {
-        uint gasUsed;
-        uint amount;
+        uint256 gasUsed;
+        uint256 amount;
         string operation;
         string testCase;
     }
@@ -48,10 +48,10 @@ contract AutoDolaVaultIntegration is Test {
     GasBenchmark[] public gasBenchmarks;
 
     // Standard test amounts for consistent benchmarking
-    uint public constant SMALL_AMOUNT = 1e15; // 0.001 tokens (18 decimals)
-    uint public constant MEDIUM_AMOUNT = 1e18; // 1 token
-    uint public constant LARGE_AMOUNT = 1000e18; // 1000 tokens
-    uint public constant MAX_AMOUNT = type(uint).max / 1e6; // Safe max amount
+    uint256 public constant SMALL_AMOUNT = 1e15; // 0.001 tokens (18 decimals)
+    uint256 public constant MEDIUM_AMOUNT = 1e18; // 1 token
+    uint256 public constant LARGE_AMOUNT = 1000e18; // 1000 tokens
+    uint256 public constant MAX_AMOUNT = type(uint256).max / 1e6; // Safe max amount
 
     // ============ SETUP ============
 
@@ -78,9 +78,9 @@ contract AutoDolaVaultIntegration is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        uint fundingGoal = 1_000_000 * 1e18; // 1M tokens
-        uint seedInput = 1000 * 1e18; // 1K tokens
-        uint desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
+        uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
+        uint256 seedInput = 1000 * 1e18; // 1K tokens
+        uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
         b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
 
         // Setup initial liquidity for meaningful tests
@@ -92,10 +92,10 @@ contract AutoDolaVaultIntegration is Test {
 
         // Setup user approvals
         vm.prank(user1);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
 
         vm.prank(user2);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
 
         // Clear gas benchmarks array
         delete gasBenchmarks;
@@ -110,7 +110,9 @@ contract AutoDolaVaultIntegration is Test {
      * @param amount The amount involved in the operation
      * @param gasUsed The gas consumed
      */
-    function recordGasBenchmark(string memory operation, string memory testCase, uint amount, uint gasUsed) internal {
+    function recordGasBenchmark(string memory operation, string memory testCase, uint256 amount, uint256 gasUsed)
+        internal
+    {
         gasBenchmarks.push(GasBenchmark({gasUsed: gasUsed, amount: amount, operation: operation, testCase: testCase}));
     }
 
@@ -122,7 +124,7 @@ contract AutoDolaVaultIntegration is Test {
         console.log("Operation | Test Case | Amount | Gas Used");
         console.log("----------------------------------------");
 
-        for (uint i = 0; i < gasBenchmarks.length; i++) {
+        for (uint256 i = 0; i < gasBenchmarks.length; i++) {
             GasBenchmark memory benchmark = gasBenchmarks[i];
             console.log(
                 string(
@@ -152,9 +154,9 @@ contract AutoDolaVaultIntegration is Test {
         inputToken.approve(address(vault), SMALL_AMOUNT);
 
         // Measure gas for deposit
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.deposit(address(inputToken), SMALL_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         // Record benchmark
         recordGasBenchmark("DEPOSIT", "small_amount", SMALL_AMOUNT, gasUsed);
@@ -170,9 +172,9 @@ contract AutoDolaVaultIntegration is Test {
     function test_VaultDeposit_MediumAmount_GasBenchmark() public {
         inputToken.approve(address(vault), MEDIUM_AMOUNT);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.deposit(address(inputToken), MEDIUM_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("DEPOSIT", "medium_amount", MEDIUM_AMOUNT, gasUsed);
 
@@ -186,9 +188,9 @@ contract AutoDolaVaultIntegration is Test {
     function test_VaultDeposit_LargeAmount_GasBenchmark() public {
         inputToken.approve(address(vault), LARGE_AMOUNT);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.deposit(address(inputToken), LARGE_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("DEPOSIT", "large_amount", LARGE_AMOUNT, gasUsed);
 
@@ -206,12 +208,12 @@ contract AutoDolaVaultIntegration is Test {
         inputToken.approve(address(vault), SMALL_AMOUNT);
         vault.deposit(address(inputToken), SMALL_AMOUNT, address(this));
 
-        uint balanceBefore = inputToken.balanceOf(address(this));
+        uint256 balanceBefore = inputToken.balanceOf(address(this));
 
         // Measure gas for withdrawal
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.withdraw(address(inputToken), SMALL_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("WITHDRAW", "small_amount", SMALL_AMOUNT, gasUsed);
 
@@ -228,11 +230,11 @@ contract AutoDolaVaultIntegration is Test {
         inputToken.approve(address(vault), MEDIUM_AMOUNT);
         vault.deposit(address(inputToken), MEDIUM_AMOUNT, address(this));
 
-        uint balanceBefore = inputToken.balanceOf(address(this));
+        uint256 balanceBefore = inputToken.balanceOf(address(this));
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.withdraw(address(inputToken), MEDIUM_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("WITHDRAW", "medium_amount", MEDIUM_AMOUNT, gasUsed);
 
@@ -247,11 +249,11 @@ contract AutoDolaVaultIntegration is Test {
         inputToken.approve(address(vault), LARGE_AMOUNT);
         vault.deposit(address(inputToken), LARGE_AMOUNT, address(this));
 
-        uint balanceBefore = inputToken.balanceOf(address(this));
+        uint256 balanceBefore = inputToken.balanceOf(address(this));
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.withdraw(address(inputToken), LARGE_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("WITHDRAW", "large_amount", LARGE_AMOUNT, gasUsed);
 
@@ -267,12 +269,12 @@ contract AutoDolaVaultIntegration is Test {
     function test_IntegratedDeposit_via_AddLiquidity_GasBenchmark() public {
         vm.startPrank(user1);
 
-        uint depositAmount = MEDIUM_AMOUNT;
+        uint256 depositAmount = MEDIUM_AMOUNT;
 
         // Measure gas for integrated operation
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         b3.addLiquidity(depositAmount, 0); // minBondingTokens = 0 for test
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("INTEGRATED_DEPOSIT", "add_liquidity", depositAmount, gasUsed);
 
@@ -290,16 +292,16 @@ contract AutoDolaVaultIntegration is Test {
         vm.startPrank(user1);
 
         // Setup: Add liquidity first
-        uint depositAmount = MEDIUM_AMOUNT;
+        uint256 depositAmount = MEDIUM_AMOUNT;
         b3.addLiquidity(depositAmount, 0); // minBondingTokens = 0 for test
-        uint bondingTokenBalance = bondingToken.balanceOf(user1);
+        uint256 bondingTokenBalance = bondingToken.balanceOf(user1);
 
-        uint balanceBefore = inputToken.balanceOf(user1);
+        uint256 balanceBefore = inputToken.balanceOf(user1);
 
         // Measure gas for integrated withdrawal
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         b3.removeLiquidity(bondingTokenBalance, 0); // minInputTokens = 0 for test
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("INTEGRATED_WITHDRAW", "remove_liquidity", bondingTokenBalance, gasUsed);
 
@@ -367,9 +369,9 @@ contract AutoDolaVaultIntegration is Test {
 
         inputToken.approve(address(vault), MAX_AMOUNT);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.deposit(address(inputToken), MAX_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         recordGasBenchmark("DEPOSIT", "max_amount", MAX_AMOUNT, gasUsed);
 
@@ -457,15 +459,15 @@ contract AutoDolaVaultIntegration is Test {
     function test_MultipleUsers_Deposit_GasBenchmark() public {
         // First deposit (simulating user1 via B3)
         inputToken.approve(address(vault), MEDIUM_AMOUNT);
-        uint gasBefore1 = gasleft();
+        uint256 gasBefore1 = gasleft();
         vault.deposit(address(inputToken), MEDIUM_AMOUNT, address(this));
-        uint gasUsed1 = gasBefore1 - gasleft();
+        uint256 gasUsed1 = gasBefore1 - gasleft();
 
         // Second deposit (simulating user2 via B3)
         inputToken.approve(address(vault), MEDIUM_AMOUNT);
-        uint gasBefore2 = gasleft();
+        uint256 gasBefore2 = gasleft();
         vault.deposit(address(inputToken), MEDIUM_AMOUNT, address(this));
-        uint gasUsed2 = gasBefore2 - gasleft();
+        uint256 gasUsed2 = gasBefore2 - gasleft();
 
         recordGasBenchmark("MULTI_USER_DEPOSIT", "first_deposit", MEDIUM_AMOUNT, gasUsed1);
         recordGasBenchmark("MULTI_USER_DEPOSIT", "second_deposit", MEDIUM_AMOUNT, gasUsed2);
@@ -486,9 +488,9 @@ contract AutoDolaVaultIntegration is Test {
 
         // Test deposit operations
         inputToken.approve(address(vault), SMALL_AMOUNT);
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         vault.deposit(address(inputToken), SMALL_AMOUNT, address(this));
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
         recordGasBenchmark("DEPOSIT", "small_analysis", SMALL_AMOUNT, gasUsed);
 
         // Clean slate for next test
@@ -509,7 +511,7 @@ contract AutoDolaVaultIntegration is Test {
 
         // Test integrated operations with fresh state
         vm.startPrank(user1);
-        uint depositAmount = MEDIUM_AMOUNT;
+        uint256 depositAmount = MEDIUM_AMOUNT;
         gasBefore = gasleft();
         b3.addLiquidity(depositAmount, 0);
         gasUsed = gasBefore - gasleft();
@@ -520,12 +522,12 @@ contract AutoDolaVaultIntegration is Test {
         printGasBenchmarks();
 
         // Calculate averages for analysis
-        uint depositGasTotal = 0;
-        uint depositCount = 0;
-        uint withdrawGasTotal = 0;
-        uint withdrawCount = 0;
+        uint256 depositGasTotal = 0;
+        uint256 depositCount = 0;
+        uint256 withdrawGasTotal = 0;
+        uint256 withdrawCount = 0;
 
-        for (uint i = 0; i < gasBenchmarks.length; i++) {
+        for (uint256 i = 0; i < gasBenchmarks.length; i++) {
             if (keccak256(bytes(gasBenchmarks[i].operation)) == keccak256(bytes("DEPOSIT"))) {
                 depositGasTotal += gasBenchmarks[i].gasUsed;
                 depositCount++;

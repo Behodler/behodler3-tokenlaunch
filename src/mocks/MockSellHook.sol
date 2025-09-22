@@ -9,34 +9,30 @@ import "../interfaces/IBondingCurveHook.sol";
  * @dev Allows configuration of return values for testing different scenarios
  */
 contract MockSellHook is IBondingCurveHook {
-    uint public buyFee;
-    int public buyDeltaBondingToken;
-    uint public sellFee;
-    int public sellDeltaBondingToken;
+    uint256 public buyFee;
+    int256 public buyDeltaBondingToken;
+    uint256 public sellFee;
+    int256 public sellDeltaBondingToken;
 
     // Call tracking
-    uint public buyCallCount;
-    uint public sellCallCount;
+    uint256 public buyCallCount;
+    uint256 public sellCallCount;
     address public lastBuyer;
     address public lastSeller;
-    uint public lastBaseBondingToken;
-    uint public lastBaseInputToken;
+    uint256 public lastBaseBondingToken;
+    uint256 public lastBaseInputToken;
 
-    constructor(uint _buyFee, int _buyDeltaBondingToken, uint _sellFee, int _sellDeltaBondingToken) {
+    constructor(uint256 _buyFee, int256 _buyDeltaBondingToken, uint256 _sellFee, int256 _sellDeltaBondingToken) {
         buyFee = _buyFee;
         buyDeltaBondingToken = _buyDeltaBondingToken;
         sellFee = _sellFee;
         sellDeltaBondingToken = _sellDeltaBondingToken;
     }
 
-    function buy(
-        address buyer,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         buyCallCount++;
         lastBuyer = buyer;
@@ -46,14 +42,10 @@ contract MockSellHook is IBondingCurveHook {
         return (buyFee, buyDeltaBondingToken);
     }
 
-    function sell(
-        address seller,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         sellCallCount++;
         lastSeller = seller;
@@ -64,12 +56,12 @@ contract MockSellHook is IBondingCurveHook {
     }
 
     // Configuration functions
-    function setBuyParams(uint _fee, int _deltaBondingToken) external {
+    function setBuyParams(uint256 _fee, int256 _deltaBondingToken) external {
         buyFee = _fee;
         buyDeltaBondingToken = _deltaBondingToken;
     }
 
-    function setSellParams(uint _fee, int _deltaBondingToken) external {
+    function setSellParams(uint256 _fee, int256 _deltaBondingToken) external {
         sellFee = _fee;
         sellDeltaBondingToken = _deltaBondingToken;
     }

@@ -41,7 +41,7 @@ contract ScribbleEdgeCaseTest is Test {
      * @notice Test edge case: Minimum deposit value (1 wei)
      */
     function testMinimumDepositEdgeCase() public {
-        uint minDeposit = 1;
+        uint256 minDeposit = 1;
 
         validationContract.deposit(minDeposit);
 
@@ -152,11 +152,11 @@ contract ScribbleEdgeCaseTest is Test {
         // Set goals that might cause calculation edge cases
         tokenLaunch.setGoals(1000 ether, 1 ether, 1e17); // 10% desired average price
 
-        uint virtualK = tokenLaunch.virtualK();
-        uint virtualInputTokens = tokenLaunch.virtualInputTokens();
-        uint virtualL = tokenLaunch.virtualL();
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 virtualK = tokenLaunch.virtualK();
+        uint256 virtualInputTokens = tokenLaunch.virtualInputTokens();
+        uint256 virtualL = tokenLaunch.virtualL();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // Verify virtual K invariant holds even with extreme parameters
         if (virtualK > 0) {
@@ -211,7 +211,7 @@ contract ScribbleEdgeCaseTest is Test {
         tokenLaunch.removeLiquidity(0, 0);
 
         // Read operations should still work
-        uint virtualK = tokenLaunch.virtualK();
+        uint256 virtualK = tokenLaunch.virtualK();
         assertTrue(virtualK > 0); // Read operations work even when locked
     }
 
@@ -222,9 +222,9 @@ contract ScribbleEdgeCaseTest is Test {
         // Use values that test precision without causing overflow
         tokenLaunch.setGoals(1000 ether + 1, 100 ether, 5e17); // Values with some precision
 
-        uint virtualK = tokenLaunch.virtualK();
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 virtualK = tokenLaunch.virtualK();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // Verify calculations maintain precision
         assertTrue(virtualK > 0);
@@ -238,7 +238,7 @@ contract ScribbleEdgeCaseTest is Test {
      */
     function testGasLimitEdgeCases() public {
         // Perform operations that might consume significant gas
-        for (uint i = 0; i < 10; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             validationContract.deposit(100 + i);
 
             // Verify invariants hold after each iteration
@@ -247,7 +247,7 @@ contract ScribbleEdgeCaseTest is Test {
         }
 
         // Perform some withdrawals
-        for (uint i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             validationContract.withdraw(100 + i);
         }
 
@@ -281,15 +281,15 @@ contract ScribbleEdgeCaseTest is Test {
         tokenLaunch.setGoals(1000 ether, 100 ether, 5e17);
 
         // Get current marginal price (should not revert)
-        uint currentPrice = tokenLaunch.getCurrentMarginalPrice();
+        uint256 currentPrice = tokenLaunch.getCurrentMarginalPrice();
         assertTrue(currentPrice > 0);
 
         // Get average price (should be 0 initially)
-        uint avgPrice = tokenLaunch.getAveragePrice();
+        uint256 avgPrice = tokenLaunch.getAveragePrice();
         assertEq(avgPrice, 0); // No bonding tokens minted yet
 
         // Get total raised (should equal virtual input tokens minus seed)
-        uint totalRaised = tokenLaunch.getTotalRaised();
+        uint256 totalRaised = tokenLaunch.getTotalRaised();
         assertEq(totalRaised, 0); // No additional tokens raised yet
     }
 

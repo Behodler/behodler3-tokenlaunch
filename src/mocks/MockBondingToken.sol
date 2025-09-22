@@ -17,7 +17,7 @@ contract MockBondingToken is ERC20, IBondingToken {
      * @param to The address that will receive the minted tokens
      * @param amount The amount of tokens to mint
      */
-    function mint(address to, uint amount) external override {
+    function mint(address to, uint256 amount) external override {
         require(to != address(0), "MockBondingToken: mint to zero address");
         require(amount > 0, "MockBondingToken: mint amount is zero");
         _mint(to, amount);
@@ -28,7 +28,7 @@ contract MockBondingToken is ERC20, IBondingToken {
      * @param from The address to burn tokens from
      * @param amount The amount of tokens to burn
      */
-    function burn(address from, uint amount) external override {
+    function burn(address from, uint256 amount) external override {
         require(from != address(0), "MockBondingToken: burn from zero address");
         require(amount > 0, "MockBondingToken: burn amount is zero");
         require(balanceOf(from) >= amount, "MockBondingToken: burn amount exceeds balance");
@@ -36,7 +36,7 @@ contract MockBondingToken is ERC20, IBondingToken {
     }
 
     // Additional helper functions for testing
-    function totalSupply() public view override(ERC20, IERC20) returns (uint) {
+    function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
         return super.totalSupply();
     }
 }

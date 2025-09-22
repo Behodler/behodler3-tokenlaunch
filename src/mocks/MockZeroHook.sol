@@ -10,21 +10,17 @@ import "../interfaces/IBondingCurveHook.sol";
  */
 contract MockZeroHook is IBondingCurveHook {
     // Call tracking
-    uint public buyCallCount;
-    uint public sellCallCount;
+    uint256 public buyCallCount;
+    uint256 public sellCallCount;
     address public lastBuyer;
     address public lastSeller;
-    uint public lastBaseBondingToken;
-    uint public lastBaseInputToken;
+    uint256 public lastBaseBondingToken;
+    uint256 public lastBaseInputToken;
 
-    function buy(
-        address buyer,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function buy(address buyer, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         buyCallCount++;
         lastBuyer = buyer;
@@ -34,14 +30,10 @@ contract MockZeroHook is IBondingCurveHook {
         return (0, 0);
     }
 
-    function sell(
-        address seller,
-        uint baseBondingToken,
-        uint baseInputToken
-    )
+    function sell(address seller, uint256 baseBondingToken, uint256 baseInputToken)
         external
         override
-        returns (uint fee, int deltaBondingToken)
+        returns (uint256 fee, int256 deltaBondingToken)
     {
         sellCallCount++;
         lastSeller = seller;

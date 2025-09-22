@@ -14,14 +14,14 @@ interface IEarlySellPenaltyHook is IBondingCurveHook {
      * @param buyer Address of the buyer to query
      * @return timestamp Last buy timestamp for the buyer (0 if never bought)
      */
-    function getBuyerTimestamp(address buyer) external view returns (uint timestamp);
+    function getBuyerTimestamp(address buyer) external view returns (uint256 timestamp);
 
     /**
      * @notice Set penalty parameters (owner only)
      * @param _declineRatePerHour Rate at which penalty declines per hour (1% = 10 in fee units)
      * @param _maxDurationHours Maximum duration in hours after which penalty is 0
      */
-    function setPenaltyParameters(uint _declineRatePerHour, uint _maxDurationHours) external;
+    function setPenaltyParameters(uint256 _declineRatePerHour, uint256 _maxDurationHours) external;
 
     /**
      * @notice Set whether penalty is active (owner only)
@@ -35,18 +35,18 @@ interface IEarlySellPenaltyHook is IBondingCurveHook {
      * @return maxDuration Maximum penalty duration in hours
      * @return active Whether penalty is currently active
      */
-    function getPenaltyParameters() external view returns (uint declineRate, uint maxDuration, bool active);
+    function getPenaltyParameters() external view returns (uint256 declineRate, uint256 maxDuration, bool active);
 
     /**
      * @notice Calculate current penalty fee for a seller based on time elapsed
      * @param seller Address of the seller
      * @return penaltyFee Fee amount (0-1000 where 1000 = 100%)
      */
-    function calculatePenaltyFee(address seller) external view returns (uint penaltyFee);
+    function calculatePenaltyFee(address seller) external view returns (uint256 penaltyFee);
 
     // Events
-    event BuyerTimestampRecorded(address indexed buyer, uint timestamp);
-    event PenaltyParametersUpdated(uint declineRatePerHour, uint maxDurationHours);
+    event BuyerTimestampRecorded(address indexed buyer, uint256 timestamp);
+    event PenaltyParametersUpdated(uint256 declineRatePerHour, uint256 maxDurationHours);
     event PenaltyStatusChanged(bool active);
-    event PenaltyApplied(address indexed seller, uint penaltyFee, uint hoursElapsed);
+    event PenaltyApplied(address indexed seller, uint256 penaltyFee, uint256 hoursElapsed);
 }

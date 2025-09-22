@@ -25,10 +25,10 @@ contract EarlySellPenaltyHookTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
-    uint constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
-    uint constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
-    uint constant ONE_HOUR = 3600;
-    uint constant ONE_DAY = 24 * ONE_HOUR;
+    uint256 constant INITIAL_INPUT_SUPPLY = 1_000_000 * 1e18;
+    uint256 constant TYPICAL_INPUT_AMOUNT = 1000 * 1e18;
+    uint256 constant ONE_HOUR = 3600;
+    uint256 constant ONE_DAY = 24 * ONE_HOUR;
 
     function setUp() public {
         // Deploy mock contracts
@@ -51,9 +51,9 @@ contract EarlySellPenaltyHookTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        uint fundingGoal = 1_000_000 * 1e18; // 1M tokens
-        uint seedInput = 1000 * 1e18; // 1K tokens
-        uint desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
+        uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
+        uint256 seedInput = 1000 * 1e18; // 1K tokens
+        uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
         b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
 
         vm.stopPrank();
@@ -67,9 +67,9 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Approve spending
         vm.prank(user1);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
         vm.prank(user2);
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
     }
 
     // ============ TDD RED PHASE - INTERFACE AND CONTRACT EXISTENCE TESTS (SHOULD FAIL) ============
@@ -99,12 +99,12 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
 
-        uint timestampBefore = block.timestamp;
+        uint256 timestampBefore = block.timestamp;
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint recordedTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 recordedTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
 
         // Should fail because real hook doesn't track timestamps
         assertGe(recordedTimestamp, timestampBefore, "Timestamp should be recorded for buyer");
@@ -118,14 +118,14 @@ contract EarlySellPenaltyHookTest is Test {
         // First buy
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint firstTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 firstTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
 
         // Wait some time and buy again
         vm.warp(block.timestamp + ONE_HOUR);
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
-        uint secondTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 secondTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
 
         // Should fail because real hook doesn't update timestamps
         assertGt(secondTimestamp, firstTimestamp, "Timestamp should be updated on subsequent buy");
@@ -145,15 +145,15 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(user2);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint timestamp1 = mockPenaltyHook.getBuyerTimestamp(user1);
-        uint timestamp2 = mockPenaltyHook.getBuyerTimestamp(user2);
+        uint256 timestamp1 = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 timestamp2 = mockPenaltyHook.getBuyerTimestamp(user2);
 
         // Should fail because real hook doesn't track multiple buyers
         assertLt(timestamp1, timestamp2, "Different buyers should have different timestamps");
     }
 
     function test_FirstTimeBuyerHasZeroTimestamp() public {
-        uint timestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 timestamp = mockPenaltyHook.getBuyerTimestamp(user1);
         assertEq(timestamp, 0, "First-time buyer should have zero timestamp");
     }
 
@@ -165,14 +165,14 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Immediately sell (should get 100% penalty)
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't calculate penalties
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 1000, "Immediate sell should have maximum penalty (100%)");
     }
 
@@ -182,7 +182,7 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait 10 hours and sell (should have 90% penalty)
         vm.warp(block.timestamp + (10 * ONE_HOUR));
@@ -191,7 +191,7 @@ contract EarlySellPenaltyHookTest is Test {
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't calculate declining penalties
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 900, "10-hour wait should result in 90% penalty");
     }
 
@@ -201,7 +201,7 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait 100+ hours and sell (should have no penalty)
         vm.warp(block.timestamp + (101 * ONE_HOUR));
@@ -210,7 +210,7 @@ contract EarlySellPenaltyHookTest is Test {
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't handle max duration
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 0, "Sell after max duration should have no penalty");
     }
 
@@ -218,10 +218,10 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
 
-        uint user1BalanceBefore = bondingToken.balanceOf(user1);
+        uint256 user1BalanceBefore = bondingToken.balanceOf(user1);
         vm.prank(user1);
         b3.addLiquidity(1000, 1000);
-        uint bondingTokensMinted = bondingToken.balanceOf(user1) - user1BalanceBefore;
+        uint256 bondingTokensMinted = bondingToken.balanceOf(user1) - user1BalanceBefore;
         assertGt(bondingTokensMinted, 0);
 
         vm.prank(user1);
@@ -232,7 +232,7 @@ contract EarlySellPenaltyHookTest is Test {
         b3.removeLiquidity(bondingTokensMinted, 0);
 
         // Should fail because real hook doesn't handle first-time sellers
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 1000, "First-time seller should get maximum penalty");
     }
 
@@ -241,7 +241,7 @@ contract EarlySellPenaltyHookTest is Test {
     function test_PenaltyParametersCanBeSet() public {
         mockPenaltyHook.setPenaltyParameters(15, 80); // 1.5% per hour, 80-hour max
 
-        (uint declineRate, uint maxDuration, bool active) = mockPenaltyHook.getPenaltyParameters();
+        (uint256 declineRate, uint256 maxDuration, bool active) = mockPenaltyHook.getPenaltyParameters();
         assertEq(declineRate, 15, "Decline rate should be updated");
         assertEq(maxDuration, 80, "Max duration should be updated");
     }
@@ -255,13 +255,13 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy and immediately sell
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't handle deactivation
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 0, "Deactivated penalty should result in no fee");
     }
 
@@ -274,7 +274,7 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait 5 hours and sell (should have 90% penalty with 2% decline rate)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
@@ -283,7 +283,7 @@ contract EarlySellPenaltyHookTest is Test {
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't handle custom rates
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 900, "Custom 2% rate should result in 90% penalty after 5 hours");
     }
 
@@ -298,14 +298,14 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Check that buy hook was called
         assertEq(mockPenaltyHook.buyCallCount(), 1, "Buy hook should be called");
 
         // Sell tokens immediately
         vm.prank(user1);
-        uint inputReceived = b3.removeLiquidity(bondingTokens, 0);
+        uint256 inputReceived = b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't integrate properly
         assertEq(mockPenaltyHook.sellCallCount(), 1, "Sell hook should be called");
@@ -318,20 +318,20 @@ contract EarlySellPenaltyHookTest is Test {
 
         // First buy
         vm.prank(user1);
-        uint bondingTokens1 = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens1 = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait and second buy (should reset timestamp)
         vm.warp(block.timestamp + (5 * ONE_HOUR));
 
         vm.prank(user1);
-        uint bondingTokens2 = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens2 = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Immediately sell (penalty should be based on second buy)
         vm.prank(user1);
         b3.removeLiquidity(bondingTokens1 + bondingTokens2, 0);
 
         // Should fail because real hook doesn't handle timestamp resets
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 1000, "Penalty should be based on most recent buy");
     }
 
@@ -341,14 +341,14 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
 
-        uint initialTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 initialTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
 
         // Try to buy with zero amount (should revert, but if it doesn't, timestamp shouldn't update)
         vm.prank(user1);
         vm.expectRevert("B3: Input amount must be greater than 0");
         b3.addLiquidity(0, 0);
 
-        uint afterTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
+        uint256 afterTimestamp = mockPenaltyHook.getBuyerTimestamp(user1);
 
         // Should fail because real hook doesn't exist
         assertEq(afterTimestamp, initialTimestamp, "Zero amount buy should not update timestamp");
@@ -359,10 +359,10 @@ contract EarlySellPenaltyHookTest is Test {
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
 
         // Set timestamp to a large value
-        vm.warp(type(uint).max - 1000);
+        vm.warp(type(uint256).max - 1000);
 
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // This should not cause overflow
         vm.prank(user1);
@@ -378,7 +378,7 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait exactly 1 hour
         vm.warp(block.timestamp + ONE_HOUR);
@@ -387,7 +387,7 @@ contract EarlySellPenaltyHookTest is Test {
         b3.removeLiquidity(bondingTokens, 0);
 
         // Should fail because real hook doesn't handle exact boundaries
-        uint penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
+        uint256 penaltyApplied = mockPenaltyHook.lastPenaltyApplied();
         assertEq(penaltyApplied, 990, "Exactly 1 hour should result in 99% penalty");
     }
 
@@ -412,7 +412,7 @@ contract EarlySellPenaltyHookTest is Test {
 
         // Buy tokens
         vm.prank(user1);
-        uint bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
+        uint256 bondingTokens = b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
         // Wait 2 hours
         vm.warp(block.timestamp + (2 * ONE_HOUR));
@@ -441,12 +441,12 @@ contract EarlySellPenaltyHookTest is Test {
         vm.prank(owner);
         b3.setHook(IBondingCurveHook(address(mockPenaltyHook)));
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
 
         vm.prank(user1);
         b3.addLiquidity(TYPICAL_INPUT_AMOUNT, 0);
 
-        uint gasUsed = gasBefore - gasleft();
+        uint256 gasUsed = gasBefore - gasleft();
 
         // Should fail because real hook doesn't exist to measure gas
         assertLt(gasUsed, 500_000, "Timestamp storage should not be overly gas intensive");
@@ -454,8 +454,8 @@ contract EarlySellPenaltyHookTest is Test {
 
     // ============ EVENT DEFINITIONS FOR COMPILATION ============
 
-    event BuyerTimestampRecorded(address indexed buyer, uint timestamp);
-    event PenaltyApplied(address indexed seller, uint penaltyFee, uint hoursElapsed);
-    event PenaltyParametersUpdated(uint declineRatePerHour, uint maxDurationHours);
+    event BuyerTimestampRecorded(address indexed buyer, uint256 timestamp);
+    event PenaltyApplied(address indexed seller, uint256 penaltyFee, uint256 hoursElapsed);
+    event PenaltyParametersUpdated(uint256 declineRatePerHour, uint256 maxDurationHours);
     event PenaltyStatusChanged(bool active);
 }

@@ -30,9 +30,9 @@ contract B3RemoveLiquidityTest is Test {
     address public user2 = address(0x3);
 
     // Virtual Liquidity Test Parameters
-    uint public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
-    uint public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
+    uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
+    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
         vm.startPrank(owner);
@@ -74,67 +74,67 @@ contract B3RemoveLiquidityTest is Test {
     // ============ BASIC REMOVE LIQUIDITY TESTS ============
 
     function testRemoveLiquidityBasic() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
         vm.startPrank(user1);
 
         // Record balance before operation
-        uint balanceBefore = inputToken.balanceOf(user1);
+        uint256 balanceBefore = inputToken.balanceOf(user1);
 
-        uint inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
 
         // Should return non-zero input tokens
         assertTrue(inputTokensOut > 0, "Should return input tokens");
 
         // Check that user's input token balance increased by the returned amount
-        uint balanceAfter = inputToken.balanceOf(user1);
+        uint256 balanceAfter = inputToken.balanceOf(user1);
         assertEq(balanceAfter - balanceBefore, inputTokensOut, "User should receive the exact input tokens returned");
 
         vm.stopPrank();
     }
 
     function testRemoveLiquidityBurnsBondingTokens() public {
-        uint bondingTokenAmount = 10_000;
-        uint initialBondingBalance = bondingToken.balanceOf(user1);
+        uint256 bondingTokenAmount = 10_000;
+        uint256 initialBondingBalance = bondingToken.balanceOf(user1);
 
         vm.startPrank(user1);
 
         b3.removeLiquidity(bondingTokenAmount, 0);
 
         // Check that bonding tokens were burned
-        uint finalBondingBalance = bondingToken.balanceOf(user1);
+        uint256 finalBondingBalance = bondingToken.balanceOf(user1);
         assertEq(initialBondingBalance - finalBondingBalance, bondingTokenAmount, "Bonding tokens should be burned");
 
         vm.stopPrank();
     }
 
     function testRemoveLiquidityVaultWithdrawal() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
-        uint initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
 
         vm.startPrank(user1);
 
-        uint inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
 
         // Check that tokens were withdrawn from vault
-        uint finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
         assertEq(initialVaultBalance - finalVaultBalance, inputTokensOut, "Tokens should be withdrawn from vault");
 
         vm.stopPrank();
     }
 
     function testRemoveLiquidityVirtualPairUpdate() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
-        (uint initialVInput, uint initialVL,) = b3.getVirtualPair();
+        (uint256 initialVInput, uint256 initialVL,) = b3.getVirtualPair();
 
         vm.startPrank(user1);
 
         b3.removeLiquidity(bondingTokenAmount, 0);
 
         // Virtual pair should be updated
-        (uint finalVInput, uint finalVL, uint k) = b3.getVirtualPair();
+        (uint256 finalVInput, uint256 finalVL, uint256 k) = b3.getVirtualPair();
 
         assertTrue(finalVInput < initialVInput, "Virtual input tokens should decrease");
         assertEq(finalVL, initialVL + bondingTokenAmount, "Virtual L should increase by bonding token amount");
@@ -146,16 +146,16 @@ contract B3RemoveLiquidityTest is Test {
     // ============ VIRTUAL PAIR MATH TESTS ============
 
     function testRemoveLiquidityVirtualPairMath() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
-        (uint initialVInput, uint initialVL,) = b3.getVirtualPair();
+        (uint256 initialVInput, uint256 initialVL,) = b3.getVirtualPair();
 
         // Use quote to get expected output (virtual liquidity formula is complex)
-        uint expectedInputTokensOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
+        uint256 expectedInputTokensOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
 
-        uint inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
 
         // The input tokens out should equal calculated amount
         assertEq(inputTokensOut, expectedInputTokensOut, "Input tokens should equal calculated amount");
@@ -180,31 +180,31 @@ contract B3RemoveLiquidityTest is Test {
         freshB3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
         // First add liquidity to get bonding tokens and update virtual pair
-        uint inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
+        uint256 inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
 
         vm.startPrank(user1);
         inputToken.approve(address(freshB3), inputAmount);
-        uint bondingTokensReceived = freshB3.addLiquidity(inputAmount, 0);
+        uint256 bondingTokensReceived = freshB3.addLiquidity(inputAmount, 0);
 
         // Capture virtual K after adding liquidity
-        uint initialVirtualK = freshB3.virtualK();
+        uint256 initialVirtualK = freshB3.virtualK();
 
         // Now remove some liquidity (less than we added)
-        uint bondingTokenAmount = bondingTokensReceived / 2;
+        uint256 bondingTokenAmount = bondingTokensReceived / 2;
         freshB3.removeLiquidity(bondingTokenAmount, 0);
 
-        (uint finalVInput, uint finalVL, uint k) = freshB3.getVirtualPair();
+        (uint256 finalVInput, uint256 finalVL, uint256 k) = freshB3.getVirtualPair();
 
         // Virtual K constant should remain unchanged
-        uint finalVirtualK = freshB3.virtualK();
+        uint256 finalVirtualK = freshB3.virtualK();
         assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change");
 
         // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with precision tolerance
-        uint alpha = freshB3.alpha();
-        uint beta = freshB3.beta();
-        uint leftSide = (finalVInput + alpha) * (finalVL + beta);
+        uint256 alpha = freshB3.alpha();
+        uint256 beta = freshB3.beta();
+        uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
         // Use larger tolerance for ERC20 precision as instructed by user (10^4 for 10^18 values)
-        uint tolerance = initialVirtualK / 1e14; // 0.01% tolerance for large numbers
+        uint256 tolerance = initialVirtualK / 1e14; // 0.01% tolerance for large numbers
         assertApproxEqAbs(
             leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within precision"
         );
@@ -216,13 +216,13 @@ contract B3RemoveLiquidityTest is Test {
         vm.startPrank(user1);
 
         // Test with different amounts using fresh contracts for each to avoid saturation
-        uint[] memory testAmounts = new uint[](4);
+        uint256[] memory testAmounts = new uint256[](4);
         testAmounts[0] = 10 * 1e18;
         testAmounts[1] = 50 * 1e18;
         testAmounts[2] = 100 * 1e18;
         testAmounts[3] = 200 * 1e18;
 
-        for (uint i = 0; i < testAmounts.length; i++) {
+        for (uint256 i = 0; i < testAmounts.length; i++) {
             // Set vault bonding curve for fresh contract (need to do this outside of prank)
             vm.stopPrank();
 
@@ -245,14 +245,14 @@ contract B3RemoveLiquidityTest is Test {
 
             // Add liquidity
             inputToken.approve(address(freshB3), testAmounts[i]);
-            uint bondingReceived = freshB3.addLiquidity(testAmounts[i], 0);
+            uint256 bondingReceived = freshB3.addLiquidity(testAmounts[i], 0);
             assertTrue(
                 bondingReceived > 0, string(abi.encodePacked("Add ", vm.toString(i), " should produce bonding tokens"))
             );
 
             // Remove half of the liquidity
-            uint bondingAmount = bondingReceived / 2;
-            uint actualOut = freshB3.removeLiquidity(bondingAmount, 0);
+            uint256 bondingAmount = bondingReceived / 2;
+            uint256 actualOut = freshB3.removeLiquidity(bondingAmount, 0);
             assertTrue(
                 actualOut > 0, string(abi.encodePacked("Remove ", vm.toString(i), " should return input tokens"))
             );
@@ -264,8 +264,8 @@ contract B3RemoveLiquidityTest is Test {
     // ============ MEV PROTECTION TESTS ============
 
     function testRemoveLiquidityMEVProtection() public {
-        uint bondingTokenAmount = 10_000;
-        uint minInputTokens = 50_000 * 1e18; // Set unreasonably high minimum
+        uint256 bondingTokenAmount = 10_000;
+        uint256 minInputTokens = 50_000 * 1e18; // Set unreasonably high minimum
 
         vm.startPrank(user1);
 
@@ -277,15 +277,15 @@ contract B3RemoveLiquidityTest is Test {
     }
 
     function testRemoveLiquidityMEVProtectionPasses() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
         // Get quote first
-        uint expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
-        uint minInputTokens = (expectedOut * 95) / 100; // 5% slippage tolerance
+        uint256 expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
+        uint256 minInputTokens = (expectedOut * 95) / 100; // 5% slippage tolerance
 
         vm.startPrank(user1);
 
-        uint inputTokensOut = b3.removeLiquidity(bondingTokenAmount, minInputTokens);
+        uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, minInputTokens);
 
         assertTrue(inputTokensOut >= minInputTokens, "Output should meet minimum requirement");
 
@@ -304,7 +304,7 @@ contract B3RemoveLiquidityTest is Test {
     }
 
     function testRemoveLiquidityInsufficientBondingTokens() public {
-        uint bondingTokenAmount = 100_000; // More than user2 has
+        uint256 bondingTokenAmount = 100_000; // More than user2 has
 
         vm.startPrank(user2); // user2 doesn't have any bonding tokens
 
@@ -316,7 +316,7 @@ contract B3RemoveLiquidityTest is Test {
 
     function testRemoveLiquidityInsufficientVaultBalance() public {
         // This tests the case where vault doesn't have enough tokens
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
         vm.startPrank(user1);
 
@@ -339,11 +339,11 @@ contract B3RemoveLiquidityTest is Test {
     // ============ COMPLETE REMOVAL TESTS ============
 
     function testRemoveAllLiquidity() public {
-        uint allBondingTokens = bondingToken.balanceOf(user1);
+        uint256 allBondingTokens = bondingToken.balanceOf(user1);
 
         vm.startPrank(user1);
 
-        uint inputTokensOut = b3.removeLiquidity(allBondingTokens, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(allBondingTokens, 0);
 
         // Should have no bonding tokens left
         assertEq(bondingToken.balanceOf(user1), 0, "Should have no bonding tokens left");
@@ -360,16 +360,16 @@ contract B3RemoveLiquidityTest is Test {
         // Give user2 some bonding tokens
         bondingToken.mint(user2, 25_000);
 
-        uint bondingAmount = 10_000;
+        uint256 bondingAmount = 10_000;
 
         // User 1 removes liquidity
         vm.startPrank(user1);
-        uint user1TokensOut = b3.removeLiquidity(bondingAmount, 0);
+        uint256 user1TokensOut = b3.removeLiquidity(bondingAmount, 0);
         vm.stopPrank();
 
         // User 2 removes liquidity
         vm.startPrank(user2);
-        uint user2TokensOut = b3.removeLiquidity(bondingAmount, 0);
+        uint256 user2TokensOut = b3.removeLiquidity(bondingAmount, 0);
         vm.stopPrank();
 
         // Both users should have received tokens
@@ -389,7 +389,7 @@ contract B3RemoveLiquidityTest is Test {
         vm.startPrank(user1);
 
         // The function should have reentrancy protection
-        uint inputTokensOut = b3.removeLiquidity(10_000, 0);
+        uint256 inputTokensOut = b3.removeLiquidity(10_000, 0);
         assertTrue(inputTokensOut > 0, "Function should work normally when not under reentrancy attack");
 
         vm.stopPrank();
@@ -413,23 +413,23 @@ contract B3RemoveLiquidityTest is Test {
         // Set virtual liquidity goals for fresh contract
         freshB3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
 
-        uint initialBalance = inputToken.balanceOf(user1);
-        uint inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair
+        uint256 initialBalance = inputToken.balanceOf(user1);
+        uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair
 
         vm.startPrank(user1);
 
         // Add liquidity
         inputToken.approve(address(freshB3), inputAmount);
-        uint bondingTokensOut = freshB3.addLiquidity(inputAmount, 0);
+        uint256 bondingTokensOut = freshB3.addLiquidity(inputAmount, 0);
 
         // Remove liquidity
-        uint inputTokensOut = freshB3.removeLiquidity(bondingTokensOut, 0);
+        uint256 inputTokensOut = freshB3.removeLiquidity(bondingTokensOut, 0);
 
         // Due to virtual pair math and integer division, might not get exactly the same amount back
         assertTrue(inputTokensOut > 0, "Should get some tokens back");
 
         // Check that the operation shows expected rounding behavior
-        uint finalBalance = inputToken.balanceOf(user1);
+        uint256 finalBalance = inputToken.balanceOf(user1);
         // Due to integer division precision in virtual pair math, we typically get back slightly less
         // or in some cases exactly the same (depending on the math precision)
         assertTrue(
@@ -443,12 +443,12 @@ contract B3RemoveLiquidityTest is Test {
     // ============ EVENT TESTS ============
 
     function testRemoveLiquidityEvent() public {
-        uint bondingTokenAmount = 10_000;
+        uint256 bondingTokenAmount = 10_000;
 
         vm.startPrank(user1);
 
         // Calculate expected input tokens out
-        uint expectedInputTokensOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
+        uint256 expectedInputTokensOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         // Expect the LiquidityRemoved event
         vm.expectEmit(true, false, false, true);
@@ -460,5 +460,5 @@ contract B3RemoveLiquidityTest is Test {
     }
 
     // Define the event for testing
-    event LiquidityRemoved(address indexed user, uint bondingTokenAmount, uint inputTokensOut);
+    event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
 }

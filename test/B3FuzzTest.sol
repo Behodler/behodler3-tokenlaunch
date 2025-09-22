@@ -38,28 +38,28 @@ contract B3FuzzTest is Test {
     address public user2 = address(0x3);
 
     // Virtual Liquidity Test Parameters
-    uint public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
-    uint public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
+    uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
+    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     // Track edge cases discovered during fuzzing
     struct EdgeCase {
         string description;
-        uint inputAmount;
-        uint bondingAmount;
+        uint256 inputAmount;
+        uint256 bondingAmount;
         bool reproduced;
     }
 
     EdgeCase[] public discoveredEdgeCases;
 
     // Fuzz testing metrics
-    uint public fuzzRunsCount = 0;
-    uint public edgeCasesFound = 0;
-    uint public boundaryConditionsHit = 0;
+    uint256 public fuzzRunsCount = 0;
+    uint256 public edgeCasesFound = 0;
+    uint256 public boundaryConditionsHit = 0;
 
-    event FuzzTestResult(string testName, uint inputAmount, bool success, string reason);
-    event EdgeCaseDiscovered(string description, uint inputAmount, uint bondingAmount);
-    event BoundaryConditionHit(string condition, uint value);
+    event FuzzTestResult(string testName, uint256 inputAmount, bool success, string reason);
+    event EdgeCaseDiscovered(string description, uint256 inputAmount, uint256 bondingAmount);
+    event BoundaryConditionHit(string condition, uint256 value);
 
     function setUp() public {
         vm.startPrank(owner);
@@ -88,12 +88,12 @@ contract B3FuzzTest is Test {
         // Setup user balances
         vm.startPrank(user1);
         inputToken.mint(user1, type(uint128).max); // Large balance for testing
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
         vm.stopPrank();
 
         vm.startPrank(user2);
         inputToken.mint(user2, type(uint128).max); // Large balance for testing
-        inputToken.approve(address(b3), type(uint).max);
+        inputToken.approve(address(b3), type(uint256).max);
         vm.stopPrank();
     }
 
@@ -125,7 +125,7 @@ contract B3FuzzTest is Test {
 
         vm.startPrank(user1);
 
-        try b3.addLiquidity(inputAmount, 0) returns (uint bondingTokensOut) {
+        try b3.addLiquidity(inputAmount, 0) returns (uint256 bondingTokensOut) {
             // Verify invariants
             assertGt(bondingTokensOut, 0, "Should receive bonding tokens");
 
@@ -192,7 +192,7 @@ contract B3FuzzTest is Test {
 
         vm.startPrank(user1);
 
-        try b3.addLiquidity(overflowAmount, 0) returns (uint bondingTokensOut) {
+        try b3.addLiquidity(overflowAmount, 0) returns (uint256 bondingTokensOut) {
             // If this succeeds, the overflow was fixed
             discoveredEdgeCases.push(
                 EdgeCase({
@@ -236,11 +236,11 @@ contract B3FuzzTest is Test {
         vm.startPrank(user1);
 
         // First add some liquidity to have bonding tokens
-        try b3.addLiquidity(1000 * 1e18, 0) returns (uint bondingTokensOut) {
+        try b3.addLiquidity(1000 * 1e18, 0) returns (uint256 bondingTokensOut) {
             // Bound the bonding amount to what we actually have
-            uint actualBondingAmount = bondingAmount > bondingTokensOut ? bondingTokensOut : bondingAmount;
+            uint256 actualBondingAmount = bondingAmount > bondingTokensOut ? bondingTokensOut : bondingAmount;
 
-            try b3.removeLiquidity(actualBondingAmount, 0) returns (uint inputTokensOut) {
+            try b3.removeLiquidity(actualBondingAmount, 0) returns (uint256 inputTokensOut) {
                 assertGt(inputTokensOut, 0, "Should receive input tokens back");
 
                 // Test edge case: removing all liquidity
@@ -297,13 +297,13 @@ contract B3FuzzTest is Test {
         vm.startPrank(user1);
 
         // Test quote functions with various amounts
-        try b3.quoteAddLiquidity(inputAmount1) returns (uint quote1) {
-            try b3.quoteAddLiquidity(inputAmount2) returns (uint quote2) {
+        try b3.quoteAddLiquidity(inputAmount1) returns (uint256 quote1) {
+            try b3.quoteAddLiquidity(inputAmount2) returns (uint256 quote2) {
                 // Test monotonicity: larger input should not give proportionally larger output (bonding curve)
                 if (inputAmount1 < inputAmount2) {
                     // Due to bonding curve, rate should decrease
-                    uint rate1 = (quote1 * 1e18) / inputAmount1;
-                    uint rate2 = (quote2 * 1e18) / inputAmount2;
+                    uint256 rate1 = (quote1 * 1e18) / inputAmount1;
+                    uint256 rate2 = (quote2 * 1e18) / inputAmount2;
 
                     if (rate1 <= rate2) {
                         // Potential edge case: bonding curve not working as expected
@@ -390,7 +390,7 @@ contract B3FuzzTest is Test {
      * @notice Test critical invariants throughout fuzz testing
      */
     function invariant_VirtualPairConsistency() public {
-        (uint inputTokens, uint lTokens, uint k) = b3.getVirtualPair();
+        (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
 
         // K should equal inputTokens * lTokens
         if (k != inputTokens * lTokens) {
@@ -412,8 +412,8 @@ contract B3FuzzTest is Test {
      */
     function invariant_TotalSupplyConsistency() public {
         bool isDifferent = b3.virtualLDifferentFromTotalSupply();
-        (, uint virtualL,) = b3.getVirtualPair();
-        uint totalSupply = bondingToken.totalSupply();
+        (, uint256 virtualL,) = b3.getVirtualPair();
+        uint256 totalSupply = bondingToken.totalSupply();
 
         // Check consistency
         if (isDifferent && virtualL == totalSupply) {
@@ -435,14 +435,14 @@ contract B3FuzzTest is Test {
     /**
      * @notice Get fuzz testing statistics
      */
-    function getFuzzStats() external view returns (uint runs, uint edgeCases, uint boundaries) {
+    function getFuzzStats() external view returns (uint256 runs, uint256 edgeCases, uint256 boundaries) {
         return (fuzzRunsCount, edgeCasesFound, boundaryConditionsHit);
     }
 
     /**
      * @notice Get discovered edge case by index
      */
-    function getEdgeCase(uint index) external view returns (EdgeCase memory) {
+    function getEdgeCase(uint256 index) external view returns (EdgeCase memory) {
         require(index < discoveredEdgeCases.length, "Index out of bounds");
         return discoveredEdgeCases[index];
     }
@@ -450,7 +450,7 @@ contract B3FuzzTest is Test {
     /**
      * @notice Get total number of edge cases discovered
      */
-    function getEdgeCaseCount() external view returns (uint) {
+    function getEdgeCaseCount() external view returns (uint256) {
         return discoveredEdgeCases.length;
     }
 }

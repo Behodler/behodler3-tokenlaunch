@@ -102,10 +102,10 @@ contract PropertyTestBridge is Test {
      */
     function test_addLiquidity_integration() public {
         // Use a reasonable test amount
-        uint testAmount = 100 * 1e18;
+        uint256 testAmount = 100 * 1e18;
 
         // PropertyTester already has tokens from its constructor, verify it has enough
-        uint currentBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
+        uint256 currentBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
         if (currentBalance < testAmount) {
             // If not enough, mint more tokens to the propertyTester
             vm.prank(address(propertyTester));
@@ -113,16 +113,16 @@ contract PropertyTestBridge is Test {
         }
 
         // Store state before operation
-        uint balanceBefore = propertyTester.inputToken().balanceOf(address(propertyTester));
-        uint bondingBefore = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 balanceBefore = propertyTester.inputToken().balanceOf(address(propertyTester));
+        uint256 bondingBefore = propertyTester.bondingToken().balanceOf(address(propertyTester));
 
         // Call the property test's addLiquidity function
         vm.prank(address(propertyTester));
         propertyTester.addLiquidity(testAmount);
 
         // Verify state changes are reasonable
-        uint balanceAfter = propertyTester.inputToken().balanceOf(address(propertyTester));
-        uint bondingAfter = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 balanceAfter = propertyTester.inputToken().balanceOf(address(propertyTester));
+        uint256 bondingAfter = propertyTester.bondingToken().balanceOf(address(propertyTester));
 
         // Basic sanity checks
         assertLe(balanceAfter, balanceBefore, "Input balance should not increase unexpectedly");
@@ -138,10 +138,10 @@ contract PropertyTestBridge is Test {
      */
     function test_removeLiquidity_integration() public {
         // First add some liquidity to have something to remove
-        uint addAmount = 50 * 1e18;
+        uint256 addAmount = 50 * 1e18;
 
         // Ensure property tester has sufficient tokens
-        uint currentBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
+        uint256 currentBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
         if (currentBalance < addAmount) {
             vm.prank(address(propertyTester));
             propertyTester.inputToken().mint(address(propertyTester), addAmount);
@@ -151,21 +151,21 @@ contract PropertyTestBridge is Test {
         propertyTester.addLiquidity(addAmount);
 
         // Now test remove liquidity
-        uint bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
+        uint256 bondingBalance = propertyTester.bondingToken().balanceOf(address(propertyTester));
         if (bondingBalance > 0) {
-            uint removeAmount = bondingBalance / 2; // Remove half
+            uint256 removeAmount = bondingBalance / 2; // Remove half
 
             // Store state before operation
-            uint inputBefore = propertyTester.inputToken().balanceOf(address(propertyTester));
-            uint bondingBefore = propertyTester.bondingToken().balanceOf(address(propertyTester));
+            uint256 inputBefore = propertyTester.inputToken().balanceOf(address(propertyTester));
+            uint256 bondingBefore = propertyTester.bondingToken().balanceOf(address(propertyTester));
 
             // Call the property test's removeLiquidity function
             vm.prank(address(propertyTester));
             propertyTester.removeLiquidity(removeAmount);
 
             // Verify state changes are reasonable
-            uint inputAfter = propertyTester.inputToken().balanceOf(address(propertyTester));
-            uint bondingAfter = propertyTester.bondingToken().balanceOf(address(propertyTester));
+            uint256 inputAfter = propertyTester.inputToken().balanceOf(address(propertyTester));
+            uint256 bondingAfter = propertyTester.bondingToken().balanceOf(address(propertyTester));
 
             // Basic sanity checks
             assertLe(bondingAfter, bondingBefore, "Bonding balance should not increase unexpectedly");
@@ -210,7 +210,7 @@ contract PropertyTestBridge is Test {
 
         // Verify that token balances reflect proper initialization
         // (Constants are internal, so we test the effects instead)
-        uint propertyTesterBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
+        uint256 propertyTesterBalance = propertyTester.inputToken().balanceOf(address(propertyTester));
         assertGt(propertyTesterBalance, 0, "Property tester should have initial token supply");
     }
 }

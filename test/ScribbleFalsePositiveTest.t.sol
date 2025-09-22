@@ -163,11 +163,11 @@ contract ScribbleFalsePositiveTest is Test {
      */
     function testTokenLaunchLiquidityOperationsValid() public {
         // Add liquidity operations should pass specifications
-        uint balanceBefore = bondingToken.balanceOf(address(this));
+        uint256 balanceBefore = bondingToken.balanceOf(address(this));
 
         tokenLaunch.addLiquidity(200 ether, 0);
 
-        uint balanceAfter = bondingToken.balanceOf(address(this));
+        uint256 balanceAfter = bondingToken.balanceOf(address(this));
         assertTrue(balanceAfter > balanceBefore, "Bonding tokens should be minted");
 
         // Multiple add liquidity operations
@@ -175,7 +175,7 @@ contract ScribbleFalsePositiveTest is Test {
         tokenLaunch.addLiquidity(150 ether, 0);
 
         // Remove some liquidity
-        uint bondingTokenBalance = bondingToken.balanceOf(address(this));
+        uint256 bondingTokenBalance = bondingToken.balanceOf(address(this));
         bondingToken.approve(address(tokenLaunch), bondingTokenBalance);
 
         tokenLaunch.removeLiquidity(bondingTokenBalance / 4, 0); // Remove 25%
@@ -190,21 +190,21 @@ contract ScribbleFalsePositiveTest is Test {
      */
     function testViewFunctionCallsValid() public {
         // Price queries should not trigger any specifications
-        uint marginalPrice = tokenLaunch.getCurrentMarginalPrice();
+        uint256 marginalPrice = tokenLaunch.getCurrentMarginalPrice();
         assertTrue(marginalPrice > 0, "Marginal price should be positive");
 
-        uint averagePrice = tokenLaunch.getAveragePrice();
+        uint256 averagePrice = tokenLaunch.getAveragePrice();
         // Average price can be 0 initially, that's valid
 
-        uint totalRaised = tokenLaunch.getTotalRaised();
+        uint256 totalRaised = tokenLaunch.getTotalRaised();
         assertTrue(totalRaised >= 0, "Total raised should be non-negative");
 
         // State queries
-        uint virtualK = tokenLaunch.virtualK();
-        uint virtualL = tokenLaunch.virtualL();
-        uint virtualInputTokens = tokenLaunch.virtualInputTokens();
-        uint alpha = tokenLaunch.alpha();
-        uint beta = tokenLaunch.beta();
+        uint256 virtualK = tokenLaunch.virtualK();
+        uint256 virtualL = tokenLaunch.virtualL();
+        uint256 virtualInputTokens = tokenLaunch.virtualInputTokens();
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
 
         // These should all be consistent without triggering false positives
         assertTrue(virtualK > 0);
@@ -240,17 +240,17 @@ contract ScribbleFalsePositiveTest is Test {
         // Perform operations that involve complex calculations
         tokenLaunch.addLiquidity(123 ether, 0); // Non-round number
 
-        uint marginalPriceBefore = tokenLaunch.getCurrentMarginalPrice();
+        uint256 marginalPriceBefore = tokenLaunch.getCurrentMarginalPrice();
 
         tokenLaunch.addLiquidity(456 ether, 0); // Another non-round number
 
-        uint marginalPriceAfter = tokenLaunch.getCurrentMarginalPrice();
+        uint256 marginalPriceAfter = tokenLaunch.getCurrentMarginalPrice();
 
         // Price should increase as more liquidity is added (curve property)
         assertTrue(marginalPriceAfter > marginalPriceBefore, "Marginal price should increase");
 
         // Remove some liquidity
-        uint bondingTokens = bondingToken.balanceOf(address(this));
+        uint256 bondingTokens = bondingToken.balanceOf(address(this));
         bondingToken.approve(address(tokenLaunch), bondingTokens);
 
         tokenLaunch.removeLiquidity(bondingTokens / 3, 0);
@@ -281,7 +281,7 @@ contract ScribbleFalsePositiveTest is Test {
      */
     function testRepeatedOperationsValid() public {
         // Perform many repeated operations
-        for (uint i = 1; i <= 20; i++) {
+        for (uint256 i = 1; i <= 20; i++) {
             validationContract.deposit(i * 10);
         }
 
@@ -290,7 +290,7 @@ contract ScribbleFalsePositiveTest is Test {
         assertTrue(validationContract.balance() > 0);
 
         // Perform many withdrawals
-        for (uint i = 1; i <= 10; i++) {
+        for (uint256 i = 1; i <= 10; i++) {
             validationContract.withdraw(i * 10);
         }
 
@@ -339,15 +339,15 @@ contract ScribbleFalsePositiveTest is Test {
         tokenLaunch.addLiquidity(500 ether, 0);
 
         // Quote functions should work without triggering specifications
-        uint bondingTokensOut = tokenLaunch.quoteAddLiquidity(100 ether);
+        uint256 bondingTokensOut = tokenLaunch.quoteAddLiquidity(100 ether);
         assertTrue(bondingTokensOut > 0, "Quote should return positive bonding tokens");
 
-        uint inputTokensOut = tokenLaunch.quoteRemoveLiquidity(bondingTokensOut);
+        uint256 inputTokensOut = tokenLaunch.quoteRemoveLiquidity(bondingTokensOut);
         assertTrue(inputTokensOut > 0, "Quote should return positive input tokens");
 
         // These pricing operations should not trigger any false positives
-        uint currentPrice = tokenLaunch.getCurrentMarginalPrice();
-        uint averagePrice = tokenLaunch.getAveragePrice();
+        uint256 currentPrice = tokenLaunch.getCurrentMarginalPrice();
+        uint256 averagePrice = tokenLaunch.getAveragePrice();
 
         assertTrue(currentPrice > 0, "Current price should be positive");
         assertTrue(averagePrice > 0, "Average price should be positive after liquidity addition");
@@ -357,14 +357,14 @@ contract ScribbleFalsePositiveTest is Test {
      * @notice Test that specification checking itself doesn't interfere with normal operations
      */
     function testSpecificationOverheadValid() public {
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
 
         // Perform operations and measure gas impact of specifications
         validationContract.deposit(1000);
         validationContract.withdraw(500);
 
-        uint gasAfter = gasleft();
-        uint gasUsed = gasBefore - gasAfter;
+        uint256 gasAfter = gasleft();
+        uint256 gasUsed = gasBefore - gasAfter;
 
         // Gas usage should be reasonable (specifications shouldn't add excessive overhead)
         assertTrue(gasUsed < 1_000_000, "Specification overhead should be reasonable");

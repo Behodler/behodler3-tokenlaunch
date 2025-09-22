@@ -6,9 +6,9 @@ pragma solidity ^0.8.13;
  * @notice Basic Echidna test to verify the setup works
  */
 contract SimpleTest {
-    uint public value;
+    uint256 public value;
 
-    function setValue(uint _value) public {
+    function setValue(uint256 _value) public {
         value = _value;
     }
 

@@ -369,8 +369,16 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
         // Calculate using (x+α)(y+β)=k formula
         // newVirtualFrom = k / (virtualTo + inputAmount + toOffset) - fromOffset
+        // Check for overflow before adding
+        require(virtualTo <= type(uint256).max - inputAmount, "VL: Addition would overflow");
+        require(virtualTo + inputAmount <= type(uint256).max - toOffset, "VL: Addition would overflow");
+
         uint256 denominator = virtualTo + inputAmount + toOffset;
-        uint256 newVirtualFrom = virtualK / denominator - fromOffset;
+        require(denominator > 0, "VL: Zero denominator");
+
+        uint256 newVirtualFromWithOffset = virtualK / denominator;
+        require(newVirtualFromWithOffset >= fromOffset, "VL: Subtraction would underflow");
+        uint256 newVirtualFrom = newVirtualFromWithOffset - fromOffset;
 
         // Ensure we don't get negative results
         require(newVirtualFrom < virtualFrom, "VL: Invalid calculation result");

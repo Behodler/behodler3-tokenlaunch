@@ -184,39 +184,29 @@ contract B3FuzzTest is Test {
 
     /**
      * @notice Test specific overflow edge case discovered during fuzzing
-     * @dev Documents the boundary where arithmetic overflow occurs
+     * @dev Documents the boundary where arithmetic overflow would occur and is now properly handled
      */
     function testFuzz_AddLiquidity_OverflowBoundary() public {
         // Test the specific failing value from fuzz testing (smaller overflow boundary)
-        uint128 overflowAmount = 8_222_967_575_367_701_945_983_868; // 8.222e24 - causes overflow
+        uint128 overflowAmount = 8_222_967_575_367_701_945_983_868; // 8.222e24 - now properly handled
 
         vm.startPrank(user1);
 
-        try b3.addLiquidity(overflowAmount, 0) returns (uint256 bondingTokensOut) {
-            // If this succeeds, the overflow was fixed
-            discoveredEdgeCases.push(
-                EdgeCase({
-                    description: "Previously failing overflow amount now works",
-                    inputAmount: overflowAmount,
-                    bondingAmount: bondingTokensOut,
-                    reproduced: true
-                })
-            );
-            edgeCasesFound++;
-            emit EdgeCaseDiscovered("Overflow fixed", overflowAmount, bondingTokensOut);
-        } catch Error(string memory reason) {
-            // Expected: arithmetic overflow
-            discoveredEdgeCases.push(
-                EdgeCase({
-                    description: string(abi.encodePacked("Confirmed overflow at 8.222e24: ", reason)),
-                    inputAmount: overflowAmount,
-                    bondingAmount: 0,
-                    reproduced: true
-                })
-            );
-            edgeCasesFound++;
-            emit EdgeCaseDiscovered("Confirmed overflow boundary", overflowAmount, 0);
-        }
+        // This should now revert with a proper error message instead of panic
+        vm.expectRevert("VL: Subtraction would underflow");
+        b3.addLiquidity(overflowAmount, 0);
+
+        // Document that overflow protection is working
+        discoveredEdgeCases.push(
+            EdgeCase({
+                description: "Overflow protection working correctly at 8.222e24",
+                inputAmount: overflowAmount,
+                bondingAmount: 0,
+                reproduced: true
+            })
+        );
+        edgeCasesFound++;
+        emit EdgeCaseDiscovered("Overflow protection validated", overflowAmount, 0);
 
         vm.stopPrank();
     }

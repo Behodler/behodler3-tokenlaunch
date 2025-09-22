@@ -4,11 +4,8 @@ pragma solidity ^0.8.13;
 import "@vault/interfaces/IVault.sol";
 import "./interfaces/IBondingToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @title Behodler3Tokenlaunch (B3)
@@ -61,7 +58,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 /// !vaultApprovalInitialized || address(inputToken) != address(0);
 /// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
 /// virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
-contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
+contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     // ============ STATE VARIABLES ============
 
     /// @notice The input token being bootstrapped
@@ -108,20 +105,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /// @notice Auto-lock functionality flag
     bool public autoLock;
 
-    // ============ EIP-2612 PERMIT VARIABLES ============
-
-    /// @notice Mapping of user addresses to their current nonce for permit functionality
-    mapping(address => uint256) private _nonces;
-
-    /// @notice EIP-712 typehash for the permit function
-    bytes32 private constant _PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-
-    /// @notice Name used for EIP-712 domain separator
-    string private constant _EIP712_NAME = "Behodler3Tokenlaunch";
-
-    /// @notice Version used for EIP-712 domain separator
-    string private constant _EIP712_VERSION = "1";
 
     // ============ EVENTS ============
 
@@ -139,10 +122,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         uint256 virtualK
     );
 
-    // ============ EIP-2612 PERMIT EVENTS ============
-
-    /// @notice Emitted when a permit is used for token approval
-    event PermitUsed(address indexed owner, address indexed spender, uint256 value, uint256 nonce, uint256 deadline);
 
     // ============ MODIFIERS ============
 
@@ -155,7 +134,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
 
     constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault)
         Ownable(msg.sender)
-        EIP712(_EIP712_NAME, _EIP712_VERSION)
     {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
@@ -759,149 +737,5 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /// #if_succeeds {:msg "Virtual pair architecture requires separation of virtual and actual tokens"} true;
     function virtualLDifferentFromTotalSupply() external view returns (bool) {
         return virtualL != bondingToken.totalSupply();
-    }
-
-    // ============ EIP-2612 PERMIT FUNCTIONS ============
-
-    /**
-     * @notice Implements EIP-2612 permit functionality for gasless approvals
-     * @dev Allows token holder to approve spender via signature instead of transaction
-     * @param owner The token owner granting the approval
-     * @param spender The address being approved to spend tokens
-     * @param value The amount of tokens to approve
-     * @param deadline The timestamp after which the permit is no longer valid
-     * @param v The recovery byte of the signature
-     * @param r The first 32 bytes of the signature
-     * @param s The second 32 bytes of the signature
-     */
-    /// #if_succeeds {:msg "Permit deadline must not be expired"} deadline >= block.timestamp;
-    /// #if_succeeds {:msg "Owner address must not be zero"} owner != address(0);
-    /// #if_succeeds {:msg "Spender address must not be zero"} spender != address(0);
-    /// #if_succeeds {:msg "Nonce should be incremented after permit"} _nonces[owner] == old(_nonces[owner]) + 1;
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
-        external
-    {
-        require(deadline >= block.timestamp, "B3: Permit expired");
-        require(owner != address(0), "B3: Invalid owner");
-        require(spender != address(0), "B3: Invalid spender");
-
-        uint256 nonce = _nonces[owner];
-
-        // Increment nonce to prevent replay attacks
-        _nonces[owner]++;
-
-        // Check if the input token supports EIP-2612 permit
-        try IERC20Permit(address(inputToken)).permit(owner, spender, value, deadline, v, r, s) {
-            // If input token has native permit support, use it directly
-            emit PermitUsed(owner, spender, value, nonce, deadline);
-        } catch {
-            // If input token doesn't support permit, we need a different approach
-            // For now, revert as we cannot directly approve tokens we don't control
-            revert("B3: Input token does not support permit");
-        }
-    }
-
-    /**
-     * @notice Permit-enabled version of addLiquidity
-     * @dev Combines permit and addLiquidity in one transaction for gasless approval
-     * @param inputAmount Amount of input tokens to add
-     * @param minBondingTokens Minimum bonding tokens to receive (MEV protection)
-     * @param deadline The timestamp after which the permit is no longer valid
-     * @param v The recovery byte of the signature
-     * @param r The first 32 bytes of the signature
-     * @param s The second 32 bytes of the signature
-     * @return bondingTokensOut Amount of bonding tokens minted
-     */
-    /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
-    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
-    /// #if_succeeds {:msg "Vault approval must be initialized"} vaultApprovalInitialized;
-    /// #if_succeeds {:msg "Permit deadline must not be expired"} deadline >= block.timestamp;
-    /// #if_succeeds {:msg "Output must meet minimum requirement"} bondingTokensOut >= minBondingTokens;
-    /// #if_succeeds {:msg "Bonding tokens must be minted to user"} bondingTokensOut > 0;
-    function addLiquidityWithPermit(
-        uint256 inputAmount,
-        uint256 minBondingTokens,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant notLocked returns (uint256 bondingTokensOut) {
-        require(inputAmount > 0, "B3: Input amount must be greater than 0");
-
-        // Fallback safety check: ensure vault approval is initialized
-        require(vaultApprovalInitialized, "B3: Vault approval not initialized - call initializeVaultApproval() first");
-
-        // First try to use permit (will fail gracefully if not supported)
-        try this.permit(msg.sender, address(this), inputAmount, deadline, v, r, s) {
-            // Permit succeeded, proceed with addLiquidity
-        } catch {
-            // Permit failed - check if user has sufficient allowance instead
-            require(
-                inputToken.allowance(msg.sender, address(this)) >= inputAmount,
-                "B3: Insufficient allowance and permit failed"
-            );
-        }
-
-        // Calculate bonding tokens using refactored virtual pair math
-        bondingTokensOut = _calculateBondingTokensOut(inputAmount);
-
-        // Check MEV protection
-        require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
-
-        // Transfer input tokens from user to contract
-        require(inputToken.transferFrom(msg.sender, address(this), inputAmount), "B3: Transfer failed");
-
-        // Deposit input tokens to vault
-        vault.deposit(address(inputToken), inputAmount, address(this));
-
-        // Mint bonding tokens to user (only if amount > 0)
-        if (bondingTokensOut > 0) {
-            bondingToken.mint(msg.sender, bondingTokensOut);
-        }
-
-        // Update virtual pair state
-        _updateVirtualLiquidityState(int256(inputAmount), -int256(bondingTokensOut));
-
-        emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
-
-        return bondingTokensOut;
-    }
-
-    /**
-     * @notice Returns the current nonce for the given owner
-     * @dev Part of EIP-2612 standard interface
-     * @param owner The address to query the nonce for
-     * @return The current nonce for the owner
-     */
-    /// #if_succeeds {:msg "Nonce should match internal nonce mapping"} $result == _nonces[owner];
-    /// #if_succeeds {:msg "Nonce must be non-negative"} $result >= 0;
-    function nonces(address owner) external view returns (uint256) {
-        return _nonces[owner];
-    }
-
-    /**
-     * @notice Returns the domain separator for EIP-712 signatures
-     * @dev Part of EIP-2612 standard interface
-     * @return The domain separator hash
-     */
-    /// #if_succeeds {:msg "Domain separator should be valid EIP-712 hash"} $result != bytes32(0);
-    /// #if_succeeds {:msg "Domain separator should match EIP-712 v4 standard"} $result == _domainSeparatorV4();
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparatorV4();
-    }
-
-    /**
-     * @notice Checks if the contract supports EIP-2612 permit functionality
-     * @dev Returns true if permit is supported (EIP-165 compatible)
-     * @param interfaceId The interface identifier to check
-     * @return True if the interface is supported
-     */
-    /// #if_succeeds {:msg "Should return true for IERC20Permit interface"} interfaceId ==
-    /// type(IERC20Permit).interfaceId ==> $result == true;
-    /// #if_succeeds {:msg "Should return true for EIP-165 interface"} interfaceId == 0x01ffc9a7 ==> $result == true;
-    /// #if_succeeds {:msg "Should return false for unsupported interfaces"} interfaceId !=
-    /// type(IERC20Permit).interfaceId && interfaceId != 0x01ffc9a7 ==> $result == false;
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IERC20Permit).interfaceId || interfaceId == 0x01ffc9a7; // EIP-165 interface ID
     }
 }

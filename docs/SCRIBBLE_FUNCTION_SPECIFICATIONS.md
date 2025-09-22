@@ -94,7 +94,6 @@ This document outlines the comprehensive Scribble specifications implemented for
 
 - Auto-lock should be set to specified value
 
-
 ##### initializeVaultApproval()
 
 **Access Control**: Only owner can initialize vault approval
@@ -116,7 +115,6 @@ This document outlines the comprehensive Scribble specifications implemented for
 **Postconditions**:
 
 - Vault approval should be disabled after call
-
 
 ## Input Validation Specifications
 

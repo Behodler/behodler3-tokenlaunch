@@ -6,7 +6,6 @@ import "../src/Behodler3Tokenlaunch.sol";
 import "@vault/mocks/MockVault.sol";
 import "../src/mocks/MockBondingToken.sol";
 import "../src/mocks/MockERC20.sol";
-import "../src/mocks/MockBuyHook.sol";
 import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 /**
@@ -31,7 +30,6 @@ contract B3FuzzTest is Test {
     MockVault public vault;
     MockBondingToken public bondingToken;
     MockERC20 public inputToken;
-    MockBuyHook public buyHook;
 
     address public owner = address(0x1);
     address public user1 = address(0x2);
@@ -68,7 +66,6 @@ contract B3FuzzTest is Test {
         inputToken = new MockERC20("Input Token", "INPUT", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
         vault = new MockVault(owner);
-        buyHook = new MockBuyHook(0, 0, 0, 0); // No fees, no delta for basic testing
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
@@ -77,7 +74,6 @@ contract B3FuzzTest is Test {
 
         // Set up B3 configuration
         b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
-        b3.setHook(IBondingCurveHook(address(buyHook)));
 
         // Initialize vault
         vault.setClient(address(b3), true);

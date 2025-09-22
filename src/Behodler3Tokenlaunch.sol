@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "@vault/interfaces/IVault.sol";
 import "./interfaces/IBondingToken.sol";
-import "./interfaces/IBondingCurveHook.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -124,8 +123,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /// @notice Auto-lock functionality flag
     bool public autoLock;
 
-    /// @notice The bonding curve hook for buy/sell operations
-    IBondingCurveHook private bondingCurveHook;
 
     // ============ EIP-2612 PERMIT VARIABLES ============
 
@@ -148,9 +145,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
     event ContractLocked();
     event ContractUnlocked();
-    event HookCalled(address indexed hook, address indexed user, string operation, uint256 fee, int256 delta);
-    event FeeApplied(address indexed user, uint256 fee, string operation);
-    event BondingTokenAdjusted(address indexed user, int256 adjustment, string operation);
     event VaultChanged(address indexed oldVault, address indexed newVault);
     event VirtualLiquidityGoalsSet(
         uint256 fundingGoal,
@@ -596,40 +590,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         // This prevents operations if approval was missed or revoked
         require(vaultApprovalInitialized, "B3: Vault approval not initialized - call initializeVaultApproval() first");
 
-        // Calculate base bonding tokens using refactored virtual pair math
-        uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);
-
-        // Initialize variables for hook processing
-        uint256 effectiveInputAmount = inputAmount;
-        bondingTokensOut = baseBondingTokens;
-
-        // Call buy hook if set
-        if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) =
-                bondingCurveHook.buy(msg.sender, baseBondingTokens, inputAmount);
-
-            // Emit hook called event
-            emit HookCalled(address(bondingCurveHook), msg.sender, "buy", hookFee, deltaBondingToken);
-
-            // Apply fee to input amount
-            if (hookFee > 0) {
-                require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (inputAmount * hookFee) / 1000;
-                effectiveInputAmount = inputAmount - feeAmount;
-                emit FeeApplied(msg.sender, feeAmount, "buy");
-
-                // Recalculate bonding tokens with reduced input
-                bondingTokensOut = _calculateBondingTokensOut(effectiveInputAmount);
-            }
-
-            // Apply delta bonding token adjustment
-            if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(bondingTokensOut) + deltaBondingToken;
-                require(adjustedBondingAmount > 0, "B3: Negative bonding token result");
-                bondingTokensOut = uint256(adjustedBondingAmount);
-                emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "buy");
-            }
-        }
+        // Calculate bonding tokens using refactored virtual pair math
+        bondingTokensOut = _calculateBondingTokensOut(inputAmount);
 
         // Check MEV protection
         require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
@@ -645,8 +607,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
             bondingToken.mint(msg.sender, bondingTokensOut);
         }
 
-        // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
+        // Update virtual pair state
+        _updateVirtualLiquidityState(int256(inputAmount), -int256(bondingTokensOut));
 
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
 
@@ -680,52 +642,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
 
-        // Calculate base input tokens using refactored virtual pair math
-        uint256 baseInputTokens = _calculateInputTokensOut(bondingTokenAmount);
-
-        // Initialize variables for hook processing
-        uint256 effectiveBondingAmount = bondingTokenAmount;
-        inputTokensOut = baseInputTokens;
-
-        // Call sell hook if set
-        if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) =
-                bondingCurveHook.sell(msg.sender, bondingTokenAmount, baseInputTokens);
-
-            // Emit hook called event
-            emit HookCalled(address(bondingCurveHook), msg.sender, "sell", hookFee, deltaBondingToken);
-
-            // Apply fee to bonding token amount
-            if (hookFee > 0) {
-                require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (bondingTokenAmount * hookFee) / 1000;
-                effectiveBondingAmount = bondingTokenAmount - feeAmount;
-                emit FeeApplied(msg.sender, feeAmount, "sell");
-
-                // Recalculate input tokens with reduced bonding tokens
-                // Handle edge case where fee is 100% (effectiveBondingAmount = 0)
-                if (effectiveBondingAmount > 0) {
-                    inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
-                } else {
-                    inputTokensOut = 0;
-                }
-            }
-
-            // Apply delta bonding token adjustment
-            if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(effectiveBondingAmount) + deltaBondingToken;
-                require(adjustedBondingAmount > 0, "B3: Invalid bonding token amount after adjustment");
-                effectiveBondingAmount = uint256(adjustedBondingAmount);
-
-                // Handle edge case where adjusted amount might be 0
-                if (effectiveBondingAmount > 0) {
-                    inputTokensOut = _calculateInputTokensOut(effectiveBondingAmount);
-                } else {
-                    inputTokensOut = 0;
-                }
-                emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "sell");
-            }
-        }
+        // Calculate input tokens using refactored virtual pair math
+        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
 
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
@@ -739,8 +657,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
             require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         }
 
-        // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(-int256(baseInputTokens), int256(bondingTokenAmount));
+        // Update virtual pair state
+        _updateVirtualLiquidityState(-int256(inputTokensOut), int256(bondingTokenAmount));
 
         emit LiquidityRemoved(msg.sender, bondingTokenAmount, inputTokensOut);
 
@@ -820,24 +738,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
         autoLock = _autoLock;
     }
 
-    /**
-     * @notice Set the bonding curve hook
-     * @param _hook The hook contract address
-     */
-    /// #if_succeeds {:msg "Only owner can set hook"} msg.sender == owner();
-    /// #if_succeeds {:msg "Hook should be set to specified address"} address(bondingCurveHook) == address(_hook);
-    function setHook(IBondingCurveHook _hook) external onlyOwner {
-        bondingCurveHook = _hook;
-    }
-
-    /**
-     * @notice Get the current bonding curve hook
-     * @return The hook contract address
-     */
-    /// #if_succeeds {:msg "Hook should match internal hook storage"} $result == bondingCurveHook;
-    function getHook() external view returns (IBondingCurveHook) {
-        return bondingCurveHook;
-    }
 
     // ============ VIEW FUNCTIONS - ALL STUBS ============
 
@@ -959,40 +859,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
             );
         }
 
-        // Calculate base bonding tokens using refactored virtual pair math
-        uint256 baseBondingTokens = _calculateBondingTokensOut(inputAmount);
-
-        // Initialize variables for hook processing
-        uint256 effectiveInputAmount = inputAmount;
-        bondingTokensOut = baseBondingTokens;
-
-        // Call buy hook if set
-        if (address(bondingCurveHook) != address(0)) {
-            (uint256 hookFee, int256 deltaBondingToken) =
-                bondingCurveHook.buy(msg.sender, baseBondingTokens, inputAmount);
-
-            // Emit hook called event
-            emit HookCalled(address(bondingCurveHook), msg.sender, "buy", hookFee, deltaBondingToken);
-
-            // Apply fee to input amount
-            if (hookFee > 0) {
-                require(hookFee <= 1000, "B3: Fee exceeds maximum");
-                uint256 feeAmount = (inputAmount * hookFee) / 1000;
-                effectiveInputAmount = inputAmount - feeAmount;
-                emit FeeApplied(msg.sender, feeAmount, "buy");
-
-                // Recalculate bonding tokens with reduced input
-                bondingTokensOut = _calculateBondingTokensOut(effectiveInputAmount);
-            }
-
-            // Apply delta bonding token adjustment
-            if (deltaBondingToken != 0) {
-                int256 adjustedBondingAmount = int256(bondingTokensOut) + deltaBondingToken;
-                require(adjustedBondingAmount > 0, "B3: Negative bonding token result");
-                bondingTokensOut = uint256(adjustedBondingAmount);
-                emit BondingTokenAdjusted(msg.sender, deltaBondingToken, "buy");
-            }
-        }
+        // Calculate bonding tokens using refactored virtual pair math
+        bondingTokensOut = _calculateBondingTokensOut(inputAmount);
 
         // Check MEV protection
         require(bondingTokensOut >= minBondingTokens, "B3: Insufficient output amount");
@@ -1008,8 +876,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
             bondingToken.mint(msg.sender, bondingTokensOut);
         }
 
-        // Update virtual pair state using base amounts (virtual pair math is independent of hook adjustments)
-        _updateVirtualLiquidityState(int256(effectiveInputAmount), -int256(baseBondingTokens));
+        // Update virtual pair state
+        _updateVirtualLiquidityState(int256(inputAmount), -int256(bondingTokensOut));
 
         emit LiquidityAdded(msg.sender, inputAmount, bondingTokensOut);
 

@@ -94,12 +94,6 @@ This document outlines the comprehensive Scribble specifications implemented for
 
 - Auto-lock should be set to specified value
 
-##### setHook(IBondingCurveHook \_hook)
-
-**Access Control**: Only owner can set hook
-**Postconditions**:
-
-- Hook should be set to specified address
 
 ##### initializeVaultApproval()
 
@@ -123,64 +117,6 @@ This document outlines the comprehensive Scribble specifications implemented for
 
 - Vault approval should be disabled after call
 
-### 2. EarlySellPenaltyHook.sol
-
-#### Contract-Level Invariants
-
-- **Penalty Rate Validation**: Penalty decline rate must be positive if set
-- **Duration Validation**: Max penalty duration must be positive if set
-- **Parameter Consistency**: Penalty parameters must allow penalty to reach zero
-- **Active State Consistency**: Penalty active state must be boolean
-
-#### Function Specifications
-
-##### buy(address buyer, uint baseBondingToken, uint baseInputToken)
-
-**Access Control**: Public function (called by tokenlaunch contract)
-**Preconditions**:
-
-- Buyer address must not be zero
-
-**Postconditions**:
-
-- Buy operations never apply fees (fee == 0)
-- Buy operations never adjust bonding tokens (deltaBondingToken == 0)
-- Buyer timestamp should be updated to current block
-
-##### sell(address seller, uint baseBondingToken, uint baseInputToken)
-
-**Access Control**: Public function (called by tokenlaunch contract)
-**Preconditions**:
-
-- Seller address must not be zero
-
-**Postconditions**:
-
-- Fee must be within valid range (≤ 1000)
-- Sell operations never adjust bonding tokens (deltaBondingToken == 0)
-- If penalty is inactive, fee should be zero
-- If seller never bought, fee should be maximum when penalty active
-
-##### setPenaltyParameters(uint \_declineRatePerHour, uint \_maxDurationHours)
-
-**Access Control**: Only owner can set penalty parameters
-**Preconditions**:
-
-- Decline rate must be positive
-- Max duration must be positive
-- Parameters must allow penalty to reach zero
-
-**Postconditions**:
-
-- Decline rate should be set correctly
-- Max duration should be set correctly
-
-##### setPenaltyActive(bool \_active)
-
-**Access Control**: Only owner can set penalty active status
-**Postconditions**:
-
-- Penalty active should be set to specified value
 
 ## Input Validation Specifications
 
@@ -209,17 +145,13 @@ The following functions include comprehensive access control specifications:
 - `setGoals()` - Virtual liquidity configuration
 - `lock()` / `unlock()` - Emergency controls
 - `setAutoLock()` - Auto-lock configuration
-- `setHook()` - Hook management
 - `initializeVaultApproval()` - Vault setup
 - `disableToken()` - Emergency token disable
-- `setPenaltyParameters()` - Penalty configuration
-- `setPenaltyActive()` - Penalty state control
 
 ### Public Functions with State Guards
 
 - `addLiquidity()` - Protected by lock state and initialization checks
 - `removeLiquidity()` - Protected by lock state
-- `buy()` / `sell()` - Hook functions with input validation
 
 ## Testing and Verification
 

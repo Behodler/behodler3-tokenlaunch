@@ -35,37 +35,22 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
  * - Emergency disableToken() function allows revoking vault approval if needed
  * - Fallback safety check in addLiquidity ensures vault approval is initialized
  */
-/// #invariant {:msg "Virtual K must be consistent with virtual pair product"} virtualK == 0 || virtualK ==
-/// (virtualInputTokens + alpha) * (virtualL + beta);
-/// #invariant {:msg "Virtual liquidity parameters must be properly initialized together"} (virtualK > 0 && alpha > 0 &&
-/// beta > 0) || (virtualK == 0 && alpha == 0 && beta == 0);
+/// #invariant {:msg "Virtual K must be consistent with virtual pair product"} virtualK == 0 || virtualK == (virtualInputTokens + alpha) * (virtualL + beta);
+/// #invariant {:msg "Virtual liquidity parameters must be properly initialized together"} (virtualK > 0 && alpha > 0 && beta > 0) || (virtualK == 0 && alpha == 0 && beta == 0);
 /// #invariant {:msg "Contract cannot be locked and unlocked simultaneously"} locked == true || locked == false;
-/// #invariant {:msg "Vault approval state must be consistent"} vaultApprovalInitialized == true ||
-/// vaultApprovalInitialized == false;
-/// #invariant {:msg "Funding goal must be greater than seed input when set"} fundingGoal == 0 || fundingGoal >
-/// seedInput;
-/// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 ||
-/// (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
-/// #invariant {:msg "Virtual input tokens must remain consistent with vault balance after operations"}
-/// virtualK == 0 || virtualInputTokens >= seedInput;
-/// #invariant {:msg "Vault balance consistency: approval must be initialized for operations"}
-/// !vaultApprovalInitialized || address(vault) != address(0);
-/// #invariant {:msg "Bonding token total supply must not exceed reasonable mathematical limits"}
-/// bondingToken.totalSupply() <= virtualL + virtualInputTokens;
-/// #invariant {:msg "Virtual K maintains mathematical integrity as constant product formula"}
-/// virtualK == 0 || virtualK > 0;
-/// #invariant {:msg "Alpha and beta must be mathematically consistent for proper curve behavior"}
-/// alpha == 0 || beta == 0 || alpha == beta;
+/// #invariant {:msg "Vault approval state must be consistent"} vaultApprovalInitialized == true || vaultApprovalInitialized == false;
+/// #invariant {:msg "Funding goal must be greater than seed input when set"} fundingGoal == 0 || fundingGoal > seedInput;
+/// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 || (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
+/// #invariant {:msg "Virtual input tokens must remain consistent with vault balance after operations"} virtualK == 0 || virtualInputTokens >= seedInput;
+/// #invariant {:msg "Vault balance consistency: approval must be initialized for operations"} !vaultApprovalInitialized || address(vault) != address(0);
+/// #invariant {:msg "Bonding token total supply must not exceed reasonable mathematical limits"} bondingToken.totalSupply() <= virtualL + virtualInputTokens;
+/// #invariant {:msg "Virtual K maintains mathematical integrity as constant product formula"} virtualK == 0 || virtualK > 0;
+/// #invariant {:msg "Alpha and beta must be mathematically consistent for proper curve behavior"} alpha == 0 || beta == 0 || alpha == beta;
 /// #invariant {:msg "Slippage protection: virtual parameters must be reasonable"}
 /// alpha == 0 || alpha <= fundingGoal * 10;
-/// #invariant {:msg "Token supply management: bonding token supply must not exceed funding goal"}
-/// fundingGoal == 0 || bondingToken.totalSupply() <= fundingGoal;
-/// #invariant {:msg "Token supply consistency: total supply starts at zero and grows"}
-/// bondingToken.totalSupply() >= 0;
-/// #invariant {:msg "Minting authorization: bonding tokens can only increase through valid operations"}
-/// true;
-/// #invariant {:msg "Supply bounds: virtual L must be positive when virtual K is set"}
-/// virtualK == 0 || virtualL > 0;
+/// #invariant {:msg "Token supply management: bonding token supply must not exceed funding goal"} fundingGoal == 0 || bondingToken.totalSupply() <= fundingGoal;
+/// #invariant {:msg "Token supply consistency: total supply starts at zero and grows"} bondingToken.totalSupply() >= 0;
+/// #invariant {:msg "Supply bounds: virtual L must be positive when virtual K is set"} virtualK == 0 || virtualL > 0;
 /// #invariant {:msg "Cross-function state consistency: locked state must prevent all operations"}
 /// !locked || (true);
 /// #invariant {:msg "Add/remove liquidity state consistency: virtual pair maintains K invariant"}

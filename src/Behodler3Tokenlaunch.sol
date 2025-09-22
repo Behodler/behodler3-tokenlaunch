@@ -123,7 +123,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     /// @notice Auto-lock functionality flag
     bool public autoLock;
 
-
     // ============ EIP-2612 PERMIT VARIABLES ============
 
     /// @notice Mapping of user addresses to their current nonce for permit functionality
@@ -737,7 +736,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, EIP712 {
     function setAutoLock(bool _autoLock) external onlyOwner {
         autoLock = _autoLock;
     }
-
 
     // ============ VIEW FUNCTIONS - ALL STUBS ============
 

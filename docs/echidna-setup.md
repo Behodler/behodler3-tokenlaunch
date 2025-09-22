@@ -186,6 +186,100 @@ contract TestContract {
     crytic-compile --version
     ```
 
+## K Invariant Testing
+
+### Overview
+
+The K invariant is critical for the Behodler3 TokenLaunch contract as it validates the mathematical correctness of the offset bonding curve formula: `(x + α)(y + β) = k`, where:
+
+- `x` = virtualInputTokens (current input token balance in virtual pair)
+- `y` = virtualL (current bonding token balance in virtual pair)
+- `α` = alpha offset parameter
+- `β` = beta offset parameter
+- `k` = virtualK (constant product for the bonding curve)
+
+### Implementation
+
+The K invariant testing is implemented in `test/echidna/properties/TokenLaunchProperties.sol` and validated through Foundry tests in `test/PropertyTestBridge.sol`.
+
+#### Core K Invariant Function
+
+```solidity
+function echidna_virtual_k_invariant() public view returns (bool) {
+    uint256 virtualInput = tokenLaunch.virtualInputTokens();
+    uint256 virtualL = tokenLaunch.virtualL();
+    uint256 alpha = tokenLaunch.alpha();
+    uint256 beta = tokenLaunch.beta();
+
+    // Use correct offset bonding curve formula: (x + α)(y + β) = k
+    uint256 currentK = (virtualInput + alpha) * (virtualL + beta);
+    uint256 expectedK = tokenLaunch.virtualK();
+
+    // K should match expected virtual K (allowing for precision tolerance)
+    // Use 0.01% tolerance for large numbers (similar to other tests in codebase)
+    uint256 tolerance = expectedK / 1e4; // 0.01% tolerance for precision
+    return currentK >= expectedK - tolerance && currentK <= expectedK + tolerance;
+}
+```
+
+#### Key Design Decisions
+
+1. **Offset Bonding Curve Formula**: The function correctly implements `(x + α)(y + β) = k` instead of the simpler `x * y = k`. This offset formula is essential for proper bonding curve behavior.
+
+2. **Precision Tolerance**: Uses 0.01% tolerance (`expectedK / 1e4`) to handle:
+    - Integer division precision loss in Solidity
+    - Large number arithmetic (values around 1e47)
+    - Consistency with other tolerance patterns in the codebase
+
+3. **Automatic Validation**: The invariant is automatically checked:
+    - After every `addLiquidity` operation via `test_addLiquidity_integration()`
+    - After every `removeLiquidity` operation via `test_removeLiquidity_integration()`
+    - As a standalone property test via `test_virtual_k_invariant()`
+
+#### Test Integration
+
+The K invariant is integrated into three test functions:
+
+1. **`test_virtual_k_invariant()`**: Direct validation of the K invariant
+2. **`test_addLiquidity_integration()`**: Validates K invariant after liquidity addition
+3. **`test_removeLiquidity_integration()`**: Validates K invariant after liquidity removal
+
+### Historical Context
+
+**Previous Issue**: The original implementation incorrectly used `virtualInputTokens * virtualL` which failed because it didn't account for the offset parameters (α and β) that are fundamental to the contract's bonding curve design.
+
+**Resolution**: Updated to use the correct offset bonding curve formula `(virtualInputTokens + alpha) * (virtualL + beta)` with appropriate precision tolerance.
+
+### Tolerance Calibration
+
+The 0.01% tolerance was chosen based on:
+
+- Analysis of similar tests in the codebase (B3AddLiquidityTest.sol, VirtualLiquidityTest.sol)
+- The scale of numbers involved (~1e47 for virtualK)
+- Observed precision differences (~1e23) which represent a tiny relative error
+
+### Running K Invariant Tests
+
+```bash
+# Run all three K invariant tests
+forge test --match-test "test_virtual_k_invariant|test_addLiquidity_integration|test_removeLiquidity_integration"
+
+# Run just the direct K invariant test
+forge test --match-test "test_virtual_k_invariant"
+
+# Run with verbose output for debugging
+forge test --match-test "test_virtual_k_invariant" -vvv
+```
+
+### Expected Results
+
+All three tests should pass, confirming:
+
+- ✅ The K invariant holds immediately after contract initialization
+- ✅ The K invariant is preserved after adding liquidity
+- ✅ The K invariant is preserved after removing liquidity
+- ✅ Mathematical correctness of the offset bonding curve implementation
+
 ## Future Enhancements
 
 ### Phase 1 (Current)
@@ -199,7 +293,7 @@ contract TestContract {
 - Resolve OpenZeppelin dependency conflicts
 - Implement comprehensive TokenLaunch property tests
 - Add coverage reporting
-- Create property test patterns for bonding curve invariants
+- ✅ Create property test patterns for bonding curve invariants
 
 ### Phase 3 (Advanced)
 

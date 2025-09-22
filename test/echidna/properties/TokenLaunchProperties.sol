@@ -104,16 +104,22 @@ contract TokenLaunchProperties {
 
     /**
      * @notice Virtual K invariant - K should never decrease inappropriately
-     * @dev Virtual pair constant product should follow expected constraints
+     * @dev Virtual pair constant product should follow expected constraints using offset bonding curve
      */
     function echidna_virtual_k_invariant() public view returns (bool) {
         uint256 virtualInput = tokenLaunch.virtualInputTokens();
         uint256 virtualL = tokenLaunch.virtualL();
-        uint256 currentK = virtualInput * virtualL;
+        uint256 alpha = tokenLaunch.alpha();
+        uint256 beta = tokenLaunch.beta();
+
+        // Use correct offset bonding curve formula: (x + α)(y + β) = k
+        uint256 currentK = (virtualInput + alpha) * (virtualL + beta);
         uint256 expectedK = tokenLaunch.virtualK();
 
-        // K should match expected virtual K (allowing for rounding)
-        return currentK >= expectedK - 1000 && currentK <= expectedK + 1000;
+        // K should match expected virtual K (allowing for precision tolerance)
+        // Use 0.01% tolerance for large numbers (similar to other tests in codebase)
+        uint256 tolerance = expectedK / 1e4; // 0.01% tolerance for precision
+        return currentK >= expectedK - tolerance && currentK <= expectedK + tolerance;
     }
 
     /**

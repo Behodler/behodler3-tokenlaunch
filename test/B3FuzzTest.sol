@@ -37,7 +37,7 @@ contract B3FuzzTest is Test {
 
     // Virtual Liquidity Test Parameters
     uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     // Track edge cases discovered during fuzzing
@@ -73,7 +73,7 @@ contract B3FuzzTest is Test {
         );
 
         // Set up B3 configuration
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        b3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
 
         // Initialize vault
         vault.setClient(address(b3), true);

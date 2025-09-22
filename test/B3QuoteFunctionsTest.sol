@@ -29,7 +29,7 @@ contract B3QuoteFunctionsTest is Test {
 
     // Virtual Liquidity Test Parameters
     uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
@@ -55,7 +55,7 @@ contract B3QuoteFunctionsTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        b3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
         // Setup test tokens
@@ -118,7 +118,7 @@ contract B3QuoteFunctionsTest is Test {
         uint256 quote = b3.quoteAddLiquidity(inputAmount);
         (, uint256 currentVirtualL,) = b3.getVirtualPair();
 
-        assertTrue(quote > 0, "Should handle large amounts");
+        assertTrue(quote > 0, "Quote should be positive for add liquidity");
         assertTrue(quote < currentVirtualL, "Quote should not exceed current virtual L");
     }
 
@@ -152,8 +152,8 @@ contract B3QuoteFunctionsTest is Test {
 
         uint256 quotedAmount = b3.quoteRemoveLiquidity(bondingAmount);
 
-        // Should return non-zero quote
-        assertTrue(quotedAmount > 0, "Quote should be non-zero");
+        // With zero seed, should return zero until liquidity is added
+        assertEq(quotedAmount, 0, "Quote should be zero with no input tokens available");
     }
 
     function testQuoteRemoveLiquidityMath() public view {
@@ -170,8 +170,22 @@ contract B3QuoteFunctionsTest is Test {
         uint256 virtualK = b3.virtualK();
 
         uint256 denominator = currentVirtualL + bondingAmount + beta;
-        uint256 expectedNewVirtualInput = virtualK / denominator - alpha;
-        uint256 expectedQuote = currentVirtualInput - expectedNewVirtualInput;
+        uint256 quotientWithOffset = virtualK / denominator;
+
+        // With zero seed, quote should be zero since no input tokens are available
+        uint256 expectedQuote;
+        if (currentVirtualInput == 0) {
+            expectedQuote = 0;
+        } else {
+            // Avoid underflow in calculations
+            if (quotientWithOffset > alpha) {
+                uint256 expectedNewVirtualInput = quotientWithOffset - alpha;
+                expectedQuote = currentVirtualInput > expectedNewVirtualInput ?
+                    currentVirtualInput - expectedNewVirtualInput : 0;
+            } else {
+                expectedQuote = 0;
+            }
+        }
 
         uint256 actualQuote = b3.quoteRemoveLiquidity(bondingAmount);
 
@@ -192,7 +206,7 @@ contract B3QuoteFunctionsTest is Test {
 
         uint256 quote = b3.quoteRemoveLiquidity(bondingAmount);
 
-        assertTrue(quote > 0, "Should handle small amounts");
+        assertEq(quote, 0, "Quote should be zero with no input tokens available");
     }
 
     function testQuoteRemoveLiquidityLargeAmount() public view {
@@ -201,8 +215,7 @@ contract B3QuoteFunctionsTest is Test {
         uint256 quote = b3.quoteRemoveLiquidity(bondingAmount);
         (uint256 currentVirtualInput,,) = b3.getVirtualPair();
 
-        assertTrue(quote > 0, "Should handle large amounts");
-        assertTrue(quote < currentVirtualInput, "Quote should not exceed current virtual input");
+        assertEq(quote, 0, "Quote should be zero with no input tokens available");
     }
 
     function testQuoteRemoveLiquidityDifferentAmounts() public view {
@@ -218,13 +231,9 @@ contract B3QuoteFunctionsTest is Test {
         for (uint256 i = 0; i < amounts.length; i++) {
             uint256 quote = b3.quoteRemoveLiquidity(amounts[i]);
 
-            // Quotes should increase with larger bonding token amounts
-            assertTrue(quote > lastQuote, "Larger bonding amount should give larger quote");
+            // With zero seed, all quotes should be zero until liquidity is added
+            assertEq(quote, 0, "Quote should be zero with no input tokens available");
 
-            // Simplified check - just verify quotes are increasing
-            // (Detailed math verification is done in testQuoteRemoveLiquidityMath)
-
-            lastQuote = quote;
         }
     }
 
@@ -307,7 +316,7 @@ contract B3QuoteFunctionsTest is Test {
         uint256 maxBonding = type(uint256).max / 2; // Avoid overflow
 
         try b3.quoteRemoveLiquidity(maxBonding) returns (uint256 quote) {
-            assertTrue(quote > 0, "Should handle maximum bonding amount");
+            assertEq(quote, 0, "Quote should be zero with no input tokens available");
         } catch {
             // If it reverts due to overflow, that's acceptable
         }
@@ -379,8 +388,8 @@ contract B3QuoteFunctionsTest is Test {
         // Quote remove liquidity with the quoted amount
         uint256 inputQuote = b3.quoteRemoveLiquidity(bondingQuote);
 
-        // Due to virtual pair math, removing immediately after adding should yield less than original
-        assertTrue(inputQuote < inputAmount, "Remove quote should be less than original input due to virtual pair math");
-        assertTrue(inputQuote > 0, "Remove quote should be positive");
+        // With zero seed, remove quote is zero because no input tokens are available in virtual state
+        assertEq(inputQuote, 0, "Remove quote should be zero with zero seed until liquidity is actually added");
+        assertTrue(bondingQuote > 0, "Add liquidity quote should be positive");
     }
 }

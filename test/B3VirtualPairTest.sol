@@ -30,7 +30,7 @@ contract B3VirtualPairTest is Test {
 
     // Virtual Liquidity Test Parameters
     uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
@@ -56,7 +56,7 @@ contract B3VirtualPairTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        b3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
         // Setup test tokens

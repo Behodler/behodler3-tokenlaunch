@@ -36,9 +36,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// #invariant {:msg "Virtual liquidity parameters must be properly initialized together"} (virtualK > 0 && alpha > 0 && beta > 0) || (virtualK == 0 && alpha == 0 && beta == 0);
 /// #invariant {:msg "Contract cannot be locked and unlocked simultaneously"} locked == true || locked == false;
 /// #invariant {:msg "Vault approval state must be consistent"} vaultApprovalInitialized == true || vaultApprovalInitialized == false;
-/// #invariant {:msg "Funding goal must be greater than seed input when set"} fundingGoal == 0 || fundingGoal > seedInput;
+/// #invariant {:msg "Seed input must always be zero (zero seed enforcement)"} seedInput == 0;
 /// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 || (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
-/// #invariant {:msg "Virtual input tokens must remain consistent with vault balance after operations"} virtualK == 0 || virtualInputTokens >= seedInput;
+/// #invariant {:msg "Virtual input tokens must be non-negative (starts at zero)"} virtualInputTokens >= 0;
 /// #invariant {:msg "Vault balance consistency: approval must be initialized for operations"} !vaultApprovalInitialized || address(vault) != address(0);
 /// #invariant {:msg "Bonding token total supply must not exceed reasonable mathematical limits"} bondingToken.totalSupply() <= virtualL + virtualInputTokens;
 /// #invariant {:msg "Virtual K maintains mathematical integrity as constant product formula"} virtualK == 0 || virtualK > 0;
@@ -52,8 +52,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// !locked || (true);
 /// #invariant {:msg "Add/remove liquidity state consistency: virtual pair maintains K invariant"}
 /// virtualK == 0 || virtualK > 0;
-/// #invariant {:msg "State consistency across operations: virtual input tokens change must match operations"}
-/// virtualK == 0 || virtualInputTokens <= fundingGoal + seedInput;
+/// #invariant {:msg "State consistency across operations: virtual input tokens should not exceed funding goal"}
+/// virtualK == 0 || virtualInputTokens <= fundingGoal;
 /// #invariant {:msg "Pre/post condition linkage: vault approval required for operations"}
 /// !vaultApprovalInitialized || address(inputToken) != address(0);
 /// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
@@ -115,7 +115,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event VaultChanged(address indexed oldVault, address indexed newVault);
     event VirtualLiquidityGoalsSet(
         uint256 fundingGoal,
-        uint256 seedInput,
+        uint256 seedInput, // Always zero with zero seed enforcement
         uint256 desiredAveragePrice,
         uint256 alpha,
         uint256 beta,
@@ -150,61 +150,58 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     // ============ VIRTUAL LIQUIDITY FUNCTIONS ============
 
     /**
-     * @notice Set goals for virtual liquidity bonding curve using (x+α)(y+β)=k formula
-     * @dev Calculates α, β, and k based on desired goals using mathematical formulas
+     * @notice Set goals for virtual liquidity bonding curve using (x+α)(y+β)=k formula with zero seed enforcement
+     * @dev Calculates α, β, and k based on desired goals using mathematical formulas with x₀ = 0
      * @param _fundingGoal Total amount of input tokens to raise (x_fin)
-     * @param _seedInput Initial seed amount of input tokens (x_0)
      * @param _desiredAveragePrice Desired average price for the sale (P_ave), scaled by 1e18
      */
     /// #if_succeeds {:msg "Only owner can call this function"} msg.sender == owner();
-    /// #if_succeeds {:msg "Funding goal must be greater than seed input"} _fundingGoal > _seedInput;
-    /// #if_succeeds {:msg "Seed input must be positive"} _seedInput > 0;
-    /// #if_succeeds {:msg "Desired average price must be between 0 and 1e18"} _desiredAveragePrice > 0 &&
-    /// _desiredAveragePrice < 1e18;
+    /// #if_succeeds {:msg "Funding goal must be positive"} _fundingGoal > 0;
+    /// #if_succeeds {:msg "Desired average price must be between sqrt(0.75) and 1e18"} _desiredAveragePrice >= 866025403784438647 && _desiredAveragePrice < 1e18;
     /// #if_succeeds {:msg "Funding goal should be set correctly"} fundingGoal == _fundingGoal;
-    /// #if_succeeds {:msg "Seed input should be set correctly"} seedInput == _seedInput;
+    /// #if_succeeds {:msg "Seed input should be enforced as zero"} seedInput == 0;
     /// #if_succeeds {:msg "Desired average price should be set correctly"} desiredAveragePrice == _desiredAveragePrice;
-    /// #if_succeeds {:msg "Alpha should be calculated correctly"} alpha == ((_desiredAveragePrice * _fundingGoal) /
-    /// 1e18 - _seedInput) * 1e18 / (1e18 - _desiredAveragePrice);
+    /// #if_succeeds {:msg "Alpha should be calculated correctly for zero seed"} alpha == (_desiredAveragePrice * _fundingGoal) / (1e18 - _desiredAveragePrice);
     /// #if_succeeds {:msg "Beta should equal alpha"} beta == alpha;
-    /// #if_succeeds {:msg "Virtual K should be calculated correctly"} virtualK == (_fundingGoal + alpha) *
-    /// (_fundingGoal + alpha);
-    /// #if_succeeds {:msg "Virtual input tokens should be set to seed input"} virtualInputTokens == _seedInput;
-    /// #if_succeeds {:msg "Virtual L should be calculated correctly"} virtualL == virtualK / (_seedInput + alpha) -
-    /// alpha;
-    function setGoals(uint256 _fundingGoal, uint256 _seedInput, uint256 _desiredAveragePrice) external onlyOwner {
-        require(_fundingGoal > _seedInput, "VL: Funding goal must be greater than seed");
-        require(_desiredAveragePrice > 0 && _desiredAveragePrice < 1e18, "VL: Average price must be between 0 and 1");
-        require(_seedInput > 0, "VL: Seed input must be greater than 0");
+    /// #if_succeeds {:msg "Virtual K should be calculated correctly"} virtualK == (_fundingGoal + alpha) * (_fundingGoal + alpha);
+    /// #if_succeeds {:msg "Virtual input tokens should be set to zero"} virtualInputTokens == 0;
+    /// #if_succeeds {:msg "Virtual L should be calculated correctly"} virtualL == virtualK / alpha - alpha;
+    function setGoals(uint256 _fundingGoal, uint256 _desiredAveragePrice) external onlyOwner {
+        require(_fundingGoal > 0, "VL: Funding goal must be positive");
 
-        // Store goal parameters
+        // Enforce minimum average price for target initial price P₀ ≥ 0.75
+        // P₀ = P_avg², so P_avg ≥ √0.75 ≈ 0.866025403784438647 (scaled by 1e18)
+        require(_desiredAveragePrice >= 866025403784438647, "VL: Average price must be >= sqrt(0.75) for P0 >= 0.75");
+        require(_desiredAveragePrice < 1e18, "VL: Average price must be < 1");
+
+        // Store goal parameters with enforced zero seed
         fundingGoal = _fundingGoal;
-        seedInput = _seedInput;
+        seedInput = 0; // Enforce zero seed
         desiredAveragePrice = _desiredAveragePrice;
 
-        // Calculate α using formula: α = (P_ave * x_fin - x_0) / (1 - P_ave)
-        // All calculations in wei (1e18) precision
-        uint256 numerator = (_desiredAveragePrice * _fundingGoal) / 1e18 - _seedInput;
+        // Calculate α using formula for zero seed: α = (P_avg * x_fin) / (1 - P_avg)
+        // When x₀ = 0, the formula simplifies significantly
+        uint256 numerator = (_desiredAveragePrice * _fundingGoal) / 1e18;
         uint256 denominator = 1e18 - _desiredAveragePrice;
+        require(denominator > 0, "VL: Invalid average price (denominator would be zero)");
         alpha = (numerator * 1e18) / denominator;
 
         // Set β = α for equal final prices as specified in planning doc
         beta = alpha;
 
-        // Calculate k = (x_fin + α)^2
+        // Calculate k = (x_fin + α)²
         uint256 xFinPlusAlpha = _fundingGoal + alpha;
-        virtualK = xFinPlusAlpha * xFinPlusAlpha; // Keep the full precision
+        virtualK = xFinPlusAlpha * xFinPlusAlpha;
 
-        // Initialize virtual bonding token balance: y_0 = k/(x_0 + α) - α
-        uint256 x0PlusAlpha = _seedInput + alpha;
-        virtualL = virtualK / x0PlusAlpha - alpha;
+        // Initialize virtual bonding token balance for zero seed: y_0 = k/α - α
+        // When x₀ = 0, x₀ + α = α, so y_0 = k/α - α
+        require(alpha > 0, "VL: Alpha must be positive for calculations");
+        virtualL = virtualK / alpha - alpha;
 
-        // Set virtual input tokens to seed amount
-        virtualInputTokens = _seedInput;
+        // Set virtual input tokens to zero (enforced seed)
+        virtualInputTokens = 0;
 
-        // Virtual liquidity is now always enabled - no toggle needed
-
-        emit VirtualLiquidityGoalsSet(_fundingGoal, _seedInput, _desiredAveragePrice, alpha, beta, virtualK);
+        emit VirtualLiquidityGoalsSet(_fundingGoal, 0, _desiredAveragePrice, alpha, beta, virtualK);
     }
 
     /**
@@ -242,16 +239,14 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     /**
      * @notice Get total amount of input tokens raised so far
-     * @dev Returns difference between current and initial virtual input tokens
+     * @dev Returns current virtual input tokens (starts from zero with zero seed)
      * @return totalRaised Total input tokens raised
      */
-    /// #if_succeeds {:msg "Goals must be set before calculating total raised"} seedInput > 0;
-    /// #if_succeeds {:msg "Virtual input tokens must be at least seed input"} virtualInputTokens >= seedInput;
-    /// #if_succeeds {:msg "Total raised should equal difference between current and seed input"} totalRaised ==
-    /// virtualInputTokens - seedInput;
+    /// #if_succeeds {:msg "Goals must be set before calculating total raised"} virtualK > 0;
+    /// #if_succeeds {:msg "Total raised equals virtual input tokens with zero seed"} totalRaised == virtualInputTokens;
     function getTotalRaised() public view returns (uint256 totalRaised) {
-        require(seedInput > 0, "VL: Goals not set - call setGoals first");
-        return virtualInputTokens - seedInput;
+        require(virtualK > 0, "VL: Goals not set - call setGoals first");
+        return virtualInputTokens; // With zero seed, total raised = virtual input tokens
     }
 
     /**
@@ -513,6 +508,11 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @return inputTokensOut Amount of input tokens that would be received
      */
     function _calculateInputTokensOut(uint256 bondingTokenAmount) internal view returns (uint256 inputTokensOut) {
+        // With zero seed, no input tokens are available until liquidity is added
+        if (virtualInputTokens == 0) {
+            return 0;
+        }
+
         // Use generalized quote: virtualInputTokens reduces, virtualL increases
         inputTokensOut = _calculateVirtualPairQuote(virtualInputTokens, virtualL, bondingTokenAmount);
 
@@ -706,13 +706,13 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @notice Get the current virtual pair state
      * @return inputTokens Virtual input tokens in the pair
      * @return lTokens Virtual L tokens in the pair
-     * @return k The constant product
+     * @return k The virtual liquidity constant K (not x*y, but the actual virtualK)
      */
     /// #if_succeeds {:msg "Input tokens should match virtual storage"} inputTokens == virtualInputTokens;
     /// #if_succeeds {:msg "L tokens should match virtual storage"} lTokens == virtualL;
-    /// #if_succeeds {:msg "K should equal product of virtual pair values"} k == virtualInputTokens * virtualL;
+    /// #if_succeeds {:msg "K should return the virtual liquidity constant"} k == virtualK;
     function getVirtualPair() external view returns (uint256 inputTokens, uint256 lTokens, uint256 k) {
-        return (virtualInputTokens, virtualL, virtualInputTokens * virtualL);
+        return (virtualInputTokens, virtualL, virtualK);
     }
 
     /**

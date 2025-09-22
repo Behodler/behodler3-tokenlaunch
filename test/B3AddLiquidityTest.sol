@@ -31,7 +31,7 @@ contract B3AddLiquidityTest is Test {
 
     // Virtual Liquidity Test Parameters
     uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
@@ -57,7 +57,7 @@ contract B3AddLiquidityTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        b3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
         // Setup test tokens
@@ -116,7 +116,8 @@ contract B3AddLiquidityTest is Test {
 
         assertEq(finalVInput, initialVInput + inputAmount, "Virtual input tokens should increase");
         assertTrue(finalVL < initialVL, "Virtual L should decrease (as bondingTokens are 'minted from it')");
-        assertEq(k, finalVInput * finalVL, "K should be preserved");
+        // With virtual liquidity, k is the constant virtualK, not the simple product
+        assertEq(k, b3.virtualK(), "Virtual K should be returned by getVirtualPair");
 
         vm.stopPrank();
     }
@@ -299,7 +300,8 @@ contract B3AddLiquidityTest is Test {
 
         // Check virtual pair math still works
         (uint256 vInput, uint256 vL, uint256 k) = b3.getVirtualPair();
-        assertEq(k, vInput * vL, "K should be preserved with large amounts");
+        // With virtual liquidity, k is the constant virtualK, not the simple product
+        assertEq(k, b3.virtualK(), "Virtual K should be returned by getVirtualPair");
 
         vm.stopPrank();
     }

@@ -37,7 +37,7 @@ contract ScribbleInvariantTest is Test {
         tokenLaunch.initializeVaultApproval();
 
         // Set up initial goals for tokenLaunch
-        tokenLaunch.setGoals(1000 ether, 100 ether, 5e17); // 50% desired average price
+        tokenLaunch.setGoals(1000 ether, 5e17); // 50% desired average price
     }
 
     /**

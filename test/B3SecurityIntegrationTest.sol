@@ -54,7 +54,7 @@ contract B3SecurityIntegrationTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        b3.setGoals(1_000_000 * 1e18, 1000 * 1e18, 0.9e18);
+        b3.setGoals(1_000_000 * 1e18, 0.9e18);
         vm.stopPrank();
 
         // Setup test tokens

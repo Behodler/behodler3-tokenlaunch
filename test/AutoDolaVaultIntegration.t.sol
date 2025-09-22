@@ -81,7 +81,7 @@ contract AutoDolaVaultIntegration is Test {
         uint256 fundingGoal = 1_000_000 * 1e18; // 1M tokens
         uint256 seedInput = 1000 * 1e18; // 1K tokens
         uint256 desiredAveragePrice = 0.9e18; // 0.9 (90% of final price)
-        b3.setGoals(fundingGoal, seedInput, desiredAveragePrice);
+        b3.setGoals(fundingGoal, desiredAveragePrice);
 
         // Setup initial liquidity for meaningful tests
         inputToken.mint(address(this), 1_000_000e18);

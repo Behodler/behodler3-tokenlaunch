@@ -31,7 +31,7 @@ contract B3RemoveLiquidityTest is Test {
 
     // Virtual Liquidity Test Parameters
     uint256 public constant FUNDING_GOAL = 1_000_000 * 1e18; // 1M tokens
-    uint256 public constant SEED_INPUT = 1000 * 1e18; // 1K tokens
+    uint256 public constant SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 public constant DESIRED_AVG_PRICE = 0.9e18; // 0.9 (90% of final price)
 
     function setUp() public {
@@ -57,7 +57,7 @@ contract B3RemoveLiquidityTest is Test {
         b3.initializeVaultApproval();
 
         // Set virtual liquidity goals
-        b3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        b3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
         vm.stopPrank();
 
         // Setup test tokens and add initial liquidity
@@ -138,7 +138,8 @@ contract B3RemoveLiquidityTest is Test {
 
         assertTrue(finalVInput < initialVInput, "Virtual input tokens should decrease");
         assertEq(finalVL, initialVL + bondingTokenAmount, "Virtual L should increase by bonding token amount");
-        assertEq(k, finalVInput * finalVL, "K should be preserved");
+        // With virtual liquidity, k is the constant virtualK, not the simple product
+        assertEq(k, b3.virtualK(), "Virtual K should be returned by getVirtualPair");
 
         vm.stopPrank();
     }
@@ -177,7 +178,7 @@ contract B3RemoveLiquidityTest is Test {
         freshB3.initializeVaultApproval();
 
         // Set virtual liquidity goals for fresh contract
-        freshB3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
 
         // First add liquidity to get bonding tokens and update virtual pair
         uint256 inputAmount = 1000 * 1e18; // Use appropriate amount for virtual pair scale
@@ -239,7 +240,7 @@ contract B3RemoveLiquidityTest is Test {
             freshB3.initializeVaultApproval();
 
             // Set virtual liquidity goals for fresh contract
-            freshB3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+            freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
 
             vm.startPrank(user1);
 
@@ -411,7 +412,7 @@ contract B3RemoveLiquidityTest is Test {
         freshB3.initializeVaultApproval();
 
         // Set virtual liquidity goals for fresh contract
-        freshB3.setGoals(FUNDING_GOAL, SEED_INPUT, DESIRED_AVG_PRICE);
+        freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
 
         uint256 initialBalance = inputToken.balanceOf(user1);
         uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair

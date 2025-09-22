@@ -65,7 +65,7 @@ contract TokenLaunchProperties {
     // Constants for testing
     uint256 constant INITIAL_TOKEN_SUPPLY = 1_000_000 * 1e18;
     uint256 constant TEST_FUNDING_GOAL = 50_000 * 1e18;
-    uint256 constant TEST_SEED_INPUT = 1000 * 1e18;
+    uint256 constant TEST_SEED_INPUT = 0; // Always zero with zero seed enforcement
     uint256 constant TEST_DESIRED_PRICE = 0.9e18; // 0.9 (90% of final price, must be < 1)
 
     constructor() {
@@ -81,7 +81,7 @@ contract TokenLaunchProperties {
         tokenLaunch = new Behodler3Tokenlaunch(inputToken, bondingToken, vault);
 
         // Set up virtual liquidity goals
-        tokenLaunch.setGoals(TEST_FUNDING_GOAL, TEST_SEED_INPUT, TEST_DESIRED_PRICE);
+        tokenLaunch.setGoals(TEST_FUNDING_GOAL, TEST_DESIRED_PRICE);
 
         // Initialize vault approval
         vault.setClient(address(tokenLaunch), true);

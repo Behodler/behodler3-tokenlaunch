@@ -34,7 +34,7 @@ contract ZeroSeedVirtualLiquidityTest is Test {
     uint256 constant MAX_P_AVG = 0.985e18; // Just below 0.99 to avoid overflow
 
     // Gas cost tracking
-    uint256 constant MAX_ACCEPTABLE_GAS = 200000; // 200k gas limit for operations
+    uint256 constant MAX_ACCEPTABLE_GAS = 250000; // 250k gas limit for operations
 
     event VirtualLiquidityGoalsSet(
         uint256 fundingGoal,

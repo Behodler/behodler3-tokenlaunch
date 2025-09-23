@@ -197,10 +197,15 @@ Returns the final marginal price when funding goal is reached.
 function getTotalRaised() public view returns (uint256 totalRaised)
 ```
 
-Returns the total amount of input tokens raised.
+Returns the total amount of input tokens raised since launch start.
+
+**Zero Seed Behavior:**
+- Returns current `virtualInputTokens` amount
+- Starts at 0 due to zero seed enforcement
+- Increases as users add liquidity
 
 **Returns:**
-- `totalRaised`: Total input tokens deposited since start
+- `totalRaised`: Total input tokens deposited (starts at 0 with zero seed)
 
 #### getVirtualPair
 
@@ -208,12 +213,17 @@ Returns the total amount of input tokens raised.
 function getVirtualPair() external view returns (uint256 inputTokens, uint256 lTokens, uint256 k)
 ```
 
-Returns the current virtual pair state.
+Returns the current virtual pair state for the offset bonding curve.
+
+**Zero Seed Behavior:**
+- `inputTokens` starts at 0 and increases as liquidity is added
+- Uses (x+α)(y+β)=k formula, not simple xy=k
+- `k` represents the virtual constant product, not inputTokens × lTokens
 
 **Returns:**
-- `inputTokens`: Virtual input token amount
-- `lTokens`: Virtual L token amount
-- `k`: Virtual constant product (k = inputTokens * lTokens)
+- `inputTokens`: Current virtual input token amount (starts at 0)
+- `lTokens`: Current virtual L token amount (calculated as k/α - α initially)
+- `k`: Virtual constant product for (x+α)(y+β)=k formula
 
 #### isVirtualPairInitialized
 
@@ -233,22 +243,41 @@ Checks if virtual liquidity parameters have been set.
 #### setGoals
 
 ```solidity
-function setGoals(
-    uint256 _fundingGoal,
-    uint256 _seedInput,
-    uint256 _desiredAveragePrice
-) external onlyOwner
+function setGoals(uint256 _fundingGoal, uint256 _desiredAveragePrice) external onlyOwner
 ```
 
-Sets the virtual liquidity parameters for the launch.
+Sets the virtual liquidity parameters for the launch with **zero seed enforcement**.
+
+**Zero Seed Enforcement:**
+- Seed input is automatically set to 0 (cannot be configured)
+- Virtual input tokens start at 0 (fair launch guarantee)
+- Initial price calculated as P₀ = P_avg²
 
 **Parameters:**
-- `_fundingGoal`: Target amount of input tokens to raise
-- `_seedInput`: Initial virtual input token amount (typically 10000)
-- `_desiredAveragePrice`: Target average price (between 0 and 1e18)
+- `_fundingGoal`: Target amount of input tokens to raise (must be > 0)
+- `_desiredAveragePrice`: Target average price scaled by 1e18
+  - Must be ≥ 866025403784438647 (√0.75) to ensure P₀ ≥ 0.75
+  - Must be < 1e18 (< 1.0) to prevent overflow
+
+**Mathematical Calculations:**
+- **Alpha (α)**: `(P_avg × funding_goal) / (1 - P_avg)`
+- **Beta (β)**: `α` (equal to alpha)
+- **Virtual K**: `(funding_goal + α)²`
+- **Initial Virtual L**: `k/α - α`
+- **Initial Price**: `P_avg²`
 
 **Events Emitted:**
-- `VirtualLiquidityGoalsSet(fundingGoal, seedInput, desiredAveragePrice, virtualInputTokens, virtualL, alpha, beta)`
+- `VirtualLiquidityGoalsSet(fundingGoal, 0, desiredAveragePrice, alpha, beta, virtualK)`
+
+**Example:**
+```javascript
+// Set goals for 1M token funding with 0.88 average price
+// This creates P₀ = 0.7744 (77.44% initial price)
+await tokenLaunch.setGoals(
+    ethers.parseEther("1000000"),  // 1M funding goal
+    ethers.parseEther("0.88")      // 0.88 average price → 0.7744 initial price
+);
+```
 
 #### setInputToken
 
@@ -419,11 +448,10 @@ const tokenLaunch = await TokenLaunch.deploy(
 await vault.setClient(tokenLaunch.address, true);
 await tokenLaunch.initializeVaultApproval();
 
-// 3. Set launch parameters
+// 3. Set launch parameters with zero seed enforcement
 await tokenLaunch.setGoals(
     ethers.parseEther("1000000"), // 1M funding goal
-    ethers.parseEther("10000"),   // 10K seed input
-    ethers.parseEther("0.9")      // 0.9 average price
+    ethers.parseEther("0.9")      // 0.9 average price → P₀ = 0.81
 );
 
 // 4. User adds liquidity

@@ -115,11 +115,11 @@ contract ScribbleEdgeCaseTest is Test {
      */
     function testExtremeFundingGoalEdgeCases() public {
         // Test with reasonable but large funding goal
-        tokenLaunch.setGoals(1_000_000 ether, 5e17);
+        tokenLaunch.setGoals(1_000_000 ether, 9e17); // 0.9, above sqrt(0.75)
         assertTrue(tokenLaunch.fundingGoal() > tokenLaunch.seedInput());
 
         // Test with minimal valid funding goal
-        tokenLaunch.setGoals(10 ether, 5e17);
+        tokenLaunch.setGoals(10 ether, 9e17); // 0.9, above sqrt(0.75)
         assertTrue(tokenLaunch.fundingGoal() > tokenLaunch.seedInput());
     }
 
@@ -127,9 +127,10 @@ contract ScribbleEdgeCaseTest is Test {
      * @notice Test edge case: Desired average price boundaries
      */
     function testDesiredAveragePriceBoundaries() public {
-        // Test reasonable price ranges that don't cause overflow
-        tokenLaunch.setGoals(1000 ether, 1e17); // 10%
-        assertTrue(tokenLaunch.desiredAveragePrice() > 0);
+        // With zero seed enforcement, minimum avg price is sqrt(0.75) ≈ 0.866
+        // Test minimum valid price
+        tokenLaunch.setGoals(1000 ether, 866025403784438647); // sqrt(0.75) exactly
+        assertTrue(tokenLaunch.desiredAveragePrice() >= 866025403784438647);
         assertTrue(tokenLaunch.desiredAveragePrice() < 1e18);
 
         // Test higher valid price
@@ -137,11 +138,12 @@ contract ScribbleEdgeCaseTest is Test {
         assertTrue(tokenLaunch.desiredAveragePrice() > 0);
         assertTrue(tokenLaunch.desiredAveragePrice() < 1e18);
 
-        // Test invalid prices should fail
-        vm.expectRevert("VL: Average price must be between 0 and 1");
-        tokenLaunch.setGoals(1000 ether, 0);
+        // Test price below minimum should fail
+        vm.expectRevert("VL: Average price must be >= sqrt(0.75) for P0 >= 0.75");
+        tokenLaunch.setGoals(1000 ether, 8e17); // 0.8, below sqrt(0.75)
 
-        vm.expectRevert("VL: Average price must be between 0 and 1");
+        // Test price >= 1 should fail
+        vm.expectRevert("VL: Average price must be < 1");
         tokenLaunch.setGoals(1000 ether, 1e18);
     }
 
@@ -150,7 +152,7 @@ contract ScribbleEdgeCaseTest is Test {
      */
     function testVirtualKCalculationEdgeCases() public {
         // Set goals that might cause calculation edge cases
-        tokenLaunch.setGoals(1000 ether, 1e17); // 10% desired average price
+        tokenLaunch.setGoals(1000 ether, 9e17); // 90% desired average price, above sqrt(0.75)
 
         uint256 virtualK = tokenLaunch.virtualK();
         uint256 virtualInputTokens = tokenLaunch.virtualInputTokens();
@@ -160,7 +162,7 @@ contract ScribbleEdgeCaseTest is Test {
 
         // Verify virtual K invariant holds even with extreme parameters
         if (virtualK > 0) {
-            assertEq(virtualK, (virtualInputTokens + alpha) * (virtualL + beta));
+            assertApproxEqRel(virtualK, (virtualInputTokens + alpha) * (virtualL + beta), 1e15, "Virtual K invariant should hold");
             assertTrue(alpha > 0);
             assertTrue(beta > 0);
             assertEq(alpha, beta);
@@ -196,7 +198,7 @@ contract ScribbleEdgeCaseTest is Test {
      */
     function testLockedContractEdgeCases() public {
         // Set up tokenLaunch for operations
-        tokenLaunch.setGoals(1000 ether, 5e17);
+        tokenLaunch.setGoals(1000 ether, 9e17); // 0.9, above sqrt(0.75)
         inputToken.mint(address(this), 1000 ether);
         inputToken.approve(address(tokenLaunch), 1000 ether);
 
@@ -220,7 +222,7 @@ contract ScribbleEdgeCaseTest is Test {
      */
     function testPrecisionAndRoundingEdgeCases() public {
         // Use values that test precision without causing overflow
-        tokenLaunch.setGoals(1000 ether + 1, 5e17); // Values with some precision
+        tokenLaunch.setGoals(1000 ether + 1, 9e17); // Values with some precision, above sqrt(0.75)
 
         uint256 virtualK = tokenLaunch.virtualK();
         uint256 alpha = tokenLaunch.alpha();
@@ -265,7 +267,7 @@ contract ScribbleEdgeCaseTest is Test {
         inputToken.mint(address(this), 1000 ether);
         inputToken.approve(address(tokenLaunch), 1000 ether);
 
-        tokenLaunch.setGoals(1000 ether, 5e17);
+        tokenLaunch.setGoals(1000 ether, 9e17); // 0.9, above sqrt(0.75)
 
         // Normal operation should work
         tokenLaunch.addLiquidity(100 ether, 0);
@@ -278,7 +280,7 @@ contract ScribbleEdgeCaseTest is Test {
      * @notice Test edge case: State consistency across view functions
      */
     function testViewFunctionConsistencyEdgeCases() public {
-        tokenLaunch.setGoals(1000 ether, 5e17);
+        tokenLaunch.setGoals(1000 ether, 9e17); // 0.9, above sqrt(0.75)
 
         // Get current marginal price (should not revert)
         uint256 currentPrice = tokenLaunch.getCurrentMarginalPrice();

@@ -149,7 +149,9 @@ contract TokenLaunchProperties {
     function echidna_virtual_liquidity_non_zero() public view returns (bool) {
         if (!tokenLaunch.vaultApprovalInitialized()) return true;
 
-        return tokenLaunch.virtualInputTokens() > 0 && tokenLaunch.virtualL() > 0;
+        // With zero seed enforcement, virtualInputTokens starts at 0 (x₀ = 0)
+        // virtualL should always be > 0 after setGoals
+        return tokenLaunch.virtualL() > 0;
     }
 
     /**
@@ -195,9 +197,10 @@ contract TokenLaunchProperties {
         uint256 virtualInput = tokenLaunch.virtualInputTokens();
         uint256 virtualL = tokenLaunch.virtualL();
 
-        // Basic sanity check - if virtual L decreases, virtual input should increase
-        // This is a simplified version of price monotonicity
-        return virtualInput > 0 && virtualL > 0;
+        // With zero seed enforcement, virtualInput starts at 0 (x₀ = 0)
+        // Price monotonicity only applies after first trade when virtualInput > 0
+        // For initial state, just check virtualL is properly initialized
+        return virtualL > 0;
     }
 
     // ============ OPERATION TESTING FUNCTIONS ============

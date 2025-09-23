@@ -41,7 +41,7 @@ contract ScribbleFalsePositiveTest is Test {
         tokenLaunch.initializeVaultApproval();
 
         // Set up initial goals for tokenLaunch
-        tokenLaunch.setGoals(1000 ether, 5e17); // 50% desired average price
+        tokenLaunch.setGoals(1000 ether, 9e17); // 90% desired average price, above sqrt(0.75)
 
         // Mint tokens for testing
         inputToken.mint(address(this), 10_000 ether);
@@ -139,7 +139,7 @@ contract ScribbleFalsePositiveTest is Test {
      */
     function testTokenLaunchGoalSettingValid() public {
         // Test various valid goal configurations
-        tokenLaunch.setGoals(2000 ether, 3e17); // 30% desired average price
+        tokenLaunch.setGoals(2000 ether, 9e17); // 90% desired average price, above sqrt(0.75)
 
         // Verify state is consistent
         assertTrue(tokenLaunch.fundingGoal() > tokenLaunch.seedInput());
@@ -150,7 +150,7 @@ contract ScribbleFalsePositiveTest is Test {
         assertTrue(tokenLaunch.beta() > 0);
 
         // Another valid configuration
-        tokenLaunch.setGoals(5000 ether, 8e17); // 80% desired average price
+        tokenLaunch.setGoals(5000 ether, 9e17); // 90% desired average price, above sqrt(0.75)
 
         // Verify consistency again
         assertTrue(tokenLaunch.fundingGoal() > tokenLaunch.seedInput());
@@ -209,7 +209,8 @@ contract ScribbleFalsePositiveTest is Test {
         // These should all be consistent without triggering false positives
         assertTrue(virtualK > 0);
         assertTrue(virtualL > 0);
-        assertTrue(virtualInputTokens > 0);
+        // With zero seed enforcement, virtualInputTokens starts at 0 (x₀ = 0)
+        assertEq(virtualInputTokens, 0, "Virtual input should be 0 initially with zero seed");
         assertTrue(alpha > 0);
         assertTrue(beta > 0);
     }

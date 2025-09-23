@@ -140,7 +140,7 @@ contract B3VirtualPairTest is Test {
         (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
         assertEq(inputTokens, SEED_INPUT, "Virtual input tokens should remain at seed input");
         assertGt(lTokens, 0, "Virtual L tokens should be positive");
-        assertEq(k, inputTokens * lTokens, "K should equal input * L for compatibility");
+        assertEq(k, b3.virtualK(), "K should equal virtualK");
 
         // Restore bonding curve to B3 contract
         vault.setClient(address(b3), true);
@@ -155,7 +155,7 @@ contract B3VirtualPairTest is Test {
         (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
         assertEq(inputTokens, SEED_INPUT, "Virtual input tokens should remain at seed input after external minting");
         assertGt(lTokens, 0, "Virtual L tokens should be positive after external minting");
-        assertEq(k, inputTokens * lTokens, "K should equal input * L for compatibility after external minting");
+        assertEq(k, b3.virtualK(), "K should equal virtualK after external minting");
 
         // Confirm that virtualL != totalSupply after minting
         assertTrue(
@@ -188,7 +188,7 @@ contract B3VirtualPairTest is Test {
         try b3.addLiquidity(1000 * 1e18, 0) {
             // After operation, check that K is preserved in some form
             (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
-            assertEq(k, inputTokens * lTokens, "K should be preserved after operations");
+            assertEq(k, b3.virtualK(), "K should be preserved after operations");
         } catch {
             // Expected to fail in RED phase
         }
@@ -199,14 +199,13 @@ contract B3VirtualPairTest is Test {
     // ============ EDGE CASE TESTS ============
 
     function testVirtualPairWithZeroValues() public {
-        // Test behavior when virtual pair has zero values (should not happen in correct implementation)
+        // Test behavior with zero seed enforcement (x₀ = 0)
         (uint256 inputTokens, uint256 lTokens, uint256 k) = b3.getVirtualPair();
 
-        // In RED phase, these will be zero, but that's wrong
-        if (inputTokens == 0 || lTokens == 0) {
-            // This test documents the current wrong state
-            assertTrue(false, "Virtual pair should never have zero values");
-        }
+        // With zero seed enforcement, inputTokens starts at 0 (x₀ = 0)
+        assertEq(inputTokens, 0, "Virtual input should be 0 initially with zero seed");
+        assertGt(lTokens, 0, "Virtual L should be positive after setGoals");
+        assertEq(k, b3.virtualK(), "K should equal virtualK");
     }
 
     function testVirtualPairConsistency() public view {
@@ -219,7 +218,7 @@ contract B3VirtualPairTest is Test {
 
         assertEq(virtualInput, returnedInput, "Virtual input tokens should be consistent");
         assertEq(virtualL, returnedL, "Virtual L tokens should be consistent");
-        assertEq(returnedK, virtualInput * virtualL, "Returned K should equal input * L for compatibility");
+        assertEq(returnedK, virtualK, "Returned K should equal virtualK");
 
         // Also check virtual liquidity invariant consistency
         uint256 alpha = b3.alpha();
@@ -243,7 +242,7 @@ contract B3VirtualPairTest is Test {
         assertGt(lTokens, 0, "Virtual liquidity architecture: L should be positive");
 
         // K should be the product for compatibility
-        assertEq(k, inputTokens * lTokens, "Virtual liquidity architecture: k should equal input * L");
+        assertEq(k, b3.virtualK(), "Virtual liquidity architecture: k should equal virtualK");
 
         // Verify virtual liquidity invariant (x+alpha)(y+beta)=virtualK
         uint256 alpha = b3.alpha();

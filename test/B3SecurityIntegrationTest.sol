@@ -505,7 +505,7 @@ contract B3SecurityIntegrationTest is Test {
 
             // Check virtual pair integrity
             (uint256 vInput, uint256 vL, uint256 k) = b3.getVirtualPair();
-            assertEq(k, vInput * vL, "K should always equal vInput * vL");
+            assertEq(k, b3.virtualK(), "K should always equal virtualK");
 
             // K should be approximately the constant (allowing for rounding)
             // Check virtual liquidity invariant instead of old K

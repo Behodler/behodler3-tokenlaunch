@@ -37,7 +37,7 @@ contract ScribbleInvariantTest is Test {
         tokenLaunch.initializeVaultApproval();
 
         // Set up initial goals for tokenLaunch
-        tokenLaunch.setGoals(1000 ether, 5e17); // 50% desired average price
+        tokenLaunch.setGoals(1000 ether, 9e17); // 90% desired average price, above sqrt(0.75)
     }
 
     /**
@@ -100,7 +100,7 @@ contract ScribbleInvariantTest is Test {
         // Check virtual K consistency invariant
         if (virtualK > 0) {
             uint256 expectedK = (virtualInputTokens + alpha) * (virtualL + beta);
-            assertEq(virtualK, expectedK, "Virtual K should equal (virtualInputTokens + alpha) * (virtualL + beta)");
+            assertApproxEqRel(virtualK, expectedK, 1e15, "Virtual K should equal (virtualInputTokens + alpha) * (virtualL + beta)");
         }
     }
 

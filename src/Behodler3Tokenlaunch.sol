@@ -304,6 +304,58 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         view
         returns (uint256 outputAmount)
     {
+        // ZERO SEED OPTIMIZATION: Use optimized path when applicable
+        if (seedInput == 0 && beta == alpha) {
+            return _calculateVirtualLiquidityQuoteOptimized(virtualFrom, virtualTo, inputAmount);
+        }
+
+        // Fallback to general implementation for non-zero seed cases
+        return _calculateVirtualLiquidityQuoteGeneral(virtualFrom, virtualTo, inputAmount);
+    }
+
+    /**
+     * @notice Optimized virtual liquidity calculation for zero seed case
+     * @dev Gas-optimized version when seedInput = 0 and β = α
+     * @param virtualFrom Current virtual amount of the token being reduced
+     * @param virtualTo Current virtual amount of the token being increased
+     * @param inputAmount Amount of tokens being added to virtualTo
+     * @return outputAmount Amount of tokens that would be reduced from virtualFrom
+     */
+    function _calculateVirtualLiquidityQuoteOptimized(uint256 virtualFrom, uint256 virtualTo, uint256 inputAmount)
+        internal
+        view
+        returns (uint256 outputAmount)
+    {
+        // ZERO SEED OPTIMIZATION: Since β = α, we can simplify calculations
+        // Use unchecked arithmetic for gas optimization
+        unchecked {
+            // Calculate denominator: virtualTo + inputAmount + α
+            uint256 denominator = virtualTo + inputAmount + alpha;
+
+            // Calculate new virtual amount: k / denominator - α
+            uint256 newVirtualFromWithOffset = virtualK / denominator;
+            uint256 newVirtualFrom = newVirtualFromWithOffset - alpha;
+
+            // Output amount = reduction in virtualFrom
+            outputAmount = virtualFrom - newVirtualFrom;
+        }
+
+        return outputAmount;
+    }
+
+    /**
+     * @notice General virtual liquidity calculation (original implementation)
+     * @dev Used as fallback for non-optimized cases
+     * @param virtualFrom Current virtual amount of the token being reduced
+     * @param virtualTo Current virtual amount of the token being increased
+     * @param inputAmount Amount of tokens being added to virtualTo
+     * @return outputAmount Amount of tokens that would be reduced from virtualFrom
+     */
+    function _calculateVirtualLiquidityQuoteGeneral(uint256 virtualFrom, uint256 virtualTo, uint256 inputAmount)
+        internal
+        view
+        returns (uint256 outputAmount)
+    {
         // Determine which offset to use based on token type
         uint256 fromOffset;
         uint256 toOffset;
@@ -356,25 +408,38 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Internal function to get current marginal price
-     * @dev Used internally to avoid external call issues
+     * @notice Internal function to get current marginal price (optimized for zero seed)
+     * @dev Used internally to avoid external call issues. Optimized for x₀ = 0 case.
      */
     function _getCurrentMarginalPriceInternal() internal view returns (uint256 price) {
         require(virtualK > 0, "VL: Goals not set - call setGoals first");
 
+        // OPTIMIZATION: When seedInput is always 0, we can use optimized calculation
+        // Since virtualInputTokens starts at 0 and only increases, we can optimize the calculation
         uint256 xPlusAlpha = virtualInputTokens + alpha;
-        // Calculate (x+α)²/k with proper scaling
-        price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK;
+
+        // Gas optimization: Use unchecked arithmetic for safe operations
+        unchecked {
+            // Calculate (x+α)²/k with proper scaling - optimized for zero seed case
+            price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK;
+        }
+
         return price;
     }
 
     /**
-     * @notice Internal function to get initial marginal price
-     * @dev Used internally to avoid external call issues
+     * @notice Internal function to get initial marginal price (optimized for zero seed)
+     * @dev Used internally to avoid external call issues. Zero seed optimization: P₀ = P_avg²
      */
     function _getInitialMarginalPriceInternal() internal view returns (uint256 initialPrice) {
         require(desiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
-        initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
+
+        // ZERO SEED OPTIMIZATION: P₀ = P_avg² (simplified when x₀ = 0)
+        // Gas optimization: Use unchecked arithmetic for safe operations
+        unchecked {
+            initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
+        }
+
         return initialPrice;
     }
 

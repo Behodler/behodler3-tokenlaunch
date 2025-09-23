@@ -327,18 +327,19 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         returns (uint256 outputAmount)
     {
         // ZERO SEED OPTIMIZATION: Since β = α, we can simplify calculations
-        // Use unchecked arithmetic for gas optimization
-        unchecked {
-            // Calculate denominator: virtualTo + inputAmount + α
-            uint256 denominator = virtualTo + inputAmount + alpha;
+        // Calculate denominator: virtualTo + inputAmount + α
+        uint256 denominator = virtualTo + inputAmount + alpha;
 
-            // Calculate new virtual amount: k / denominator - α
-            uint256 newVirtualFromWithOffset = virtualK / denominator;
-            uint256 newVirtualFrom = newVirtualFromWithOffset - alpha;
+        // Calculate new virtual amount: k / denominator - α
+        uint256 newVirtualFromWithOffset = virtualK / denominator;
+        // Overflow protection: ensure newVirtualFromWithOffset >= alpha
+        require(newVirtualFromWithOffset >= alpha, "VL: Subtraction would underflow");
+        uint256 newVirtualFrom = newVirtualFromWithOffset - alpha;
 
-            // Output amount = reduction in virtualFrom
-            outputAmount = virtualFrom - newVirtualFrom;
-        }
+        // Overflow protection: ensure virtualFrom >= newVirtualFrom
+        require(virtualFrom >= newVirtualFrom, "VL: Subtraction would underflow");
+        // Output amount = reduction in virtualFrom
+        outputAmount = virtualFrom - newVirtualFrom;
 
         return outputAmount;
     }

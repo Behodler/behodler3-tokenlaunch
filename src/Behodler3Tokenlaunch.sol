@@ -105,6 +105,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Auto-lock functionality flag
     bool public autoLock;
 
+    /// @notice Withdrawal fee in basis points (0-10000, where 10000 = 100%)
+    uint256 public withdrawalFeeBasisPoints;
+
 
     // ============ EVENTS ============
 
@@ -121,6 +124,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         uint256 beta,
         uint256 virtualK
     );
+    event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount);
 
 
     // ============ MODIFIERS ============
@@ -670,14 +675,25 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
 
-        // Calculate input tokens using refactored virtual pair math
-        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
+        // Calculate fee amount in bondingTokens
+        uint256 feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+
+        // Calculate effective bonding tokens after fee deduction for withdrawal calculation
+        uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+
+        // Calculate input tokens using effective bonding tokens (post-fee amount)
+        inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
 
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
 
-        // Burn bonding tokens from user
+        // Burn full bonding token amount from user (supply decreases by full amount)
         bondingToken.burn(msg.sender, bondingTokenAmount);
+
+        // Emit fee collection event if fee was charged
+        if (feeAmount > 0) {
+            emit FeeCollected(msg.sender, bondingTokenAmount, feeAmount);
+        }
 
         // Withdraw and transfer input tokens to user (only if amount > 0)
         if (inputTokensOut > 0) {
@@ -685,7 +701,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
             require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         }
 
-        // Update virtual pair state
+        // Update virtual pair state using full bonding token amount for supply,
+        // but only effective amount affects virtual liquidity calculation
         _updateVirtualLiquidityState(-int256(inputTokensOut), int256(bondingTokenAmount));
 
         emit LiquidityRemoved(msg.sender, bondingTokenAmount, inputTokensOut);
@@ -764,6 +781,22 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// #if_succeeds {:msg "Auto-lock should be set to specified value"} autoLock == _autoLock;
     function setAutoLock(bool _autoLock) external onlyOwner {
         autoLock = _autoLock;
+    }
+
+    /**
+     * @notice Set withdrawal fee in basis points (0-10000)
+     * @param _feeBasisPoints Fee in basis points where 10000 = 100%
+     */
+    /// #if_succeeds {:msg "Only owner can set withdrawal fee"} msg.sender == owner();
+    /// #if_succeeds {:msg "Fee must be within valid range"} _feeBasisPoints <= 10000;
+    /// #if_succeeds {:msg "Withdrawal fee should be updated to new value"} withdrawalFeeBasisPoints == _feeBasisPoints;
+    function setWithdrawalFee(uint256 _feeBasisPoints) external onlyOwner {
+        require(_feeBasisPoints <= 10000, "B3: Fee must be <= 10000 basis points");
+
+        uint256 oldFee = withdrawalFeeBasisPoints;
+        withdrawalFeeBasisPoints = _feeBasisPoints;
+
+        emit WithdrawalFeeUpdated(oldFee, _feeBasisPoints);
     }
 
     // ============ VIEW FUNCTIONS - ALL STUBS ============

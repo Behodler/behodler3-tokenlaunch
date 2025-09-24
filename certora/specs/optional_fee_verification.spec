@@ -143,9 +143,16 @@ rule withdrawalAmountCorrectWithFee(env e) {
 
     // Fee reduction should be properly applied
     if (fee > 0) {
-        assert feeAmount > 0, "Fee amount should be positive when fee rate is positive";
-        assert effectiveBondingTokens < bondingTokenAmount,
-               "Effective bonding tokens should be less than original when fee applied";
+        // Only assert non-zero fee when the multiplication result is large enough for non-zero division
+        if ((bondingTokenAmount * fee) >= 10000) {
+            assert feeAmount > 0, "Fee amount should be positive when fee rate is positive and amount is sufficient";
+            assert effectiveBondingTokens < bondingTokenAmount,
+                   "Effective bonding tokens should be less than original when fee applied";
+        } else {
+            // For very small amounts where (bondingTokenAmount * fee) < 10000, feeAmount will be 0 due to integer division
+            assert effectiveBondingTokens == bondingTokenAmount,
+                   "Effective bonding tokens should equal original when integer division results in zero fee";
+        }
     } else {
         assert feeAmount == 0, "Fee amount should be zero when fee rate is zero";
         assert effectiveBondingTokens == bondingTokenAmount,

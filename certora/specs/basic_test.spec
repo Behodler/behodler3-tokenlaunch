@@ -17,12 +17,13 @@ rule sanity_check() {
 
 // Basic property: prices should be consistent
 rule price_consistency() {
-    uint256 currentPrice = getCurrentMarginalPrice();
     uint256 initialPrice = getInitialMarginalPrice();
     uint256 finalPrice = getFinalMarginalPrice();
 
-    // Final price should be higher than initial price
-    // The fee mechanism only affects removeLiquidity (selling), not the bonding curve prices
-    // Buying always increases price along the curve, so this property should hold
-    assert finalPrice >= initialPrice;
+    // The bonding curve design requires that the initial price is lower than the final price
+    // Initial price = (desiredAveragePrice)^2 / 1e18
+    // Final price = 1e18 (representing 1:1 ratio at funding goal)
+    // For a valid bonding curve, desiredAveragePrice must be <= 1e18
+    // This ensures price increases from initial to final along the curve
+    assert finalPrice >= initialPrice, "Bonding curve must have initial price <= final price";
 }

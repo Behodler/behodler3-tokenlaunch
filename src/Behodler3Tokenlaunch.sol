@@ -58,6 +58,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// !vaultApprovalInitialized || address(inputToken) != address(0);
 /// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
 /// virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
+/// #invariant {:msg "Withdrawal fee must be within valid range (0 to 10000 basis points)"} withdrawalFeeBasisPoints >= 0 && withdrawalFeeBasisPoints <= 10000;
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     // ============ STATE VARIABLES ============
 
@@ -666,6 +667,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// virtualInputTokens < old(virtualInputTokens);
     /// #if_succeeds {:msg "Input tokens should be transferred to user if output > 0"} inputTokensOut > 0 ==>
     /// inputToken.balanceOf(msg.sender) >= old(inputToken.balanceOf(msg.sender)) + inputTokensOut;
+    /// #if_succeeds {:msg "Total supply must decrease by full bonding token amount (including fees)"} bondingToken.totalSupply() == old(bondingToken.totalSupply()) - bondingTokenAmount;
+    /// #if_succeeds {:msg "Fee calculation must be correct based on basis points"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in feeAmount >= 0 && feeAmount <= bondingTokenAmount;
+    /// #if_succeeds {:msg "Effective bonding tokens must equal full amount minus fee"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in let effectiveAmount := bondingTokenAmount - feeAmount in effectiveAmount >= 0 && effectiveAmount <= bondingTokenAmount;
     function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens)
         external
         nonReentrant
@@ -790,6 +794,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// #if_succeeds {:msg "Only owner can set withdrawal fee"} msg.sender == owner();
     /// #if_succeeds {:msg "Fee must be within valid range"} _feeBasisPoints <= 10000;
     /// #if_succeeds {:msg "Withdrawal fee should be updated to new value"} withdrawalFeeBasisPoints == _feeBasisPoints;
+    /// #if_succeeds {:msg "Access control: only owner can modify withdrawal fee"} msg.sender == owner();
+    /// #if_succeeds {:msg "Fee parameter validation: new fee must not exceed maximum"} _feeBasisPoints >= 0 && _feeBasisPoints <= 10000;
     function setWithdrawalFee(uint256 _feeBasisPoints) external onlyOwner {
         require(_feeBasisPoints <= 10000, "B3: Fee must be <= 10000 basis points");
 

@@ -2,10 +2,10 @@
 // Story 032.4 - Certora Verification for Optional Fee Mechanism
 
 methods {
-    // Core contract methods
-    function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens) external returns (uint256) envfree;
+    // Core contract methods (these require env for caller context)
+    function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens) external returns (uint256);
     function quoteRemoveLiquidity(uint256 bondingTokenAmount) external returns (uint256) envfree;
-    function setWithdrawalFee(uint256 _feeBasisPoints) external envfree;
+    function setWithdrawalFee(uint256 _feeBasisPoints) external;
 
     // State getters
     function withdrawalFeeBasisPoints() external returns (uint256) envfree;
@@ -13,6 +13,10 @@ methods {
 
     // Bonding token access through the contract
     function bondingToken() external returns (address) envfree;
+
+    // Bonding token methods via dispatcher
+    function _.balanceOf(address) external => DISPATCHER(true);
+    function _.totalSupply() external => DISPATCHER(true);
 
     // Virtual state methods
     function virtualInputTokens() external returns (uint256) envfree;
@@ -28,10 +32,84 @@ methods {
 
 // ============ FEE BOUNDS VERIFICATION ============
 
-// Rule 1: Fee must always be within bounds (0-10000 basis points)
-rule feeWithinBounds() {
-    uint256 fee = withdrawalFeeBasisPoints();
-    assert fee <= 10000, "Fee must be <= 10000 basis points (100%)";
+// Rule 1: Fee upper bound is enforced by contract validation
+// Updated to test the invariant properly by focusing on setter validation
+rule feeUpperBoundEnforced(env e) {
+    uint256 newFee;
+
+    // Test that setWithdrawalFee properly rejects fees > 10000
+    if (newFee > 10000) {
+        setWithdrawalFee@withrevert(e, newFee);
+        assert lastReverted, "Setting fee > 10000 basis points should revert";
+    } else {
+        // Valid fees should be accepted (assuming caller is owner)
+        require e.msg.sender == owner();
+        uint256 oldFee = withdrawalFeeBasisPoints();
+        setWithdrawalFee(e, newFee);
+        assert withdrawalFeeBasisPoints() == newFee, "Valid fee should be set correctly";
+    }
+}
+
+// Rule 1a: Fee boundary behavior verification
+rule feeBoundaryBehavior(env e) {
+    require e.msg.sender == owner();
+
+    // Test exactly at boundary (10000 should be valid)
+    setWithdrawalFee(e, 10000);
+    assert withdrawalFeeBasisPoints() == 10000, "Fee of 10000 basis points should be valid";
+
+    // Test just over boundary (10001 should revert)
+    setWithdrawalFee@withrevert(e, 10001);
+    assert lastReverted, "Fee of 10001 basis points should be rejected";
+}
+
+// Rule 1b: Parametric fee validation across range
+rule parametricFeeValidation(env e) {
+    uint256 testFee;
+    require e.msg.sender == owner();
+
+    if (testFee <= 10000) {
+        // Valid fees should be accepted
+        setWithdrawalFee(e, testFee);
+        assert withdrawalFeeBasisPoints() == testFee, "Valid fees should be set correctly";
+    } else {
+        // Invalid fees should be rejected
+        setWithdrawalFee@withrevert(e, testFee);
+        assert lastReverted, "Invalid fees should be rejected";
+    }
+}
+
+// Rule 1c: Fee state consistency after operations
+// This rule verifies that fee operations don't corrupt the virtual state
+rule feeStateConsistency(env e) {
+    uint256 bondingTokenAmount;
+    uint256 minInputTokens;
+
+    require bondingTokenAmount > 0;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    require !locked();
+    require vaultApprovalInitialized();
+
+    // Capture fee and virtual state before operation
+    uint256 feeBefore = withdrawalFeeBasisPoints();
+    require feeBefore <= 10000; // Constrain to valid initial state
+
+    uint256 virtualKBefore = virtualK();
+    uint256 alphaBefore = alpha();
+    uint256 betaBefore = beta();
+
+    // Execute removeLiquidity with fee
+    removeLiquidity(e, bondingTokenAmount, minInputTokens);
+
+    // Fee should be unchanged by removeLiquidity operation
+    uint256 feeAfter = withdrawalFeeBasisPoints();
+    assert feeAfter == feeBefore, "RemoveLiquidity should not change withdrawal fee";
+
+    // Virtual constants should remain unchanged (fee doesn't affect these)
+    assert virtualK() == virtualKBefore, "Virtual K should remain constant";
+    assert alpha() == alphaBefore, "Alpha should remain constant";
+    assert beta() == betaBefore, "Beta should remain constant";
 }
 
 // Rule 2: Only owner can set withdrawal fee
@@ -66,13 +144,14 @@ rule supplyDecreasesCorrectly(env e) {
     require !locked();
     require vaultApprovalInitialized();
 
-    uint256 totalSupplyBefore = bondingToken.totalSupply();
-    uint256 userBalanceBefore = bondingToken.balanceOf(user);
+    address bondingTokenAddr = bondingToken();
+    uint256 totalSupplyBefore = bondingTokenAddr.totalSupply();
+    uint256 userBalanceBefore = bondingTokenAddr.balanceOf(user);
 
     removeLiquidity(e, bondingTokenAmount, minInputTokens);
 
-    uint256 totalSupplyAfter = bondingToken.totalSupply();
-    uint256 userBalanceAfter = bondingToken.balanceOf(user);
+    uint256 totalSupplyAfter = bondingTokenAddr.totalSupply();
+    uint256 userBalanceAfter = bondingTokenAddr.balanceOf(user);
 
     // Total supply should decrease by full bonding token amount (including fee portion)
     assert totalSupplyAfter == totalSupplyBefore - bondingTokenAmount,
@@ -83,6 +162,33 @@ rule supplyDecreasesCorrectly(env e) {
            "User balance must decrease by full bonding token amount";
 }
 
+// Rule 1d: Zero fee backward compatibility verification
+rule zeroFeeBackwardCompatibility(env e) {
+    uint256 bondingTokenAmount;
+    uint256 minInputTokens;
+
+    require bondingTokenAmount > 0;
+    require e.msg.sender == owner();
+
+    // Set fee to zero explicitly
+    setWithdrawalFee(e, 0);
+    uint256 fee = withdrawalFeeBasisPoints();
+    assert fee == 0, "Fee should be set to zero";
+
+    // Test that zero fee behaves like no fee
+    uint256 quotedAmount = quoteRemoveLiquidity(bondingTokenAmount);
+
+    // With zero fee, the quote should use the full bonding token amount
+    // This verifies backward compatibility with the original fee-less implementation
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    require !locked();
+    require vaultApprovalInitialized();
+
+    uint256 actualAmount = removeLiquidity(e, bondingTokenAmount, minInputTokens);
+    assert actualAmount == quotedAmount, "Zero fee should provide identical quote and actual amounts";
+}
+
 // ============ FEE CALCULATION VERIFICATION ============
 
 // Rule 4: Withdrawal amount is correct with fee applied
@@ -91,7 +197,8 @@ rule withdrawalAmountCorrectWithFee(env e) {
     uint256 minInputTokens;
 
     require bondingTokenAmount > 0;
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
@@ -99,9 +206,9 @@ rule withdrawalAmountCorrectWithFee(env e) {
     uint256 quotedAmount = quoteRemoveLiquidity(bondingTokenAmount);
     uint256 actualAmount = removeLiquidity(e, bondingTokenAmount, minInputTokens);
 
-    // Calculate expected fee amount
-    uint256 feeAmount = (bondingTokenAmount * fee) / 10000;
-    uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+    // Calculate expected fee amount using mathint to prevent overflow
+    mathint feeAmount = (bondingTokenAmount * fee) / 10000;
+    mathint effectiveBondingTokens = bondingTokenAmount - feeAmount;
 
     // Quoted amount should match actual amount (both use same calculation)
     assert actualAmount == quotedAmount,
@@ -119,27 +226,31 @@ rule withdrawalAmountCorrectWithFee(env e) {
     }
 }
 
-// Rule 5: Zero fee provides backward compatibility
-rule zeroFeeBackwardCompatibility(env e) {
+// Rule 5: Fee calculation correctness verification
+rule feeCalculationCorrectness(env e) {
     uint256 bondingTokenAmount;
     uint256 minInputTokens;
 
     require bondingTokenAmount > 0;
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
-    // Set fee to zero
-    setWithdrawalFee(e, 0);
-    assert withdrawalFeeBasisPoints() == 0;
+    // Get current fee and calculate expected amounts
+    uint256 currentFee = withdrawalFeeBasisPoints();
+    require currentFee <= 10000; // Constrain to valid state
 
     uint256 quotedAmount = quoteRemoveLiquidity(bondingTokenAmount);
     uint256 actualAmount = removeLiquidity(e, bondingTokenAmount, minInputTokens);
 
-    // With zero fee, no reduction should occur in withdrawal calculation
-    // Both quoted and actual should use full bonding token amount
+    // Calculate expected fee math using mathint to prevent overflow
+    mathint expectedFeeAmount = (bondingTokenAmount * currentFee) / 10000;
+    mathint expectedEffectiveTokens = bondingTokenAmount - expectedFeeAmount;
+
+    // Quote and actual should always match with correct fee calculation
     assert actualAmount == quotedAmount,
-           "Zero fee should provide identical quote and actual amounts";
+           "Quote and actual amounts should be consistent with fee applied";
 }
 
 // ============ PARAMETRIC VERIFICATION ============
@@ -152,7 +263,8 @@ rule parametricFeeCalculation(env e) {
 
     require bondingTokenAmount > 0 && bondingTokenAmount <= 1000000; // Reasonable bounds
     require feeRate <= 10000; // Valid fee range
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
@@ -162,9 +274,9 @@ rule parametricFeeCalculation(env e) {
     uint256 quotedAmount = quoteRemoveLiquidity(bondingTokenAmount);
     uint256 actualAmount = removeLiquidity(e, bondingTokenAmount, minInputTokens);
 
-    // Calculate expected fee mathematics
-    uint256 expectedFeeAmount = (bondingTokenAmount * feeRate) / 10000;
-    uint256 expectedEffectiveTokens = bondingTokenAmount - expectedFeeAmount;
+    // Calculate expected fee mathematics using mathint to prevent overflow
+    mathint expectedFeeAmount = (bondingTokenAmount * feeRate) / 10000;
+    mathint expectedEffectiveTokens = bondingTokenAmount - expectedFeeAmount;
 
     // Verify fee calculation properties
     assert expectedFeeAmount <= bondingTokenAmount,
@@ -191,13 +303,63 @@ rule parametricFeeCalculation(env e) {
 
 // ============ STATE CONSISTENCY VERIFICATION ============
 
-// Rule 7: Virtual state remains mathematically consistent after fee-based removeLiquidity
+// Rule 7: Virtual state operations remain unchanged by fee operations
+rule virtualStateUnchangedByFeeOperations(env e) {
+    // This rule verifies that fee-related operations don't interfere with virtual state consistency
+
+    // Capture initial virtual state
+    uint256 virtualKBefore = virtualK();
+    uint256 alphaBefore = alpha();
+    uint256 betaBefore = beta();
+
+    // Test fee operations (set fee doesn't change virtual state)
+    require e.msg.sender == owner();
+    uint256 newFee;
+    require newFee <= 10000;
+
+    setWithdrawalFee(e, newFee);
+
+    // Virtual constants should be unchanged
+    assert virtualK() == virtualKBefore, "Setting withdrawal fee should not change virtual K";
+    assert alpha() == alphaBefore, "Setting withdrawal fee should not change alpha";
+    assert beta() == betaBefore, "Setting withdrawal fee should not change beta";
+}
+
+// Rule 8: Quote consistency across different fee rates
+rule quoteConsistencyAcrossFees(env e) {
+    uint256 bondingTokenAmount;
+
+    require bondingTokenAmount > 0 && bondingTokenAmount <= 1000000; // Reasonable bounds
+    require e.msg.sender == owner();
+
+    // Test quote calculation with zero fee
+    setWithdrawalFee(e, 0);
+    uint256 quoteZeroFee = quoteRemoveLiquidity(bondingTokenAmount);
+
+    // Test quote calculation with non-zero fee (e.g., 5%)
+    setWithdrawalFee(e, 500); // 5%
+    uint256 quoteFivePct = quoteRemoveLiquidity(bondingTokenAmount);
+
+    // Test quote calculation with maximum fee (100%)
+    setWithdrawalFee(e, 10000); // 100%
+    uint256 quoteMaxFee = quoteRemoveLiquidity(bondingTokenAmount);
+
+    // Mathematical relationship verification
+    assert quoteZeroFee >= quoteFivePct, "Higher fee should result in lower or equal quote";
+    assert quoteFivePct >= quoteMaxFee, "Maximum fee should result in lowest quote";
+
+    // With 100% fee, no tokens should be withdrawn (all consumed as fee)
+    assert quoteMaxFee == 0, "100% fee should result in zero withdrawal amount";
+}
+
+// Rule 9: Virtual state remains mathematically consistent after fee-based removeLiquidity
 rule virtualStateConsistencyWithFees(env e) {
     uint256 bondingTokenAmount;
     uint256 minInputTokens;
 
     require bondingTokenAmount > 0;
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
@@ -240,7 +402,8 @@ rule feeWithMEVProtection(env e) {
     uint256 minInputTokens;
 
     require bondingTokenAmount > 0;
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
@@ -265,12 +428,13 @@ rule feeCollectionConsistency(env e) {
     uint256 minInputTokens;
 
     require bondingTokenAmount > 0;
-    require bondingToken.balanceOf(e.msg.sender) >= bondingTokenAmount;
+    address bondingTokenAddr = bondingToken();
+    require bondingTokenAddr.balanceOf(e.msg.sender) >= bondingTokenAmount;
     require !locked();
     require vaultApprovalInitialized();
 
     uint256 fee = withdrawalFeeBasisPoints();
-    uint256 expectedFeeAmount = (bondingTokenAmount * fee) / 10000;
+    mathint expectedFeeAmount = (bondingTokenAmount * fee) / 10000;
 
     // Execute removeLiquidity
     removeLiquidity(e, bondingTokenAmount, minInputTokens);

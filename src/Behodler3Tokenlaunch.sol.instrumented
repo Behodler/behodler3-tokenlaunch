@@ -35,7 +35,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///  !vaultApprovalInitialized || address(inputToken) != address(0);
 ///  #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
 ///  virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
-///  #invariant {:msg "Withdrawal fee must be within valid range (0 <= fee <= 10000)"} withdrawalFeeBasisPoints <= 10000;
+///  #invariant {:msg "Withdrawal fee must be within valid range (0 to 10000 basis points)"} withdrawalFeeBasisPoints >= 0 && withdrawalFeeBasisPoints <= 10000;
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event LiquidityAdded(address indexed user, uint256 inputAmount, uint256 bondingTokensOut);
 
@@ -75,6 +75,19 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         uint256 old_5;
         uint256 old_6;
         uint256 old_7;
+        uint256 feeAmount1;
+        bool let_0;
+        uint256 feeAmount2;
+        uint256 effectiveAmount;
+        bool let_1;
+        bool let_2;
+    }
+
+    struct vars19 {
+        uint256 feeAmount3;
+        uint256 effectiveBondingTokens1;
+        bool let_3;
+        bool let_4;
     }
 
     /// @notice The input token being bootstrapped
@@ -114,66 +127,66 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault) Ownable(msg.sender) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         inputToken = _inputToken;
         bondingToken = _bondingToken;
         vault = _vault;
         vaultApprovalInitialized = false;
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function setGoals(uint256 _fundingGoal, uint256 _desiredAveragePrice) external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_setGoals(_fundingGoal, _desiredAveragePrice);
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("006740:0102:003 21: Only owner can call this function");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("007064:0102:003 21: Only owner can call this function");
                 assert(false);
             }
             if (!(_fundingGoal > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("006944:0098:003 22: Funding goal must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("007268:0098:003 22: Funding goal must be positive");
                 assert(false);
             }
             if (!((_desiredAveragePrice >= 866025403784438647) && (_desiredAveragePrice < 1000000000000000000))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("007220:0126:003 23: Desired average price must be between sqrt(0.75) and 1e18");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("007544:0126:003 23: Desired average price must be between sqrt(0.75) and 1e18");
                 assert(false);
             }
             if (!(fundingGoal == _fundingGoal)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("007459:0105:003 24: Funding goal should be set correctly");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("007783:0105:003 24: Funding goal should be set correctly");
                 assert(false);
             }
             if (!(seedInput == 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("007664:0106:003 25: Seed input should be enforced as zero");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("007988:0106:003 25: Seed input should be enforced as zero");
                 assert(false);
             }
             if (!(desiredAveragePrice == _desiredAveragePrice)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("007899:0114:003 26: Desired average price should be set correctly");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("008223:0114:003 26: Desired average price should be set correctly");
                 assert(false);
             }
             if (!(alpha == ((_desiredAveragePrice * _fundingGoal) / (1000000000000000000 - _desiredAveragePrice)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("008194:0119:003 27: Alpha should be calculated correctly for zero seed");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("008518:0119:003 27: Alpha should be calculated correctly for zero seed");
                 assert(false);
             }
             if (!(beta == alpha)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("008412:0092:003 28: Beta should equal alpha");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("008736:0092:003 28: Beta should equal alpha");
                 assert(false);
             }
             if (!(virtualK == ((_fundingGoal + alpha) * (_fundingGoal + alpha)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("008651:0109:003 29: Virtual K should be calculated correctly");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("008975:0109:003 29: Virtual K should be calculated correctly");
                 assert(false);
             }
             if (!(virtualInputTokens == 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("008869:0111:003 30: Virtual input tokens should be set to zero");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("009193:0111:003 30: Virtual input tokens should be set to zero");
                 assert(false);
             }
             if (!(virtualL == ((virtualK / alpha) - alpha))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("009106:0109:003 31: Virtual L should be calculated correctly");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("009430:0109:003 31: Virtual L should be calculated correctly");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_setGoals(uint256 _fundingGoal, uint256 _desiredAveragePrice) internal onlyOwner() {
@@ -197,24 +210,24 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function getCurrentMarginalPrice() external returns (uint256 price) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         price = _original_Behodler3Tokenlaunch_getCurrentMarginalPrice();
         unchecked {
             if (!(virtualK > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("010823:0109:003 32: Virtual K must be set to calculate price");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("011147:0109:003 32: Virtual K must be set to calculate price");
                 assert(false);
             }
             if (!((!(virtualK > 0)) || (price > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("011050:0113:003 33: Price must be positive when virtual K is set");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("011374:0113:003 33: Price must be positive when virtual K is set");
                 assert(false);
             }
             if (!((!(virtualK > 0)) || (price == ((((virtualInputTokens + alpha) * (virtualInputTokens + alpha)) * 1000000000000000000) / virtualK)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("011379:0122:003 34: Price should be calculated using virtual pair formula");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("011703:0122:003 34: Price should be calculated using virtual pair formula");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_getCurrentMarginalPrice() internal view returns (uint256 price) {
@@ -222,24 +235,24 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function getAveragePrice() external returns (uint256 avgPrice) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         avgPrice = _original_Behodler3Tokenlaunch_getAveragePrice();
         unchecked {
             if (!((!(bondingToken.totalSupply() == 0)) || (avgPrice == 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("012139:0119:003 35: Average price is zero when no bonding tokens exist");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("012463:0119:003 35: Average price is zero when no bonding tokens exist");
                 assert(false);
             }
             if (!((!(bondingToken.totalSupply() > 0)) || (avgPrice == ((getTotalRaised() * 1000000000000000000) / bondingToken.totalSupply())))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("012468:0136:003 36: Average price calculation must be correct when bonding tokens exist");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("012792:0136:003 36: Average price calculation must be correct when bonding tokens exist");
                 assert(false);
             }
             if (!(avgPrice <= type(uint256).max)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("012719:0123:003 37: Average price must be reasonable (not exceed max uint)");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("013043:0123:003 37: Average price must be reasonable (not exceed max uint)");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_getAveragePrice() internal returns (uint256 avgPrice) {
@@ -252,21 +265,21 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function getTotalRaised() public returns (uint256 totalRaised) {
         vars9 memory _v;
-        _v.__scribble_check_invs_at_end = !__ScribbleUtilsLib__1726.isInContract();
-        __ScribbleUtilsLib__1726.setInContract(true);
+        _v.__scribble_check_invs_at_end = !__ScribbleUtilsLib__1741.isInContract();
+        __ScribbleUtilsLib__1741.setInContract(true);
         totalRaised = _original_Behodler3Tokenlaunch_getTotalRaised();
         unchecked {
             if (!(virtualK > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("013734:0118:003 38: Goals must be set before calculating total raised");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("014058:0118:003 38: Goals must be set before calculating total raised");
                 assert(false);
             }
             if (!(totalRaised == virtualInputTokens)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("013971:0124:003 39: Total raised equals virtual input tokens with zero seed");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("014295:0124:003 39: Total raised equals virtual input tokens with zero seed");
                 assert(false);
             }
         }
         if (_v.__scribble_check_invs_at_end) __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(!_v.__scribble_check_invs_at_end);
+        __ScribbleUtilsLib__1741.setInContract(!_v.__scribble_check_invs_at_end);
     }
 
     function _original_Behodler3Tokenlaunch_getTotalRaised() internal view returns (uint256 totalRaised) {
@@ -275,20 +288,20 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function getInitialMarginalPrice() external returns (uint256 initialPrice) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         initialPrice = _original_Behodler3Tokenlaunch_getInitialMarginalPrice();
         unchecked {
             if (!(desiredAveragePrice > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("014844:0129:003 40: Desired average price must be set to calculate initial price");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("015168:0129:003 40: Desired average price must be set to calculate initial price");
                 assert(false);
             }
             if (!((!(desiredAveragePrice > 0)) || (initialPrice == ((desiredAveragePrice * desiredAveragePrice) / 1000000000000000000)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("015176:0125:003 41: Initial price should equal desired average price squared");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("015500:0125:003 41: Initial price should equal desired average price squared");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_getInitialMarginalPrice() internal view returns (uint256 initialPrice) {
@@ -296,16 +309,16 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function getFinalMarginalPrice() external returns (uint256 finalPrice) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         finalPrice = _original_Behodler3Tokenlaunch_getFinalMarginalPrice();
         unchecked {
             if (!(finalPrice == 1000000000000000000)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("015940:0125:003 42: Final price must always be 1e18 (representing 1:1 ratio)");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("016264:0125:003 42: Final price must always be 1e18 (representing 1:1 ratio)");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_getFinalMarginalPrice() internal pure returns (uint256 finalPrice) {
@@ -432,24 +445,24 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function setInputToken(address _token) external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_setInputToken(_token);
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("023524:0099:003 43: Only owner can set input token");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("023848:0099:003 43: Only owner can set input token");
                 assert(false);
             }
             if (!(_token != address(0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("023729:0105:003 44: Input token address must not be zero");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("024053:0105:003 44: Input token address must not be zero");
                 assert(false);
             }
             if (!(address(inputToken) == _token)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("023949:0113:003 45: Input token should be updated to new address");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("024273:0113:003 45: Input token should be updated to new address");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_setInputToken(address _token) internal onlyOwner() {
@@ -465,27 +478,27 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function initializeVaultApproval() external {
         vars13 memory _v;
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         unchecked {
             _v.old_0 = vaultApprovalInitialized;
         }
         _original_Behodler3Tokenlaunch_initializeVaultApproval();
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("024971:0109:003 46: Only owner can initialize vault approval");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("025295:0109:003 46: Only owner can initialize vault approval");
                 assert(false);
             }
             if (!(!_v.old_0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("025175:0111:003 47: Vault approval was not already initialized");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("025499:0111:003 47: Vault approval was not already initialized");
                 assert(false);
             }
             if (!(vaultApprovalInitialized == true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("025404:0116:003 48: Vault approval should be initialized after call");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("025728:0116:003 48: Vault approval should be initialized after call");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_initializeVaultApproval() internal onlyOwner() {
@@ -496,27 +509,27 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function disableToken() external {
         vars14 memory _v;
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         unchecked {
             _v.old_1 = vaultApprovalInitialized;
         }
         _original_Behodler3Tokenlaunch_disableToken();
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("026353:0097:003 49: Only owner can disable token");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("026677:0097:003 49: Only owner can disable token");
                 assert(false);
             }
             if (!(_v.old_1)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("026544:0120:003 50: Vault approval must be initialized before disabling");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("026868:0120:003 50: Vault approval must be initialized before disabling");
                 assert(false);
             }
             if (!(vaultApprovalInitialized == false)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("026783:0113:003 51: Vault approval should be disabled after call");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("027107:0113:003 51: Vault approval should be disabled after call");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_disableToken() internal onlyOwner() {
@@ -526,28 +539,28 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function setVault(address _vault) external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_setVault(_vault);
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("027610:0093:003 52: Only owner can set vault");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("027934:0093:003 52: Only owner can set vault");
                 assert(false);
             }
             if (!(_vault != address(0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("027809:0099:003 53: Vault address must not be zero");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("028133:0099:003 53: Vault address must not be zero");
                 assert(false);
             }
             if (!(address(vault) == _vault)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("028018:0107:003 54: Vault should be updated to new address");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("028342:0107:003 54: Vault should be updated to new address");
                 assert(false);
             }
             if (!(vaultApprovalInitialized == false)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("028244:0105:003 55: Vault approval state should be reset");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("028568:0105:003 55: Vault approval state should be reset");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_setVault(address _vault) internal onlyOwner() {
@@ -587,7 +600,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function addLiquidity(uint256 inputAmount, uint256 minBondingTokens) external returns (uint256 bondingTokensOut) {
         vars16 memory _v;
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         unchecked {
             _v.old_2 = bondingToken.balanceOf(msg.sender);
             _v.old_3 = virtualInputTokens;
@@ -595,44 +608,44 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         bondingTokensOut = _original_Behodler3Tokenlaunch_addLiquidity(inputAmount, minBondingTokens);
         unchecked {
             if (!(inputAmount > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("030809:0098:003 56: Input amount must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("031133:0098:003 56: Input amount must be positive");
                 assert(false);
             }
             if (!(!locked)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("031000:0096:003 57: Contract must not be locked");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("031324:0096:003 57: Contract must not be locked");
                 assert(false);
             }
             if (!(vaultApprovalInitialized)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("031206:0103:003 58: Vault approval must be initialized");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("031530:0103:003 58: Vault approval must be initialized");
                 assert(false);
             }
             if (!(virtualK > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("031407:0110:003 59: Virtual K must be set (goals initialized)");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("031731:0110:003 59: Virtual K must be set (goals initialized)");
                 assert(false);
             }
             if (!(bondingTokensOut >= minBondingTokens)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("031639:0105:003 60: Output must meet minimum requirement");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("031963:0105:003 60: Output must meet minimum requirement");
                 assert(false);
             }
             if (!((!(bondingTokensOut > 0)) || (bondingToken.balanceOf(msg.sender) >= (_v.old_2 + bondingTokensOut)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("031928:0106:003 61: Bonding tokens must be minted to user");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("032252:0106:003 61: Bonding tokens must be minted to user");
                 assert(false);
             }
             if (!(virtualInputTokens > _v.old_3)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("032149:0105:003 62: Virtual input tokens should increase");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("032473:0105:003 62: Virtual input tokens should increase");
                 assert(false);
             }
             if (!(inputAmount <= inputToken.balanceOf(msg.sender))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("032387:0114:003 63: User must have sufficient input token balance");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("032711:0114:003 63: User must have sufficient input token balance");
                 assert(false);
             }
             if (!(inputAmount <= inputToken.allowance(msg.sender, address(this)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("032649:0104:003 64: User must have sufficient allowance");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("032973:0104:003 64: User must have sufficient allowance");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_addLiquidity(uint256 inputAmount, uint256 minBondingTokens) internal nonReentrant() notLocked() returns (uint256 bondingTokensOut) {
@@ -652,7 +665,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens) external returns (uint256 inputTokensOut) {
         vars17 memory _v;
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         unchecked {
             _v.old_4 = bondingToken.balanceOf(msg.sender);
             _v.old_5 = virtualInputTokens;
@@ -662,48 +675,54 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         inputTokensOut = _original_Behodler3Tokenlaunch_removeLiquidity(bondingTokenAmount, minInputTokens);
         unchecked {
             if (!(bondingTokenAmount > 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("034587:0106:003 65: Bonding token amount must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("034911:0106:003 65: Bonding token amount must be positive");
                 assert(false);
             }
             if (!(!locked)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("034786:0096:003 66: Contract must not be locked");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("035110:0096:003 66: Contract must not be locked");
                 assert(false);
             }
             if (!(bondingTokenAmount <= bondingToken.balanceOf(msg.sender))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("035024:0109:003 67: User must have sufficient bonding tokens");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("035348:0109:003 67: User must have sufficient bonding tokens");
                 assert(false);
             }
             if (!(inputTokensOut >= minInputTokens)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("035251:0105:003 68: Output must meet minimum requirement");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("035575:0105:003 68: Output must meet minimum requirement");
                 assert(false);
             }
             if (!(bondingToken.balanceOf(msg.sender) == (_v.old_4 - bondingTokenAmount))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("035511:0111:003 69: User bonding token balance should decrease");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("035835:0111:003 69: User bonding token balance should decrease");
                 assert(false);
             }
             if (!((!(inputTokensOut > 0)) || (virtualInputTokens < _v.old_5))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("035766:0119:003 70: Virtual input tokens should decrease if output > 0");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("036090:0119:003 70: Virtual input tokens should decrease if output > 0");
                 assert(false);
             }
             if (!((!(inputTokensOut > 0)) || (inputToken.balanceOf(msg.sender) >= (_v.old_6 + inputTokensOut)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("036063:0125:003 71: Input tokens should be transferred to user if output > 0");
-                assert(false);
-            }
-            if (!(((bondingTokenAmount * withdrawalFeeBasisPoints) / 10000) <= bondingTokenAmount)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("036353:0169:003 72: Fee calculation correctness: fee amount equals bondingTokenAmount * withdrawalFeeBasisPoints / 10000");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("036387:0125:003 71: Input tokens should be transferred to user if output > 0");
                 assert(false);
             }
             if (!(bondingToken.totalSupply() == (_v.old_7 - bondingTokenAmount))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("036669:0161:003 73: Supply decrease correctness: bonding token total supply decreases by full bondingTokenAmount");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("036659:0141:003 72: Total supply must decrease by full bonding token amount (including fees)");
                 assert(false);
             }
-            if (!(true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("036920:0142:003 74: Effective bonding tokens correctness: equals bondingTokenAmount minus fee");
+            _v.feeAmount1 = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+            _v.let_0 = (_v.feeAmount1 >= 0) && (_v.feeAmount1 <= bondingTokenAmount);
+            if (!(_v.let_0)) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("037065:0122:003 73: Fee calculation must be correct based on basis points");
+                assert(false);
+            }
+            _v.feeAmount2 = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+            _v.effectiveAmount = bondingTokenAmount - _v.feeAmount2;
+            _v.let_1 = (_v.effectiveAmount >= 0) && (_v.effectiveAmount <= bondingTokenAmount);
+            _v.let_2 = _v.let_1;
+            if (!(_v.let_2)) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("037564:0126:003 74: Effective bonding tokens must equal full amount minus fee");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens) internal nonReentrant() notLocked() returns (uint256 inputTokensOut) {
@@ -727,28 +746,28 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function quoteAddLiquidity(uint256 inputAmount) external returns (uint256 bondingTokensOut) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         bondingTokensOut = _original_Behodler3Tokenlaunch_quoteAddLiquidity(inputAmount);
         unchecked {
             if (!((!(inputAmount == 0)) || (bondingTokensOut == 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("038900:0102:003 75: Quote returns zero for zero input");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("039528:0102:003 75: Quote returns zero for zero input");
                 assert(false);
             }
             if (!((!(inputAmount > 0)) || (virtualK > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("039126:0109:003 76: Virtual K must be set to calculate quote");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("039754:0109:003 76: Virtual K must be set to calculate quote");
                 assert(false);
             }
             if (!((!((inputAmount > 0) && (virtualK > 0))) || (bondingTokensOut > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("039387:0137:003 77: Quote should return positive tokens for positive input when K is set");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("040015:0137:003 77: Quote should return positive tokens for positive input when K is set");
                 assert(false);
             }
             if (!(true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("039614:0137:003 78: Quote calculation should be consistent with addLiquidity calculation");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("040242:0137:003 78: Quote calculation should be consistent with addLiquidity calculation");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_quoteAddLiquidity(uint256 inputAmount) internal view returns (uint256 bondingTokensOut) {
@@ -758,51 +777,58 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function quoteRemoveLiquidity(uint256 bondingTokenAmount) external returns (uint256 inputTokensOut) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        vars19 memory _v;
+        __ScribbleUtilsLib__1741.setInContract(true);
         inputTokensOut = _original_Behodler3Tokenlaunch_quoteRemoveLiquidity(bondingTokenAmount);
         unchecked {
             if (!((!(bondingTokenAmount == 0)) || (inputTokensOut == 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("040567:0111:003 79: Quote returns zero for zero bonding tokens");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("041221:0111:003 79: Quote returns zero for zero bonding tokens");
                 assert(false);
             }
             if (!((!(bondingTokenAmount > 0)) || (virtualK > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("040809:0109:003 80: Virtual K must be set to calculate quote");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("041463:0109:003 80: Virtual K must be set to calculate quote");
                 assert(false);
             }
             if (!((!((bondingTokenAmount > 0) && (virtualK > 0))) || (inputTokensOut >= 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("041076:0137:003 81: Quote should return positive tokens for positive input when K is set");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("041730:0137:003 81: Quote should return positive tokens for positive input when K is set");
                 assert(false);
             }
-            if (!(true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("041303:0140:003 82: Quote calculation should be consistent with removeLiquidity calculation");
+            _v.feeAmount3 = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+            _v.effectiveBondingTokens1 = bondingTokenAmount - _v.feeAmount3;
+            _v.let_3 = inputTokensOut == _calculateInputTokensOut(_v.effectiveBondingTokens1);
+            _v.let_4 = _v.let_3;
+            if (!(_v.let_4)) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("042251:0160:003 82: Quote calculation should be consistent with removeLiquidity calculation accounting for fees");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_quoteRemoveLiquidity(uint256 bondingTokenAmount) internal view returns (uint256 inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
-        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
+        uint256 feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+        uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
         return inputTokensOut;
     }
 
     function lock() external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_lock();
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("042117:0101:003 83: Only owner can lock the contract");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("043247:0101:003 83: Only owner can lock the contract");
                 assert(false);
             }
             if (!(locked == true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("042318:0114:003 84: Contract should be locked after function call");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("043448:0114:003 84: Contract should be locked after function call");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_lock() internal onlyOwner() {
@@ -811,20 +837,20 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function unlock() external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_unlock();
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("042947:0103:003 85: Only owner can unlock the contract");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("044077:0103:003 85: Only owner can unlock the contract");
                 assert(false);
             }
             if (!(locked == false)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("043151:0116:003 86: Contract should be unlocked after function call");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("044281:0116:003 86: Contract should be unlocked after function call");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_unlock() internal onlyOwner() {
@@ -833,20 +859,20 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function setAutoLock(bool _autoLock) external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_setAutoLock(_autoLock);
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("043820:0097:003 87: Only owner can set auto-lock");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("044950:0097:003 87: Only owner can set auto-lock");
                 assert(false);
             }
             if (!(autoLock == _autoLock)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("044024:0111:003 88: Auto-lock should be set to specified value");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("045154:0111:003 88: Auto-lock should be set to specified value");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_setAutoLock(bool _autoLock) internal onlyOwner() {
@@ -854,24 +880,32 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function setWithdrawalFee(uint256 _feeBasisPoints) external {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         _original_Behodler3Tokenlaunch_setWithdrawalFee(_feeBasisPoints);
         unchecked {
             if (!(msg.sender == owner())) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("044705:0102:003 89: Only owner can set withdrawal fee");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("045835:0102:003 89: Only owner can set withdrawal fee");
                 assert(false);
             }
             if (!(_feeBasisPoints <= 10000)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("044917:0099:003 90: Fee must be within valid range");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("046047:0099:003 90: Fee must be within valid range");
                 assert(false);
             }
             if (!(withdrawalFeeBasisPoints == _feeBasisPoints)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("045145:0114:003 91: Withdrawal fee should be updated to new value");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("046275:0114:003 91: Withdrawal fee should be updated to new value");
+                assert(false);
+            }
+            if (!(msg.sender == owner())) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("046496:0121:003 92: Access control: only owner can modify withdrawal fee");
+                assert(false);
+            }
+            if (!((_feeBasisPoints >= 0) && (_feeBasisPoints <= 10000))) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("046755:0126:003 93: Fee parameter validation: new fee must not exceed maximum");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_setWithdrawalFee(uint256 _feeBasisPoints) internal onlyOwner() {
@@ -882,24 +916,24 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function getVirtualPair() external returns (uint256 inputTokens, uint256 lTokens, uint256 k) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         (inputTokens, lTokens, k) = _original_Behodler3Tokenlaunch_getVirtualPair();
         unchecked {
             if (!(inputTokens == virtualInputTokens)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("046116:0110:003 92: Input tokens should match virtual storage");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("047738:0110:003 94: Input tokens should match virtual storage");
                 assert(false);
             }
             if (!(lTokens == virtualL)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("046331:0106:003 93: L tokens should match virtual storage");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("047953:0106:003 95: L tokens should match virtual storage");
                 assert(false);
             }
             if (!(k == virtualK)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("046536:0115:003 94: K should return the virtual liquidity constant");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("048158:0115:003 96: K should return the virtual liquidity constant");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_getVirtualPair() internal view returns (uint256 inputTokens, uint256 lTokens, uint256 k) {
@@ -907,28 +941,28 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function isVirtualPairInitialized() external returns (bool RET_0) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         RET_0 = _original_Behodler3Tokenlaunch_isVirtualPairInitialized();
         unchecked {
             if (!(RET_0 == (((virtualK > 0) && (alpha > 0)) && (beta > 0)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("047330:0130:003 95: Initialization requires all virtual parameters to be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("048952:0130:003 97: Initialization requires all virtual parameters to be positive");
                 assert(false);
             }
             if (!((!RET_0) || (virtualK > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("047572:0111:003 96: If initialized, virtual K must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("049194:0111:003 98: If initialized, virtual K must be positive");
                 assert(false);
             }
             if (!((!RET_0) || (alpha > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("047792:0107:003 97: If initialized, alpha must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("049414:0107:003 99: If initialized, alpha must be positive");
                 assert(false);
             }
             if (!((!RET_0) || (beta > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("048007:0106:003 98: If initialized, beta must be positive");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("049629:0107:003 100: If initialized, beta must be positive");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_isVirtualPairInitialized() internal view returns (bool) {
@@ -936,20 +970,20 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     function virtualLDifferentFromTotalSupply() external returns (bool RET_0) {
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
         RET_0 = _original_Behodler3Tokenlaunch_virtualLDifferentFromTotalSupply();
         unchecked {
             if (!(RET_0 == (virtualL != bondingToken.totalSupply()))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("048773:0137:003 99: Result should reflect difference between virtual L and actual supply");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("050396:0138:003 101: Result should reflect difference between virtual L and actual supply");
                 assert(false);
             }
             if (!(true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("049000:0144:003 100: Virtual pair architecture requires separation of virtual and actual tokens");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("050624:0144:003 102: Virtual pair architecture requires separation of virtual and actual tokens");
                 assert(false);
             }
         }
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
     }
 
     function _original_Behodler3Tokenlaunch_virtualLDifferentFromTotalSupply() internal view returns (bool) {
@@ -960,87 +994,87 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     function __scribble_Behodler3Tokenlaunch_check_state_invariants_internal() internal {
         unchecked {
             if (!((virtualK == 0) || (virtualK == ((virtualInputTokens + alpha) * (virtualL + beta))))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("049771:0122:003 0: Virtual K must be consistent with virtual pair product");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("051395:0122:003 0: Virtual K must be consistent with virtual pair product");
                 assert(false);
             }
             if (!((((virtualK > 0) && (alpha > 0)) && (beta > 0)) || (((virtualK == 0) && (alpha == 0)) && (beta == 0)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("050080:0134:003 1: Virtual liquidity parameters must be properly initialized together");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("051704:0134:003 1: Virtual liquidity parameters must be properly initialized together");
                 assert(false);
             }
             if (!((locked == true) || (locked == false))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("050337:0121:003 2: Contract cannot be locked and unlocked simultaneously");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("051961:0121:003 2: Contract cannot be locked and unlocked simultaneously");
                 assert(false);
             }
             if (!((vaultApprovalInitialized == true) || (vaultApprovalInitialized == false))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("050617:0107:003 3: Vault approval state must be consistent");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("052241:0107:003 3: Vault approval state must be consistent");
                 assert(false);
             }
             if (!(seedInput == 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("050824:0122:003 4: Seed input must always be zero (zero seed enforcement)");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("052448:0122:003 4: Seed input must always be zero (zero seed enforcement)");
                 assert(false);
             }
             if (!((desiredAveragePrice == 0) || ((desiredAveragePrice > 0) && (desiredAveragePrice < 1000000000000000000)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("051136:0125:003 5: Desired average price must be between 0 and 1e18 when set");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("052760:0125:003 5: Desired average price must be between 0 and 1e18 when set");
                 assert(false);
             }
             if (!(virtualInputTokens >= 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("051370:0126:003 6: Virtual input tokens must be non-negative (starts at zero)");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("052994:0126:003 6: Virtual input tokens must be non-negative (starts at zero)");
                 assert(false);
             }
             if (!((!vaultApprovalInitialized) || (address(vault) != address(0)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("051643:0138:003 7: Vault balance consistency: approval must be initialized for operations");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("053267:0138:003 7: Vault balance consistency: approval must be initialized for operations");
                 assert(false);
             }
             if (!(bondingToken.totalSupply() <= (virtualL + virtualInputTokens))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("051928:0141:003 8: Bonding token total supply must not exceed reasonable mathematical limits");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("053552:0141:003 8: Bonding token total supply must not exceed reasonable mathematical limits");
                 assert(false);
             }
             if (!((virtualK == 0) || (virtualK > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("052188:0138:003 9: Virtual K maintains mathematical integrity as constant product formula");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("053812:0138:003 9: Virtual K maintains mathematical integrity as constant product formula");
                 assert(false);
             }
             if (!(((alpha == 0) || (beta == 0)) || (alpha == beta))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("052460:0143:003 10: Alpha and beta must be mathematically consistent for proper curve behavior");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("054084:0143:003 10: Alpha and beta must be mathematically consistent for proper curve behavior");
                 assert(false);
             }
             if (!((alpha == 0) || (alpha <= (fundingGoal * 10)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("052734:0127:003 11: Slippage protection: virtual parameters must be reasonable");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("054358:0127:003 11: Slippage protection: virtual parameters must be reasonable");
                 assert(false);
             }
             if (!((fundingGoal == 0) || (bondingToken.totalSupply() <= fundingGoal))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("053012:0143:003 12: Token supply management: bonding token supply must not exceed funding goal");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("054636:0143:003 12: Token supply management: bonding token supply must not exceed funding goal");
                 assert(false);
             }
             if (!(bondingToken.totalSupply() >= 0)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("053272:0132:003 13: Token supply consistency: total supply starts at zero and grows");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("054896:0132:003 13: Token supply consistency: total supply starts at zero and grows");
                 assert(false);
             }
             if (!((virtualK == 0) || (virtualL > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("053523:0132:003 14: Supply bounds: virtual L must be positive when virtual K is set");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("055147:0132:003 14: Supply bounds: virtual L must be positive when virtual K is set");
                 assert(false);
             }
             if (!((!locked) || true)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("053758:0143:003 15: Cross-function state consistency: locked state must prevent all operations");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("055382:0143:003 15: Cross-function state consistency: locked state must prevent all operations");
                 assert(false);
             }
             if (!((virtualK == 0) || (virtualK > 0))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("054020:0143:003 16: Add/remove liquidity state consistency: virtual pair maintains K invariant");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("055644:0143:003 16: Add/remove liquidity state consistency: virtual pair maintains K invariant");
                 assert(false);
             }
             if (!((virtualK == 0) || (virtualInputTokens <= fundingGoal))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("054303:0157:003 17: State consistency across operations: virtual input tokens should not exceed funding goal");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("055927:0157:003 17: State consistency across operations: virtual input tokens should not exceed funding goal");
                 assert(false);
             }
             if (!((!vaultApprovalInitialized) || (address(inputToken) != address(0)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("054612:0135:003 18: Pre/post condition linkage: vault approval required for operations");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("056236:0135:003 18: Pre/post condition linkage: vault approval required for operations");
                 assert(false);
             }
             if (!((virtualK == 0) || ((virtualL > 0) && (bondingToken.totalSupply() >= 0)))) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("054905:0158:003 19: Cross-function invariant: virtual L and bonding token supply remain mathematically linked");
+                emit __ScribbleUtilsLib__1741.AssertionFailed("056529:0158:003 19: Cross-function invariant: virtual L and bonding token supply remain mathematically linked");
                 assert(false);
             }
-            if (!(withdrawalFeeBasisPoints <= 10000)) {
-                emit __ScribbleUtilsLib__1726.AssertionFailed("055182:0130:003 20: Withdrawal fee must be within valid range (0 <= fee <= 10000)");
+            if (!((withdrawalFeeBasisPoints >= 0) && (withdrawalFeeBasisPoints <= 10000))) {
+                emit __ScribbleUtilsLib__1741.AssertionFailed("056843:0136:003 20: Withdrawal fee must be within valid range (0 to 10000 basis points)");
                 assert(false);
             }
         }
@@ -1056,69 +1090,69 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     function _callsite_1168(IERC20 receiver, address arg0, uint256 arg1) private returns (bool ret0) {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         (ret0) = receiver.approve(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1199(IERC20 receiver, address arg0, uint256 arg1) private returns (bool ret0) {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         (ret0) = receiver.approve(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1227(IERC20 receiver, address arg0, uint256 arg1) private returns (bool ret0) {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         (ret0) = receiver.approve(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1376(IERC20 receiver, address arg0, address arg1, uint256 arg2) private returns (bool ret0) {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         (ret0) = receiver.transferFrom(arg0, arg1, arg2);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1392(IVault receiver, address arg0, uint256 arg1, address arg2) private {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         receiver.deposit(arg0, arg1, arg2);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1403(IBondingToken receiver, address arg0, uint256 arg1) private {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         receiver.mint(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1495(IBondingToken receiver, address arg0, uint256 arg1) private {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         receiver.burn(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1524(IVault receiver, address arg0, uint256 arg1, address arg2) private {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         receiver.withdraw(arg0, arg1, arg2);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 
     function _callsite_1532(IERC20 receiver, address arg0, uint256 arg1) private returns (bool ret0) {
         __scribble_check_state_invariants();
-        __ScribbleUtilsLib__1726.setInContract(false);
+        __ScribbleUtilsLib__1741.setInContract(false);
         (ret0) = receiver.transfer(arg0, arg1);
-        __ScribbleUtilsLib__1726.setInContract(true);
+        __ScribbleUtilsLib__1741.setInContract(true);
     }
 }
 
-library __ScribbleUtilsLib__1726 {
+library __ScribbleUtilsLib__1741 {
     event AssertionFailed(string message);
 
     event AssertionFailedData(int eventId, bytes encodingData);

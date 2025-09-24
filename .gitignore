@@ -16,3 +16,8 @@ cache/scribble/
 performance-*.json
 benchmark-*.md
 scribble-output/
+
+# Certora temporary files
+.certora_internal/
+emv-*-certora-*/
+certora-env/

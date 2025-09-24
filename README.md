@@ -1,10 +1,31 @@
 # Behodler3 Tokenlaunch
 
-Bootstrap AMM using Virtual Pair architecture for token launches.
+Bootstrap AMM using Virtual Pair architecture for token launches with optional withdrawal fee mechanism.
+
+## Features
+
+- **Virtual Pair Architecture**: Efficient bonding curve implementation using (x+α)(y+β)=k formula
+- **Zero Seed Enforcement**: Fair launch guarantee with no initial bonding tokens
+- **Optional Withdrawal Fee**: Configurable deflationary fee mechanism for removeLiquidity operations
+- **Gas Optimized**: Minimal overhead for fee calculations (~525 gas maximum)
+- **Security Focused**: Comprehensive access controls and validation
+- **Standard ERC20 Compatibility**: No permit functionality for enhanced compatibility
 
 ## Architecture
 
 This project uses an external vault dependency via git submodules. The vault contracts are imported from the [reflax-yield-vault](https://github.com/Behodler/reflax-yield-vault) repository to avoid code duplication and maintain a clean separation of concerns.
+
+### Withdrawal Fee Mechanism
+
+The contract implements an optional withdrawal fee system with the following characteristics:
+
+- **Fee Range**: 0-10000 basis points (0% to 100%)
+- **Application**: Only on `removeLiquidity()` operations
+- **Deflationary Model**: Fees permanently removed from circulation
+- **Gas Efficient**: <0.8% overhead on withdrawal operations
+- **Owner Controlled**: Only contract owner can modify fee settings
+
+See [Withdrawal Fee Mechanism Documentation](docs/withdrawal-fee-mechanism.md) for detailed technical information.
 
 ## Code Quality and Development Setup
 

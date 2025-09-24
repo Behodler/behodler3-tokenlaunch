@@ -168,15 +168,68 @@ cast call $TOKEN_LAUNCH_ADDRESS "owner()" --rpc-url $RPC_URL
 
 Configure the TokenLaunch contract after deployment:
 
+#### Virtual Liquidity Goals Configuration
+
+Set the funding parameters for the token launch:
+
 ```bash
-# Configure platform parameters (if applicable)
-# Example: Setting fees, limits, or other configurable parameters
-cast send $TOKEN_LAUNCH_ADDRESS "setParameter(uint256)" 100 \
+# Set funding goal and desired average price (required before operations)
+# Example: 1,000,000 tokens funding goal with 0.9 average price (90%)
+cast send $TOKEN_LAUNCH_ADDRESS "setGoals(uint256,uint256)" \
+    1000000000000000000000000 900000000000000000 \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
+```
+
+#### Withdrawal Fee Configuration
+
+Configure optional withdrawal fees for removeLiquidity operations:
+
+```bash
+# Set withdrawal fee (0-10000 basis points, where 10000 = 100%)
+# Example: 250 basis points = 2.5% withdrawal fee
+cast send $TOKEN_LAUNCH_ADDRESS "setWithdrawalFee(uint256)" 250 \
     --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
 
+# Check current withdrawal fee
+cast call $TOKEN_LAUNCH_ADDRESS "withdrawalFeeBasisPoints()" --rpc-url $RPC_URL
+
+# Remove withdrawal fee (set to 0)
+cast send $TOKEN_LAUNCH_ADDRESS "setWithdrawalFee(uint256)" 0 \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
+```
+
+**Fee Examples:**
+- `0` = 0% (no fee)
+- `50` = 0.5%
+- `100` = 1%
+- `250` = 2.5%
+- `500` = 5%
+- `1000` = 10%
+- `2500` = 25%
+
+#### Vault Approval Initialization
+
+Initialize vault approval after vault authorization:
+
+```bash
+# First: Authorize this contract in the vault (run on vault contract)
+cast send $VAULT_ADDRESS "setClient(address,bool)" $TOKEN_LAUNCH_ADDRESS true \
+    --rpc-url $RPC_URL --private-key $VAULT_OWNER_PRIVATE_KEY
+
+# Then: Initialize vault approval in TokenLaunch contract
+cast send $TOKEN_LAUNCH_ADDRESS "initializeVaultApproval()" \
+    --rpc-url $RPC_URL --private-key $OWNER_PRIVATE_KEY
+```
+
+#### Access Control Management
+
+```bash
 # Transfer ownership (if needed)
 cast send $TOKEN_LAUNCH_ADDRESS "transferOwnership(address)" $NEW_OWNER_ADDRESS \
     --rpc-url $RPC_URL --private-key $CURRENT_OWNER_PRIVATE_KEY
+
+# Verify new ownership
+cast call $TOKEN_LAUNCH_ADDRESS "owner()" --rpc-url $RPC_URL
 ```
 
 ### Step 7: Emergency Controls
@@ -245,10 +298,24 @@ Monitor contract events for operational insights:
 #### Key Events to Track
 
 ```solidity
+// Liquidity Operations
+event LiquidityAdded(address indexed user, uint256 inputAmount, uint256 bondingTokensOut);
+event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
+
+// Fee-Related Events
+event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee);
+event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount);
+
+// System Events
+event ContractLocked();
+event ContractUnlocked();
+event VaultChanged(address indexed oldVault, address indexed newVault);
+event VirtualLiquidityGoalsSet(uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
+
+// Standard ERC20 Events
 event Transfer(address indexed from, address indexed to, uint256 value);
 event Approval(address indexed owner, address indexed spender, uint256 value);
 event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-// Additional custom events specific to TokenLaunch functionality
 ```
 
 #### Example Monitoring Script
@@ -257,14 +324,37 @@ event OwnershipTransferred(address indexed previousOwner, address indexed newOwn
 // Using ethers.js or web3.js
 const tokenLaunch = new ethers.Contract(TOKEN_LAUNCH_ADDRESS, abi, provider);
 
-// Monitor transfers
-tokenLaunch.on("Transfer", (from, to, value, event) => {
-    console.log(`Transfer: ${from} -> ${to}, Amount: ${value}`);
+// Monitor liquidity operations
+tokenLaunch.on("LiquidityAdded", (user, inputAmount, bondingTokensOut, event) => {
+    console.log(`Liquidity Added: User ${user}, Input: ${ethers.utils.formatEther(inputAmount)}, Bonding Tokens: ${ethers.utils.formatEther(bondingTokensOut)}`);
 });
 
-// Monitor approvals
-tokenLaunch.on("Approval", (owner, spender, value, event) => {
-    console.log(`Approval: ${owner} approved ${spender} for ${value}`);
+tokenLaunch.on("LiquidityRemoved", (user, bondingTokenAmount, inputTokensOut, event) => {
+    console.log(`Liquidity Removed: User ${user}, Bonding Tokens: ${ethers.utils.formatEther(bondingTokenAmount)}, Input Tokens: ${ethers.utils.formatEther(inputTokensOut)}`);
+});
+
+// Monitor fee-related events
+tokenLaunch.on("WithdrawalFeeUpdated", (oldFee, newFee, event) => {
+    console.log(`Withdrawal Fee Updated: ${oldFee} basis points -> ${newFee} basis points`);
+});
+
+tokenLaunch.on("FeeCollected", (user, bondingTokenAmount, feeAmount, event) => {
+    const feePercentage = (feeAmount * 10000n) / bondingTokenAmount;
+    console.log(`Fee Collected: User ${user}, Fee: ${ethers.utils.formatEther(feeAmount)} (${feePercentage} basis points)`);
+});
+
+// Monitor system events
+tokenLaunch.on("ContractLocked", (event) => {
+    console.log("Contract has been locked");
+});
+
+tokenLaunch.on("ContractUnlocked", (event) => {
+    console.log("Contract has been unlocked");
+});
+
+// Monitor configuration changes
+tokenLaunch.on("VirtualLiquidityGoalsSet", (fundingGoal, seedInput, desiredAveragePrice, alpha, beta, virtualK, event) => {
+    console.log(`Virtual Liquidity Goals Set: Funding Goal: ${ethers.utils.formatEther(fundingGoal)}, Average Price: ${ethers.utils.formatEther(desiredAveragePrice)}`);
 });
 ```
 
@@ -272,9 +362,21 @@ tokenLaunch.on("Approval", (owner, spender, value, event) => {
 
 #### Parameter Review
 
-- Monitor penalty effectiveness through transaction data
-- Adjust parameters based on user behavior and market conditions
-- Review gas costs for timestamp operations
+**Withdrawal Fee Management:**
+- Monitor fee collection effectiveness through `FeeCollected` events
+- Analyze user behavior impact from different fee levels
+- Adjust withdrawal fees based on market conditions and project needs
+- Review deflationary impact on bonding token supply
+
+**Virtual Liquidity Parameters:**
+- Monitor funding progress toward goals
+- Review price curve behavior and user adoption
+- Consider parameter adjustments based on market feedback
+
+**Gas Cost Analysis:**
+- Track gas costs for liquidity operations with fees
+- Monitor fee calculation overhead (~475 gas maximum)
+- Optimize monitoring scripts for efficient event processing
 
 #### Security Monitoring
 

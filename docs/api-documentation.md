@@ -91,21 +91,30 @@ function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens)
     returns (uint256 inputTokensOut)
 ```
 
-Removes liquidity from the pool by burning bonding tokens.
+Removes liquidity from the pool by burning bonding tokens with optional withdrawal fee.
 
 **Prerequisites:**
 - User must own sufficient bonding tokens
 - Contract must not be locked
 
 **Parameters:**
-- `bondingTokenAmount`: Amount of bonding tokens to burn
-- `minInputTokens`: Minimum input tokens expected (slippage protection)
+- `bondingTokenAmount`: Amount of bonding tokens to burn (full amount including fee portion)
+- `minInputTokens`: Minimum input tokens expected (slippage protection, net amount after fee)
 
 **Returns:**
-- `inputTokensOut`: Actual input tokens received
+- `inputTokensOut`: Actual input tokens received (net amount after fee deduction)
+
+**Fee Mechanism:**
+- Optional withdrawal fee applied based on `withdrawalFeeBasisPoints` (0-10000)
+- Fee calculation: `feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000`
+- Effective amount: `effectiveAmount = bondingTokenAmount - feeAmount`
+- Full `bondingTokenAmount` is burned from user (deflationary)
+- Output calculated only on `effectiveAmount`, not full amount
+- Fee is permanently removed from circulation
 
 **Events Emitted:**
 - `LiquidityRemoved(user, bondingTokenAmount, inputTokensOut)`
+- `FeeCollected(user, bondingTokenAmount, feeAmount)` (if fee > 0)
 
 ### Quote Functions
 
@@ -135,13 +144,19 @@ function quoteRemoveLiquidity(uint256 bondingTokenAmount)
     returns (uint256 inputTokensOut)
 ```
 
-Calculates input tokens that would be received for burning bonding tokens.
+Calculates input tokens that would be received for burning bonding tokens (after fee deduction).
 
 **Parameters:**
-- `bondingTokenAmount`: Amount of bonding tokens to simulate burning
+- `bondingTokenAmount`: Amount of bonding tokens to simulate burning (full amount)
 
 **Returns:**
-- `inputTokensOut`: Input tokens that would be returned
+- `inputTokensOut`: Input tokens that would be returned (net amount after fee deduction)
+
+**Fee Impact:**
+- Quote automatically accounts for current `withdrawalFeeBasisPoints`
+- Returns actual amount user would receive, not gross amount
+- Use this for accurate slippage calculations and UI display
+- Calculation mirrors exact logic used in `removeLiquidity()`
 
 ### Price Functions
 
@@ -360,6 +375,37 @@ Configures automatic locking when funding goal is reached.
 **Parameters:**
 - `_autoLock`: Whether to enable auto-lock functionality
 
+#### setWithdrawalFee
+
+```solidity
+function setWithdrawalFee(uint256 _feeBasisPoints) external onlyOwner
+```
+
+Sets the withdrawal fee for `removeLiquidity` operations.
+
+**Parameters:**
+- `_feeBasisPoints`: Fee in basis points (0-10000), where 10000 = 100%
+
+**Fee Examples:**
+- `0` = 0% (no fee)
+- `50` = 0.5%
+- `100` = 1%
+- `250` = 2.5%
+- `500` = 5%
+- `1000` = 10%
+- `2500` = 25%
+- `10000` = 100% (maximum)
+
+**Behavior:**
+- Fee is applied during `removeLiquidity()` calls
+- Full `bondingTokenAmount` is burned from user supply
+- Only effective amount (after fee deduction) used for withdrawal calculation
+- Fee is permanently removed from circulation (deflationary mechanism)
+- Changes are immediately effective for new withdrawal operations
+
+**Events Emitted:**
+- `WithdrawalFeeUpdated(oldFee, newFee)`
+
 ## Events
 
 ### LiquidityAdded
@@ -396,6 +442,20 @@ event VaultChanged(address indexed oldVault, address indexed newVault)
 ```
 
 Emitted when the vault address is updated.
+
+### WithdrawalFeeUpdated
+```solidity
+event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee)
+```
+
+Emitted when the withdrawal fee is updated via `setWithdrawalFee()`.
+
+### FeeCollected
+```solidity
+event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount)
+```
+
+Emitted when a withdrawal fee is collected during `removeLiquidity()` operations. Only emitted when `feeAmount > 0`.
 
 ### VirtualLiquidityGoalsSet
 ```solidity

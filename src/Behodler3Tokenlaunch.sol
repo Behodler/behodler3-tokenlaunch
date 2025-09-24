@@ -650,11 +650,28 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Remove liquidity from the bootstrap AMM
-     * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance
-     * @param bondingTokenAmount Amount of bonding tokens to burn
-     * @param minInputTokens Minimum input tokens to receive (MEV protection)
-     * @return inputTokensOut Amount of input tokens received
+     * @notice Remove liquidity from the bootstrap AMM with optional withdrawal fee
+     * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance.
+     *      The fee mechanism works as follows:
+     *      1. Fee is calculated as (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *      2. Full bondingTokenAmount is burned from user (supply decreases by full amount)
+     *      3. Only effective amount (bondingTokenAmount - fee) is used for withdrawal calculation
+     *      4. User receives input tokens based on effective amount, not full amount
+     *      5. Fee is permanently removed from circulation (deflationary mechanism)
+     *
+     * @param bondingTokenAmount Amount of bonding tokens to burn (full amount including fee)
+     * @param minInputTokens Minimum input tokens to receive (MEV protection, based on net after fee)
+     * @return inputTokensOut Amount of input tokens received (calculated on effective amount after fee deduction)
+     *
+     * @notice Fee Mechanism:
+     *         - Fee range: 0-10000 basis points (0% to 100%)
+     *         - Fee = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *         - Effective tokens = bondingTokenAmount - fee
+     *         - Output calculated on effective tokens, not full amount
+     *         - All bondingTokenAmount burned, reducing total supply
+     *
+     * @notice Gas Optimization: Fee calculation uses efficient integer arithmetic
+     * @notice Security: Fee cannot exceed 100% (10000 basis points) due to validation in setWithdrawalFee
      */
     /// #if_succeeds {:msg "Bonding token amount must be positive"} bondingTokenAmount > 0;
     /// #if_succeeds {:msg "Contract must not be locked"} !locked;
@@ -735,10 +752,23 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Quote how many input tokens would be received for removing liquidity
-     * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity
-     * @param bondingTokenAmount Amount of bonding tokens to burn
-     * @return inputTokensOut Expected input tokens to be received
+     * @notice Quote how many input tokens would be received for removing liquidity (after fee deduction)
+     * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity.
+     *      This function accounts for the withdrawal fee and returns the actual amount a user would receive.
+     *      The calculation mirrors the exact logic used in removeLiquidity() to ensure accuracy.
+     *
+     * @param bondingTokenAmount Amount of bonding tokens to burn (full amount including fee portion)
+     * @return inputTokensOut Expected input tokens to be received (net amount after fee deduction)
+     *
+     * @notice Fee Impact:
+     *         - Quote includes current withdrawal fee (withdrawalFeeBasisPoints)
+     *         - Fee = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *         - Effective amount = bondingTokenAmount - fee
+     *         - Output calculated on effective amount, not full bondingTokenAmount
+     *         - Result represents actual tokens user will receive
+     *
+     * @notice Integration: Use this function to calculate expected output before calling removeLiquidity
+     * @notice Frontend: Display both gross and net amounts for user transparency
      */
     /// #if_succeeds {:msg "Quote returns zero for zero bonding tokens"} bondingTokenAmount == 0 ==> inputTokensOut ==
     /// 0;
@@ -794,8 +824,34 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Set withdrawal fee in basis points (0-10000)
-     * @param _feeBasisPoints Fee in basis points where 10000 = 100%
+     * @notice Set withdrawal fee in basis points (0-10000) for removeLiquidity operations
+     * @dev The withdrawal fee is applied when users remove liquidity via removeLiquidity().
+     *      The fee mechanism implements a deflationary bonding token model where fees are
+     *      permanently removed from circulation rather than redistributed.
+     *
+     * @param _feeBasisPoints Fee in basis points where:
+     *                        - 0 = 0% (no fee)
+     *                        - 100 = 1%
+     *                        - 1000 = 10%
+     *                        - 10000 = 100% (maximum allowed)
+     *
+     * @notice Fee Calculation:
+     *         - Applied during removeLiquidity() calls
+     *         - Fee = (bondingTokenAmount * _feeBasisPoints) / 10000
+     *         - Full bondingTokenAmount is burned from user supply
+     *         - Only (bondingTokenAmount - fee) used for withdrawal calculation
+     *         - Results in deflationary pressure on bonding token supply
+     *
+     * @notice Security Considerations:
+     *         - Only owner can set withdrawal fee (access controlled)
+     *         - Maximum fee capped at 10000 basis points (100%)
+     *         - Fee validation prevents overflow/underflow issues
+     *         - Changes emit WithdrawalFeeUpdated event for transparency
+     *
+     * @notice Gas Optimization: Integer division optimized for efficiency
+     * @notice Use Cases: Project sustainability, tokenomics alignment, MEV capture
+     *
+     * @dev Emits WithdrawalFeeUpdated(oldFee, newFee) event
      */
     /// #if_succeeds {:msg "Only owner can set withdrawal fee"} msg.sender == owner();
     /// #if_succeeds {:msg "Fee must be within valid range"} _feeBasisPoints <= 10000;

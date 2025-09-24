@@ -1,0 +1,15 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(desiredAveragePrice > 0,VL: Goals not set - call setGoals first)
+id: 1"];
+0->1;
+2[label="EXPRESSION initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18
+id: 2"];
+1->2;
+3[label="RETURN initialPrice
+id: 3"];
+2->3;
+4[label="RETURN initialPrice
+id: 4"];
+}

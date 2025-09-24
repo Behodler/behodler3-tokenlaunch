@@ -462,10 +462,10 @@ contract ZeroSeedVirtualLiquidityTest is Test {
 
         // Test at several points along the curve
         uint256[5] memory testInputs = [
-            FUNDING_GOAL / 20,  // 5%
-            FUNDING_GOAL / 10,  // 10%
-            FUNDING_GOAL / 4,   // 25%
-            FUNDING_GOAL / 2,   // 50%
+            FUNDING_GOAL / 20, // 5%
+            FUNDING_GOAL / 10, // 10%
+            FUNDING_GOAL / 4, // 25%
+            FUNDING_GOAL / 2, // 50%
             FUNDING_GOAL * 3 / 4 // 75%
         ];
 

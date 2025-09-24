@@ -35,11 +35,7 @@ contract GasOptimizationBenchmarkTest is Test {
     uint256[] testAmounts;
 
     event GasBenchmarkResult(
-        string operation,
-        uint256 inputAmount,
-        uint256 gasUsed,
-        bool optimized,
-        uint256 improvement
+        string operation, uint256 inputAmount, uint256 gasUsed, bool optimized, uint256 improvement
     );
 
     function setUp() public {
@@ -63,11 +59,11 @@ contract GasOptimizationBenchmarkTest is Test {
         vm.stopPrank();
 
         // Initialize test amounts for comprehensive benchmarking
-        testAmounts.push(1000 * 1e18);    // 1k tokens
-        testAmounts.push(10000 * 1e18);   // 10k tokens
-        testAmounts.push(50000 * 1e18);   // 50k tokens
-        testAmounts.push(100000 * 1e18);  // 100k tokens
-        testAmounts.push(200000 * 1e18);  // 200k tokens
+        testAmounts.push(1000 * 1e18); // 1k tokens
+        testAmounts.push(10000 * 1e18); // 10k tokens
+        testAmounts.push(50000 * 1e18); // 50k tokens
+        testAmounts.push(100000 * 1e18); // 100k tokens
+        testAmounts.push(200000 * 1e18); // 200k tokens
     }
 
     /**
@@ -110,9 +106,9 @@ contract GasOptimizationBenchmarkTest is Test {
 
         // Test removing various smaller amounts to avoid underflow
         uint256[] memory removeAmounts = new uint256[](3);
-        removeAmounts[0] = bondingBalance / 20;  // 5%
-        removeAmounts[1] = bondingBalance / 10;  // 10%
-        removeAmounts[2] = bondingBalance / 5;   // 20%
+        removeAmounts[0] = bondingBalance / 20; // 5%
+        removeAmounts[1] = bondingBalance / 10; // 10%
+        removeAmounts[2] = bondingBalance / 5; // 20%
 
         for (uint256 i = 0; i < removeAmounts.length; i++) {
             uint256 amount = removeAmounts[i];
@@ -178,7 +174,7 @@ contract GasOptimizationBenchmarkTest is Test {
 
             if (i > 0) {
                 // Calculate gas increase ratio
-                uint256 amountRatio = (amount * 1000) / testAmounts[i-1]; // Scaled by 1000
+                uint256 amountRatio = (amount * 1000) / testAmounts[i - 1]; // Scaled by 1000
                 uint256 gasRatio = (gasUsed * 1000) / previousGas; // Scaled by 1000
 
                 console.log("Amount Ratio (x1000):", amountRatio, "Gas Ratio (x1000):", gasRatio);

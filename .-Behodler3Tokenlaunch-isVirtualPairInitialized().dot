@@ -1,0 +1,7 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="RETURN virtualK > 0 && alpha > 0 && beta > 0
+id: 1"];
+0->1;
+}

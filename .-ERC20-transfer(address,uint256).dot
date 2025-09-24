@@ -1,0 +1,13 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="NEW VARIABLE owner = _msgSender()
+id: 1"];
+0->1;
+2[label="EXPRESSION _transfer(owner,to,value)
+id: 2"];
+1->2;
+3[label="RETURN true
+id: 3"];
+2->3;
+}

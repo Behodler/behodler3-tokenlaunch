@@ -162,7 +162,9 @@ contract ScribbleEdgeCaseTest is Test {
 
         // Verify virtual K invariant holds even with extreme parameters
         if (virtualK > 0) {
-            assertApproxEqRel(virtualK, (virtualInputTokens + alpha) * (virtualL + beta), 1e15, "Virtual K invariant should hold");
+            assertApproxEqRel(
+                virtualK, (virtualInputTokens + alpha) * (virtualL + beta), 1e15, "Virtual K invariant should hold"
+            );
             assertTrue(alpha > 0);
             assertTrue(beta > 0);
             assertEq(alpha, beta);

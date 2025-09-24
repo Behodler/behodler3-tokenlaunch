@@ -186,9 +186,7 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(LOW_FEE); // 2%
 
         uint256 bondingTokenAmount = 10_000 * 1e18;
-        uint256 expectedFee = (bondingTokenAmount * LOW_FEE) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 expectedOut = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        uint256 expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
 
@@ -207,9 +205,7 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(MEDIUM_FEE); // 5%
 
         uint256 bondingTokenAmount = 10_000 * 1e18;
-        uint256 expectedFee = (bondingTokenAmount * MEDIUM_FEE) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 expectedOut = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        uint256 expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
 
@@ -227,9 +223,7 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(HIGH_FEE); // 10%
 
         uint256 bondingTokenAmount = 10_000 * 1e18;
-        uint256 expectedFee = (bondingTokenAmount * HIGH_FEE) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 expectedOut = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        uint256 expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
 
@@ -448,9 +442,7 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(MEDIUM_FEE); // 5%
 
         uint256 bondingTokenAmount = 10_000 * 1e18;
-        uint256 expectedFee = (bondingTokenAmount * MEDIUM_FEE) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 expectedOut = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        uint256 expectedOut = b3.quoteRemoveLiquidity(bondingTokenAmount);
         uint256 minInputTokens = expectedOut + 1; // Set minimum higher than expected
 
         vm.startPrank(user1);
@@ -486,9 +478,7 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(MEDIUM_FEE); // 5%
 
         // Now remove liquidity with the new fee
-        uint256 expectedFee = (bondingTokenAmount * MEDIUM_FEE) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 expectedOutputWithFee = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        uint256 expectedOutputWithFee = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
         uint256 actualOutputWithFee = b3.removeLiquidity(bondingTokenAmount, 0);
@@ -509,11 +499,11 @@ contract B3WithdrawalFeeTest is Test {
 
         // Test sequence of fee changes
         uint256[] memory feeSequence = new uint256[](5);
-        feeSequence[0] = 0;     // 0%
-        feeSequence[1] = 100;   // 1%
-        feeSequence[2] = 500;   // 5%
-        feeSequence[3] = 1000;  // 10%
-        feeSequence[4] = 200;   // 2% (decrease)
+        feeSequence[0] = 0; // 0%
+        feeSequence[1] = 100; // 1%
+        feeSequence[2] = 500; // 5%
+        feeSequence[3] = 1000; // 10%
+        feeSequence[4] = 200; // 2% (decrease)
 
         uint256[] memory outputs = new uint256[](5);
 
@@ -523,9 +513,7 @@ contract B3WithdrawalFeeTest is Test {
             b3.setWithdrawalFee(feeSequence[i]);
 
             // Calculate expected output
-            uint256 expectedFee = (bondingTokenAmount * feeSequence[i]) / 10000;
-            uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-            uint256 expectedOutput = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+            uint256 expectedOutput = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
             // Perform withdrawal alternating between users
             address currentUser = (i % 2 == 0) ? user1 : user2;
@@ -557,18 +545,14 @@ contract B3WithdrawalFeeTest is Test {
         b3.setWithdrawalFee(LOW_FEE); // 2%
 
         // Get quote with current fee
-        uint256 feeAmount1 = (bondingTokenAmount * LOW_FEE) / 10000;
-        uint256 effectiveAmount1 = bondingTokenAmount - feeAmount1;
-        uint256 expectedOutput1 = b3.quoteRemoveLiquidity(effectiveAmount1);
+        uint256 expectedOutput1 = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         // Change fee immediately
         vm.prank(owner);
         b3.setWithdrawalFee(HIGH_FEE); // 10%
 
         // Next operation should use new fee
-        uint256 feeAmount2 = (bondingTokenAmount * HIGH_FEE) / 10000;
-        uint256 effectiveAmount2 = bondingTokenAmount - feeAmount2;
-        uint256 expectedOutput2 = b3.quoteRemoveLiquidity(effectiveAmount2);
+        uint256 expectedOutput2 = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         vm.startPrank(user1);
         uint256 actualOutput = b3.removeLiquidity(bondingTokenAmount, 0);
@@ -613,17 +597,8 @@ contract B3WithdrawalFeeTest is Test {
         vm.prank(owner);
         b3.setWithdrawalFee(feeBasisPoints);
 
-        // Calculate expected values
-        uint256 expectedFee = (bondingTokenAmount * feeBasisPoints) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-
-        // Skip if effective amount is too small or zero
-        if (effectiveBondingTokens < 1e15) { // Require minimum effective amount
-            return;
-        }
-
-        // Get expected output
-        uint256 expectedOutput = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        // Get expected output using quote function (which applies fees internally)
+        uint256 expectedOutput = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         // Perform actual withdrawal
         vm.startPrank(user1);
@@ -642,20 +617,18 @@ contract B3WithdrawalFeeTest is Test {
         vm.assume(userBalance >= 10e18);
         bondingTokenAmount = bound(bondingTokenAmount, 5e18, userBalance / 3); // Conservative bounds
 
-        vm.prank(owner);
-        b3.setWithdrawalFee(feeBasisPoints);
-
-        // Calculate outputs with and without fee
+        // First get quote without any fee set
         uint256 outputWithoutFee = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
-        uint256 expectedFee = (bondingTokenAmount * feeBasisPoints) / 10000;
-        uint256 effectiveBondingTokens = bondingTokenAmount - expectedFee;
-        uint256 outputWithFee = b3.quoteRemoveLiquidity(effectiveBondingTokens);
+        // Now set the fee and get the quote with fee applied internally
+        vm.prank(owner);
+        b3.setWithdrawalFee(feeBasisPoints);
+        uint256 outputWithFee = b3.quoteRemoveLiquidity(bondingTokenAmount);
 
         // Fee should reduce output
         assertTrue(outputWithFee < outputWithoutFee, "Fee should reduce withdrawal output");
 
-        // Verify actual withdrawal matches calculated fee impact
+        // Verify actual withdrawal matches quote calculation
         vm.startPrank(user1);
         uint256 actualOutput = b3.removeLiquidity(bondingTokenAmount, 0);
         vm.stopPrank();

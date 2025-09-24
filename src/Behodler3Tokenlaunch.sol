@@ -109,7 +109,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Withdrawal fee in basis points (0-10000, where 10000 = 100%)
     uint256 public withdrawalFeeBasisPoints;
 
-
     // ============ EVENTS ============
 
     event LiquidityAdded(address indexed user, uint256 inputAmount, uint256 bondingTokensOut);
@@ -117,17 +116,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event ContractLocked();
     event ContractUnlocked();
     event VaultChanged(address indexed oldVault, address indexed newVault);
-    event VirtualLiquidityGoalsSet(
-        uint256 fundingGoal,
-        uint256 seedInput, // Always zero with zero seed enforcement
-        uint256 desiredAveragePrice,
-        uint256 alpha,
-        uint256 beta,
-        uint256 virtualK
-    );
+    event VirtualLiquidityGoalsSet( // Always zero with zero seed enforcement
+    uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
     event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee);
     event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount);
-
 
     // ============ MODIFIERS ============
 
@@ -138,9 +130,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     // ============ CONSTRUCTOR ============
 
-    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault)
-        Ownable(msg.sender)
-    {
+    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault) Ownable(msg.sender) {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
         bondingToken = _bondingToken;

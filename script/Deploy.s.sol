@@ -24,11 +24,8 @@ contract Deploy is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy the TokenLaunch contract
-        Behodler3Tokenlaunch tokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(inputTokenAddr),
-            IBondingToken(bondingTokenAddr),
-            IVault(vaultAddr)
-        );
+        Behodler3Tokenlaunch tokenLaunch =
+            new Behodler3Tokenlaunch(IERC20(inputTokenAddr), IBondingToken(bondingTokenAddr), IVault(vaultAddr));
 
         console.log("Behodler3Tokenlaunch deployed to:", address(tokenLaunch));
         console.log("Owner:", tokenLaunch.owner());

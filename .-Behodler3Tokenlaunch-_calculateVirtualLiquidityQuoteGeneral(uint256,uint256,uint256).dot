@@ -1,0 +1,64 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="NEW VARIABLE fromOffset
+id: 1"];
+0->1;
+2[label="NEW VARIABLE toOffset
+id: 2"];
+1->2;
+3[label="IF virtualFrom == virtualInputTokens
+id: 3"];
+2->3;
+4[label="EXPRESSION fromOffset = alpha
+id: 4
+dominance frontier: [8]"];
+3->4;
+5[label="EXPRESSION toOffset = beta
+id: 5
+dominance frontier: [8]"];
+4->5;
+6[label="EXPRESSION fromOffset = beta
+id: 6
+dominance frontier: [8]"];
+3->6;
+7[label="EXPRESSION toOffset = alpha
+id: 7
+dominance frontier: [8]"];
+6->7;
+8[label="END_IF
+id: 8"];
+3->8;
+9[label="EXPRESSION require(bool,string)(virtualTo <= type()(uint256).max - inputAmount,VL: Addition would overflow)
+id: 9"];
+8->9;
+10[label="EXPRESSION require(bool,string)(virtualTo + inputAmount <= type()(uint256).max - toOffset,VL: Addition would overflow)
+id: 10"];
+9->10;
+11[label="NEW VARIABLE denominator = virtualTo + inputAmount + toOffset
+id: 11"];
+10->11;
+12[label="EXPRESSION require(bool,string)(denominator > 0,VL: Zero denominator)
+id: 12"];
+11->12;
+13[label="NEW VARIABLE newVirtualFromWithOffset = virtualK / denominator
+id: 13"];
+12->13;
+14[label="EXPRESSION require(bool,string)(newVirtualFromWithOffset >= fromOffset,VL: Subtraction would underflow)
+id: 14"];
+13->14;
+15[label="NEW VARIABLE newVirtualFrom = newVirtualFromWithOffset - fromOffset
+id: 15"];
+14->15;
+16[label="EXPRESSION require(bool,string)(newVirtualFrom < virtualFrom,VL: Invalid calculation result)
+id: 16"];
+15->16;
+17[label="EXPRESSION outputAmount = virtualFrom - newVirtualFrom
+id: 17"];
+16->17;
+18[label="RETURN outputAmount
+id: 18"];
+17->18;
+19[label="RETURN outputAmount
+id: 19"];
+}

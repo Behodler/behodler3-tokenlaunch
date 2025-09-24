@@ -1,0 +1,31 @@
+strict digraph {
+rankdir="LR"
+node [shape=box]
+subgraph cluster_2848_ScribbleValidationContract {
+label = "ScribbleValidationContract"
+"2848_deposit" [label="deposit"]
+"2848___scribble_ScribbleValidationContract_check_state_invariants_internal" [label="__scribble_ScribbleValidationContract_check_state_invariants_internal"]
+"2848___scribble_check_state_invariants" [label="__scribble_check_state_invariants"]
+"2848__original_ScribbleValidationContract_withdraw" [label="_original_ScribbleValidationContract_withdraw"]
+"2848_getBalance" [label="getBalance"]
+"2848_withdraw" [label="withdraw"]
+"2848__original_ScribbleValidationContract_deposit" [label="_original_ScribbleValidationContract_deposit"]
+"2848_constructor" [label="constructor"]
+"2848_getUserDeposit" [label="getUserDeposit"]
+"2848___scribble_check_state_invariants" -> "2848___scribble_ScribbleValidationContract_check_state_invariants_internal"
+"2848_deposit" -> "2848__original_ScribbleValidationContract_deposit"
+"2848_withdraw" -> "2848__original_ScribbleValidationContract_withdraw"
+"2848_constructor" -> "2848___scribble_check_state_invariants"
+"2848_withdraw" -> "2848___scribble_check_state_invariants"
+"2848_deposit" -> "2848___scribble_check_state_invariants"
+}subgraph cluster_solidity {
+label = "[Solidity]"
+"require(bool,string)" 
+"assert(bool)" 
+"2848_deposit" -> "assert(bool)"
+"2848__original_ScribbleValidationContract_deposit" -> "require(bool,string)"
+"2848_withdraw" -> "assert(bool)"
+"2848___scribble_ScribbleValidationContract_check_state_invariants_internal" -> "assert(bool)"
+"2848__original_ScribbleValidationContract_withdraw" -> "require(bool,string)"
+}
+}

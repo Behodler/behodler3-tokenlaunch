@@ -1,0 +1,79 @@
+strict digraph {
+rankdir="LR"
+node [shape=box]
+subgraph cluster_933_Context {
+label = "Context"
+"933__msgSender" [label="_msgSender"]
+"933__contextSuffixLength" [label="_contextSuffixLength"]
+"933__msgData" [label="_msgData"]
+}subgraph cluster_903_IERC20Metadata {
+label = "IERC20Metadata"
+"903_symbol" [label="symbol"]
+"903_decimals" [label="decimals"]
+"903_name" [label="name"]
+}subgraph cluster_877_IERC20 {
+label = "IERC20"
+"877_balanceOf" [label="balanceOf"]
+"877_transfer" [label="transfer"]
+"877_transferFrom" [label="transferFrom"]
+"877_totalSupply" [label="totalSupply"]
+"877_approve" [label="approve"]
+"877_allowance" [label="allowance"]
+}subgraph cluster_3089_MockERC20 {
+label = "MockERC20"
+"3089_decimals" [label="decimals"]
+"3089_burn" [label="burn"]
+"3089_mint" [label="mint"]
+"3089_constructor" [label="constructor"]
+"3089_constructor" -> "3089_constructor"
+"3089_mint" -> "3089__mint"
+"3089_burn" -> "3089__burn"
+}subgraph cluster_799_ERC20 {
+label = "ERC20"
+"799_transferFrom" [label="transferFrom"]
+"799_name" [label="name"]
+"799_balanceOf" [label="balanceOf"]
+"799_decimals" [label="decimals"]
+"799__update" [label="_update"]
+"799__mint" [label="_mint"]
+"799__burn" [label="_burn"]
+"799__spendAllowance" [label="_spendAllowance"]
+"799_constructor" [label="constructor"]
+"799__approve" [label="_approve"]
+"799__transfer" [label="_transfer"]
+"799_approve" [label="approve"]
+"799_symbol" [label="symbol"]
+"799_totalSupply" [label="totalSupply"]
+"799_allowance" [label="allowance"]
+"799_transfer" [label="transfer"]
+"799_transfer" -> "799__transfer"
+"799_transfer" -> "799__msgSender"
+"799__mint" -> "799__update"
+"799__transfer" -> "799__update"
+"799__burn" -> "799__update"
+"799_approve" -> "799__approve"
+"799_transferFrom" -> "799__msgSender"
+"799__approve" -> "799__approve"
+"799_transferFrom" -> "799__spendAllowance"
+"799__spendAllowance" -> "799_allowance"
+"799_approve" -> "799__msgSender"
+"799__spendAllowance" -> "799__approve"
+"799_transferFrom" -> "799__transfer"
+}subgraph cluster_solidity {
+label = "[Solidity]"
+"revert ERC20InvalidSpender(address)" 
+"revert ERC20InsufficientBalance(address,uint256,uint256)" 
+"revert ERC20InvalidSender(address)" 
+"revert ERC20InvalidReceiver(address)" 
+"revert ERC20InsufficientAllowance(address,uint256,uint256)" 
+"revert ERC20InvalidApprover(address)" 
+"799__approve" -> "revert ERC20InvalidApprover(address)"
+"799__transfer" -> "revert ERC20InvalidReceiver(address)"
+"799__transfer" -> "revert ERC20InvalidSender(address)"
+"799__update" -> "revert ERC20InsufficientBalance(address,uint256,uint256)"
+"799__approve" -> "revert ERC20InvalidSpender(address)"
+"799__burn" -> "revert ERC20InvalidSender(address)"
+"799__spendAllowance" -> "revert ERC20InsufficientAllowance(address,uint256,uint256)"
+"799__mint" -> "revert ERC20InvalidReceiver(address)"
+}
+}

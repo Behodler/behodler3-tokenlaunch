@@ -1,0 +1,264 @@
+strict digraph {
+rankdir="LR"
+node [shape=box]
+subgraph cluster_2848_ScribbleValidationContract {
+label = "ScribbleValidationContract"
+"2848_deposit" [label="deposit"]
+"2848___scribble_ScribbleValidationContract_check_state_invariants_internal" [label="__scribble_ScribbleValidationContract_check_state_invariants_internal"]
+"2848___scribble_check_state_invariants" [label="__scribble_check_state_invariants"]
+"2848__original_ScribbleValidationContract_withdraw" [label="_original_ScribbleValidationContract_withdraw"]
+"2848_getBalance" [label="getBalance"]
+"2848_withdraw" [label="withdraw"]
+"2848__original_ScribbleValidationContract_deposit" [label="_original_ScribbleValidationContract_deposit"]
+"2848_constructor" [label="constructor"]
+"2848_getUserDeposit" [label="getUserDeposit"]
+"2848___scribble_check_state_invariants" -> "2848___scribble_ScribbleValidationContract_check_state_invariants_internal"
+"2848_deposit" -> "2848__original_ScribbleValidationContract_deposit"
+"2848_withdraw" -> "2848__original_ScribbleValidationContract_withdraw"
+"2848_constructor" -> "2848___scribble_check_state_invariants"
+"2848_withdraw" -> "2848___scribble_check_state_invariants"
+"2848_deposit" -> "2848___scribble_check_state_invariants"
+}subgraph cluster_1058_IVault {
+label = "IVault"
+"1058_balanceOf" [label="balanceOf"]
+"1058_setClient" [label="setClient"]
+"1058_withdraw" [label="withdraw"]
+"1058_emergencyWithdraw" [label="emergencyWithdraw"]
+"1058_deposit" [label="deposit"]
+"1058_totalWithdrawal" [label="totalWithdrawal"]
+}subgraph cluster_933_Context {
+label = "Context"
+"933__msgSender" [label="_msgSender"]
+"933__contextSuffixLength" [label="_contextSuffixLength"]
+"933__msgData" [label="_msgData"]
+}subgraph cluster_903_IERC20Metadata {
+label = "IERC20Metadata"
+"903_symbol" [label="symbol"]
+"903_name" [label="name"]
+"903_decimals" [label="decimals"]
+}subgraph cluster_2919_IBondingToken {
+label = "IBondingToken"
+"2919_mint" [label="mint"]
+"2919_burn" [label="burn"]
+}subgraph cluster_1002_ReentrancyGuard {
+label = "ReentrancyGuard"
+"1002__reentrancyGuardEntered" [label="_reentrancyGuardEntered"]
+"1002_constructor" [label="constructor"]
+"1002__nonReentrantBefore" [label="_nonReentrantBefore"]
+"1002__nonReentrantAfter" [label="_nonReentrantAfter"]
+}subgraph cluster_877_IERC20 {
+label = "IERC20"
+"877_balanceOf" [label="balanceOf"]
+"877_transfer" [label="transfer"]
+"877_transferFrom" [label="transferFrom"]
+"877_totalSupply" [label="totalSupply"]
+"877_approve" [label="approve"]
+"877_allowance" [label="allowance"]
+}subgraph cluster_2896___ScribbleUtilsLib__127 {
+label = "__ScribbleUtilsLib__127"
+"2896_setInContract" [label="setInContract"]
+"2896_assertionFailedData" [label="assertionFailedData"]
+"2896_isInContract" [label="isInContract"]
+"2896_assertionFailed" [label="assertionFailed"]
+}subgraph cluster_3089_MockERC20 {
+label = "MockERC20"
+"3089_decimals" [label="decimals"]
+"3089_burn" [label="burn"]
+"3089_mint" [label="mint"]
+"3089_constructor" [label="constructor"]
+"3089_constructor" -> "3089_constructor"
+"3089_mint" -> "3089__mint"
+"3089_burn" -> "3089__burn"
+}subgraph cluster_2418_Behodler3Tokenlaunch {
+label = "Behodler3Tokenlaunch"
+"2418_getTotalRaised" [label="getTotalRaised"]
+"2418__calculateInputTokensOut" [label="_calculateInputTokensOut"]
+"2418_removeLiquidity" [label="removeLiquidity"]
+"2418_getCurrentMarginalPrice" [label="getCurrentMarginalPrice"]
+"2418_initializeVaultApproval" [label="initializeVaultApproval"]
+"2418_quoteRemoveLiquidity" [label="quoteRemoveLiquidity"]
+"2418__calculateVirtualLiquidityQuoteGeneral" [label="_calculateVirtualLiquidityQuoteGeneral"]
+"2418_getInitialMarginalPrice" [label="getInitialMarginalPrice"]
+"2418__checkPriceBounds" [label="_checkPriceBounds"]
+"2418_setGoals" [label="setGoals"]
+"2418_setAutoLock" [label="setAutoLock"]
+"2418__setVault" [label="_setVault"]
+"2418__getInitialMarginalPriceInternal" [label="_getInitialMarginalPriceInternal"]
+"2418_getAveragePrice" [label="getAveragePrice"]
+"2418_constructor" [label="constructor"]
+"2418_disableToken" [label="disableToken"]
+"2418__updateVirtualLiquidityState" [label="_updateVirtualLiquidityState"]
+"2418_unlock" [label="unlock"]
+"2418_setInputToken" [label="setInputToken"]
+"2418_getVirtualPair" [label="getVirtualPair"]
+"2418_setWithdrawalFee" [label="setWithdrawalFee"]
+"2418__setInputToken" [label="_setInputToken"]
+"2418__calculateBondingTokensOut" [label="_calculateBondingTokensOut"]
+"2418_addLiquidity" [label="addLiquidity"]
+"2418_quoteAddLiquidity" [label="quoteAddLiquidity"]
+"2418_virtualLDifferentFromTotalSupply" [label="virtualLDifferentFromTotalSupply"]
+"2418_isVirtualPairInitialized" [label="isVirtualPairInitialized"]
+"2418__calculateVirtualLiquidityQuoteOptimized" [label="_calculateVirtualLiquidityQuoteOptimized"]
+"2418__getCurrentMarginalPriceInternal" [label="_getCurrentMarginalPriceInternal"]
+"2418__calculateVirtualLiquidityQuote" [label="_calculateVirtualLiquidityQuote"]
+"2418_lock" [label="lock"]
+"2418__calculateVirtualPairQuote" [label="_calculateVirtualPairQuote"]
+"2418_setVault" [label="setVault"]
+"2418_getFinalMarginalPrice" [label="getFinalMarginalPrice"]
+"2418_getAveragePrice" -> "2418_getTotalRaised"
+"2418_removeLiquidity" -> "2418_nonReentrant"
+"2418_removeLiquidity" -> "2418__calculateInputTokensOut"
+"2418_quoteAddLiquidity" -> "2418__calculateBondingTokensOut"
+"2418_addLiquidity" -> "2418_notLocked"
+"2418_removeLiquidity" -> "2418__updateVirtualLiquidityState"
+"2418_addLiquidity" -> "2418_nonReentrant"
+"2418_setInputToken" -> "2418_onlyOwner"
+"2418__calculateVirtualPairQuote" -> "2418__calculateVirtualLiquidityQuote"
+"2418_getCurrentMarginalPrice" -> "2418__getCurrentMarginalPriceInternal"
+"2418__updateVirtualLiquidityState" -> "2418__checkPriceBounds"
+"2418_setVault" -> "2418_onlyOwner"
+"2418_getInitialMarginalPrice" -> "2418__getInitialMarginalPriceInternal"
+"2418_initializeVaultApproval" -> "2418_onlyOwner"
+"2418_setVault" -> "2418__setVault"
+"2418__checkPriceBounds" -> "2418__getInitialMarginalPriceInternal"
+"2418_addLiquidity" -> "2418__calculateBondingTokensOut"
+"2418_addLiquidity" -> "2418__updateVirtualLiquidityState"
+"2418_disableToken" -> "2418_onlyOwner"
+"2418__calculateVirtualLiquidityQuote" -> "2418__calculateVirtualLiquidityQuoteGeneral"
+"2418__calculateVirtualLiquidityQuote" -> "2418__calculateVirtualLiquidityQuoteOptimized"
+"2418_removeLiquidity" -> "2418_notLocked"
+"2418_setGoals" -> "2418_onlyOwner"
+"2418__calculateBondingTokensOut" -> "2418__calculateVirtualPairQuote"
+"2418_constructor" -> "2418_constructor"
+"2418_quoteRemoveLiquidity" -> "2418__calculateInputTokensOut"
+"2418_setAutoLock" -> "2418_onlyOwner"
+"2418_lock" -> "2418_onlyOwner"
+"2418_unlock" -> "2418_onlyOwner"
+"2418__checkPriceBounds" -> "2418__getCurrentMarginalPriceInternal"
+"2418_setWithdrawalFee" -> "2418_onlyOwner"
+"2418__calculateInputTokensOut" -> "2418__calculateVirtualPairQuote"
+"2418_setInputToken" -> "2418__setInputToken"
+}subgraph cluster_147_Ownable {
+label = "Ownable"
+"147_renounceOwnership" [label="renounceOwnership"]
+"147_owner" [label="owner"]
+"147__checkOwner" [label="_checkOwner"]
+"147_transferOwnership" [label="transferOwnership"]
+"147_constructor" [label="constructor"]
+"147__transferOwnership" [label="_transferOwnership"]
+"147_constructor" -> "147__transferOwnership"
+"147_renounceOwnership" -> "147_onlyOwner"
+"147_renounceOwnership" -> "147__transferOwnership"
+"147_transferOwnership" -> "147_onlyOwner"
+"147_transferOwnership" -> "147__transferOwnership"
+"147__checkOwner" -> "147_owner"
+"147__checkOwner" -> "147__msgSender"
+}subgraph cluster_3027_MockBondingToken {
+label = "MockBondingToken"
+"3027_totalSupply" [label="totalSupply"]
+"3027_constructor" [label="constructor"]
+"3027_burn" [label="burn"]
+"3027_mint" [label="mint"]
+"3027_burn" -> "3027__burn"
+"3027_constructor" -> "3027_constructor"
+"3027_totalSupply" -> "3027_totalSupply"
+"3027_mint" -> "3027__mint"
+"3027_burn" -> "3027_balanceOf"
+}subgraph cluster_799_ERC20 {
+label = "ERC20"
+"799__update" [label="_update"]
+"799_name" [label="name"]
+"799__spendAllowance" [label="_spendAllowance"]
+"799_decimals" [label="decimals"]
+"799__mint" [label="_mint"]
+"799_balanceOf" [label="balanceOf"]
+"799__burn" [label="_burn"]
+"799_transferFrom" [label="transferFrom"]
+"799_constructor" [label="constructor"]
+"799__approve" [label="_approve"]
+"799__transfer" [label="_transfer"]
+"799_approve" [label="approve"]
+"799_symbol" [label="symbol"]
+"799_totalSupply" [label="totalSupply"]
+"799_allowance" [label="allowance"]
+"799_transfer" [label="transfer"]
+"799_transfer" -> "799__transfer"
+"799_transfer" -> "799__msgSender"
+"799__mint" -> "799__update"
+"799__transfer" -> "799__update"
+"799_transferFrom" -> "799__transfer"
+"799__burn" -> "799__update"
+"799_approve" -> "799__approve"
+"799__approve" -> "799__approve"
+"799_transferFrom" -> "799__msgSender"
+"799_transferFrom" -> "799__spendAllowance"
+"799__spendAllowance" -> "799_allowance"
+"799_approve" -> "799__msgSender"
+"799__spendAllowance" -> "799__approve"
+}subgraph cluster_solidity {
+label = "[Solidity]"
+"sload(uint256)" 
+"revert ERC20InvalidSpender(address)" 
+"revert ReentrancyGuardReentrantCall()" 
+"sstore(uint256,uint256)" 
+"revert ERC20InsufficientBalance(address,uint256,uint256)" 
+"revert ERC20InvalidSender(address)" 
+"revert OwnableUnauthorizedAccount(address)" 
+"revert ERC20InvalidApprover(address)" 
+"revert ERC20InvalidReceiver(address)" 
+"revert ERC20InsufficientAllowance(address,uint256,uint256)" 
+"assert(bool)" 
+"require(bool,string)" 
+"revert OwnableInvalidOwner(address)" 
+"799__approve" -> "revert ERC20InvalidApprover(address)"
+"799__transfer" -> "revert ERC20InvalidReceiver(address)"
+"799__transfer" -> "revert ERC20InvalidSender(address)"
+"2848__original_ScribbleValidationContract_deposit" -> "require(bool,string)"
+"2896_isInContract" -> "sload(uint256)"
+"2418__checkPriceBounds" -> "require(bool,string)"
+"2418__calculateVirtualPairQuote" -> "require(bool,string)"
+"2418_setGoals" -> "require(bool,string)"
+"799__update" -> "revert ERC20InsufficientBalance(address,uint256,uint256)"
+"2418_removeLiquidity" -> "require(bool,string)"
+"2418__getCurrentMarginalPriceInternal" -> "require(bool,string)"
+"799__mint" -> "revert ERC20InvalidReceiver(address)"
+"147_transferOwnership" -> "revert OwnableInvalidOwner(address)"
+"799__burn" -> "revert ERC20InvalidSender(address)"
+"2848__original_ScribbleValidationContract_withdraw" -> "require(bool,string)"
+"2418_setWithdrawalFee" -> "require(bool,string)"
+"2848_deposit" -> "assert(bool)"
+"2418_getTotalRaised" -> "require(bool,string)"
+"3027_burn" -> "require(bool,string)"
+"2896_setInContract" -> "sstore(uint256,uint256)"
+"2848_withdraw" -> "assert(bool)"
+"2418__updateVirtualLiquidityState" -> "require(bool,string)"
+"2848___scribble_ScribbleValidationContract_check_state_invariants_internal" -> "assert(bool)"
+"2418__calculateVirtualLiquidityQuoteGeneral" -> "require(bool,string)"
+"2418_addLiquidity" -> "require(bool,string)"
+"2418__setInputToken" -> "require(bool,string)"
+"1002__nonReentrantBefore" -> "revert ReentrancyGuardReentrantCall()"
+"3027_mint" -> "require(bool,string)"
+"2418__getInitialMarginalPriceInternal" -> "require(bool,string)"
+"2418_initializeVaultApproval" -> "require(bool,string)"
+"2418__calculateVirtualLiquidityQuoteOptimized" -> "require(bool,string)"
+"799__approve" -> "revert ERC20InvalidSpender(address)"
+"2418_disableToken" -> "require(bool,string)"
+"147__checkOwner" -> "revert OwnableUnauthorizedAccount(address)"
+"799__spendAllowance" -> "revert ERC20InsufficientAllowance(address,uint256,uint256)"
+"147_constructor" -> "revert OwnableInvalidOwner(address)"
+}"2418_initializeVaultApproval" -> "877_approve"
+"2418_removeLiquidity" -> "2919_burn"
+"2418_removeLiquidity" -> "877_transfer"
+"2848_deposit" -> "2896_setInContract"
+"2418_removeLiquidity" -> "1058_withdraw"
+"2418_addLiquidity" -> "1058_deposit"
+"2418_addLiquidity" -> "877_transferFrom"
+"2418_removeLiquidity" -> "2919_balanceOf"
+"2848_withdraw" -> "2896_setInContract"
+"2418__setInputToken" -> "877_approve"
+"2848_constructor" -> "2896_setInContract"
+"2418_virtualLDifferentFromTotalSupply" -> "2919_totalSupply"
+"2418_getAveragePrice" -> "2919_totalSupply"
+"2418_addLiquidity" -> "2919_mint"
+"2418_disableToken" -> "877_approve"
+}

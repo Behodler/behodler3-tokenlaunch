@@ -1,0 +1,68 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(bondingTokenAmount > 0,B3: Bonding token amount must be greater than 0)
+id: 1"];
+19->1;
+2[label="EXPRESSION require(bool,string)(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount,B3: Insufficient bonding tokens)
+id: 2"];
+1->2;
+3[label="NEW VARIABLE feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+id: 3"];
+2->3;
+4[label="NEW VARIABLE effectiveBondingTokens = bondingTokenAmount - feeAmount
+id: 4"];
+3->4;
+5[label="EXPRESSION inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens)
+id: 5"];
+4->5;
+6[label="EXPRESSION require(bool,string)(inputTokensOut >= minInputTokens,B3: Insufficient output amount)
+id: 6"];
+5->6;
+7[label="EXPRESSION bondingToken.burn(msg.sender,bondingTokenAmount)
+id: 7"];
+6->7;
+8[label="IF feeAmount > 0
+id: 8
+dominance frontier: [10]"];
+7->8;
+9[label="EXPRESSION FeeCollected(msg.sender,bondingTokenAmount,feeAmount)
+id: 9
+dominance frontier: [10]"];
+8->9;
+10[label="END_IF
+id: 10"];
+8->10;
+11[label="IF inputTokensOut > 0
+id: 11
+dominance frontier: [14]"];
+10->11;
+12[label="EXPRESSION vault.withdraw(address(inputToken),inputTokensOut,address(this))
+id: 12
+dominance frontier: [14]"];
+11->12;
+13[label="EXPRESSION require(bool,string)(inputToken.transfer(msg.sender,inputTokensOut),B3: Transfer failed)
+id: 13
+dominance frontier: [14]"];
+12->13;
+14[label="END_IF
+id: 14"];
+11->14;
+15[label="EXPRESSION _updateVirtualLiquidityState(- int256(inputTokensOut),int256(bondingTokenAmount))
+id: 15"];
+14->15;
+16[label="EXPRESSION LiquidityRemoved(msg.sender,bondingTokenAmount,inputTokensOut)
+id: 16"];
+15->16;
+17[label="RETURN inputTokensOut
+id: 17"];
+16->17;
+18[label="EXPRESSION nonReentrant()
+id: 18"];
+0->18;
+19[label="EXPRESSION notLocked()
+id: 19"];
+18->19;
+20[label="RETURN inputTokensOut
+id: 20"];
+}

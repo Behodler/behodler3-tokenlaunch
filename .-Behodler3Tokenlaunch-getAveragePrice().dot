@@ -1,0 +1,27 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="NEW VARIABLE totalBondingTokens = bondingToken.totalSupply()
+id: 1"];
+0->1;
+2[label="IF totalBondingTokens == 0
+id: 2"];
+1->2;
+3[label="RETURN 0
+id: 3"];
+2->3;
+4[label="END_IF
+id: 4"];
+2->4;
+5[label="NEW VARIABLE totalRaised = getTotalRaised()
+id: 5"];
+4->5;
+6[label="EXPRESSION avgPrice = (totalRaised * 1e18) / totalBondingTokens
+id: 6"];
+5->6;
+7[label="RETURN avgPrice
+id: 7"];
+6->7;
+8[label="RETURN avgPrice
+id: 8"];
+}

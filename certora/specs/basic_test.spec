@@ -22,6 +22,7 @@ rule price_consistency() {
     uint256 finalPrice = getFinalMarginalPrice();
 
     // Final price should be higher than initial price
-    // This might fail with the new fee mechanism, which is expected
+    // The fee mechanism only affects removeLiquidity (selling), not the bonding curve prices
+    // Buying always increases price along the curve, so this property should hold
     assert finalPrice >= initialPrice;
 }

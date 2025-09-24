@@ -692,8 +692,13 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Calculate effective bonding tokens after fee deduction for withdrawal calculation
         uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
 
-        // Calculate input tokens using effective bonding tokens (post-fee amount)
-        inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
+        // Handle edge case: if fee consumes all bonding tokens, no input tokens to withdraw
+        if (effectiveBondingTokens == 0) {
+            inputTokensOut = 0;
+        } else {
+            // Calculate input tokens using effective bonding tokens (post-fee amount)
+            inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
+        }
 
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
@@ -774,6 +779,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
         // Calculate effective bonding tokens after fee deduction
         uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+
+        // Handle edge case: if fee consumes all bonding tokens, return 0
+        if (effectiveBondingTokens == 0) return 0;
 
         // Calculate using effective bonding tokens (post-fee amount) to match removeLiquidity
         inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);

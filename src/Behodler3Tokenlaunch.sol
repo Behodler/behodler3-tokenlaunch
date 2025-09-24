@@ -745,12 +745,18 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// #if_succeeds {:msg "Virtual K must be set to calculate quote"} bondingTokenAmount > 0 ==> virtualK > 0;
     /// #if_succeeds {:msg "Quote should return positive tokens for positive input when K is set"} bondingTokenAmount >
     /// 0 && virtualK > 0 ==> inputTokensOut >= 0;
-    /// #if_succeeds {:msg "Quote calculation should be consistent with removeLiquidity calculation"} true;
+    /// #if_succeeds {:msg "Quote calculation should be consistent with removeLiquidity calculation accounting for fees"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in let effectiveBondingTokens := bondingTokenAmount - feeAmount in inputTokensOut == _calculateInputTokensOut(effectiveBondingTokens);
     function quoteRemoveLiquidity(uint256 bondingTokenAmount) external view returns (uint256 inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
 
-        // Calculate using refactored virtual pair math
-        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
+        // Calculate fee amount in bondingTokens (same logic as removeLiquidity)
+        uint256 feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+
+        // Calculate effective bonding tokens after fee deduction
+        uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+
+        // Calculate using effective bonding tokens (post-fee amount) to match removeLiquidity
+        inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
 
         return inputTokensOut;
     }

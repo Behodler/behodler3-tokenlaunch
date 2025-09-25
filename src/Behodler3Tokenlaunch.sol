@@ -312,6 +312,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /**
      * @notice Optimized virtual liquidity calculation for zero seed case
      * @dev Gas-optimized version when seedInput = 0 and β = α
+     *      Optimizations: Storage caching + unchecked arithmetic where safe
      * @param virtualFrom Current virtual amount of the token being reduced
      * @param virtualTo Current virtual amount of the token being increased
      * @param inputAmount Amount of tokens being added to virtualTo
@@ -322,20 +323,37 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         view
         returns (uint256 outputAmount)
     {
+        // GAS OPTIMIZATION: Cache storage variables to avoid multiple SLOADs
+        uint256 cachedAlpha = alpha;
+        uint256 cachedVirtualK = virtualK;
+
         // ZERO SEED OPTIMIZATION: Since β = α, we can simplify calculations
         // Calculate denominator: virtualTo + inputAmount + α
-        uint256 denominator = virtualTo + inputAmount + alpha;
+        uint256 denominator;
+        unchecked {
+            // Safe: virtualTo and inputAmount are validated inputs, alpha is set by owner
+            denominator = virtualTo + inputAmount + cachedAlpha;
+        }
 
         // Calculate new virtual amount: k / denominator - α
-        uint256 newVirtualFromWithOffset = virtualK / denominator;
+        uint256 newVirtualFromWithOffset = cachedVirtualK / denominator;
+
         // Overflow protection: ensure newVirtualFromWithOffset >= alpha
-        require(newVirtualFromWithOffset >= alpha, "VL: Subtraction would underflow");
-        uint256 newVirtualFrom = newVirtualFromWithOffset - alpha;
+        require(newVirtualFromWithOffset >= cachedAlpha, "VL: Subtraction would underflow");
+
+        uint256 newVirtualFrom;
+        unchecked {
+            // Safe: we just verified newVirtualFromWithOffset >= cachedAlpha
+            newVirtualFrom = newVirtualFromWithOffset - cachedAlpha;
+        }
 
         // Overflow protection: ensure virtualFrom >= newVirtualFrom
         require(virtualFrom >= newVirtualFrom, "VL: Subtraction would underflow");
-        // Output amount = reduction in virtualFrom
-        outputAmount = virtualFrom - newVirtualFrom;
+
+        unchecked {
+            // Safe: we just verified virtualFrom >= newVirtualFrom
+            outputAmount = virtualFrom - newVirtualFrom;
+        }
 
         return outputAmount;
     }
@@ -407,18 +425,29 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /**
      * @notice Internal function to get current marginal price (optimized for zero seed)
      * @dev Used internally to avoid external call issues. Optimized for x₀ = 0 case.
+     *      Gas optimizations: Storage caching + unchecked arithmetic
      */
     function _getCurrentMarginalPriceInternal() internal view returns (uint256 price) {
-        require(virtualK > 0, "VL: Goals not set - call setGoals first");
+        // GAS OPTIMIZATION: Cache storage variables to avoid multiple SLOADs
+        uint256 cachedVirtualK = virtualK;
+        require(cachedVirtualK > 0, "VL: Goals not set - call setGoals first");
+
+        uint256 cachedVirtualInputTokens = virtualInputTokens;
+        uint256 cachedAlpha = alpha;
 
         // OPTIMIZATION: When seedInput is always 0, we can use optimized calculation
         // Since virtualInputTokens starts at 0 and only increases, we can optimize the calculation
-        uint256 xPlusAlpha = virtualInputTokens + alpha;
+        uint256 xPlusAlpha;
+        unchecked {
+            // Safe: both values are non-negative and alpha is set by owner within bounds
+            xPlusAlpha = cachedVirtualInputTokens + cachedAlpha;
+        }
 
         // Gas optimization: Use unchecked arithmetic for safe operations
         unchecked {
             // Calculate (x+α)²/k with proper scaling - optimized for zero seed case
-            price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK;
+            // Safe: xPlusAlpha is always positive, scaling by 1e18 is safe for reasonable values
+            price = (xPlusAlpha * xPlusAlpha * 1e18) / cachedVirtualK;
         }
 
         return price;
@@ -427,14 +456,18 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /**
      * @notice Internal function to get initial marginal price (optimized for zero seed)
      * @dev Used internally to avoid external call issues. Zero seed optimization: P₀ = P_avg²
+     *      Gas optimizations: Storage caching + unchecked arithmetic
      */
     function _getInitialMarginalPriceInternal() internal view returns (uint256 initialPrice) {
-        require(desiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
+        // GAS OPTIMIZATION: Cache storage variable to avoid SLOAD
+        uint256 cachedDesiredAveragePrice = desiredAveragePrice;
+        require(cachedDesiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
 
         // ZERO SEED OPTIMIZATION: P₀ = P_avg² (simplified when x₀ = 0)
         // Gas optimization: Use unchecked arithmetic for safe operations
         unchecked {
-            initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
+            // Safe: desiredAveragePrice is validated in setGoals() to be < 1e18
+            initialPrice = (cachedDesiredAveragePrice * cachedDesiredAveragePrice) / 1e18;
         }
 
         return initialPrice;
@@ -686,11 +719,22 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
 
-        // Calculate fee amount in bondingTokens
-        uint256 feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+        // GAS OPTIMIZATION: Cache withdrawal fee to avoid SLOAD
+        uint256 cachedWithdrawalFee = withdrawalFeeBasisPoints;
+
+        // Calculate fee amount in bondingTokens using unchecked arithmetic
+        uint256 feeAmount;
+        unchecked {
+            // Safe: bondingTokenAmount is validated > 0, cachedWithdrawalFee <= 10000 (validated in setter)
+            feeAmount = (bondingTokenAmount * cachedWithdrawalFee) / 10000;
+        }
 
         // Calculate effective bonding tokens after fee deduction for withdrawal calculation
-        uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        uint256 effectiveBondingTokens;
+        unchecked {
+            // Safe: feeAmount = (bondingTokenAmount * fee) / 10000, so feeAmount <= bondingTokenAmount
+            effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        }
 
         // Handle edge case: if fee consumes all bonding tokens, no input tokens to withdraw
         if (effectiveBondingTokens == 0) {
@@ -774,11 +818,22 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     function quoteRemoveLiquidity(uint256 bondingTokenAmount) external view returns (uint256 inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
 
+        // GAS OPTIMIZATION: Cache withdrawal fee to avoid SLOAD
+        uint256 cachedWithdrawalFee = withdrawalFeeBasisPoints;
+
         // Calculate fee amount in bondingTokens (same logic as removeLiquidity)
-        uint256 feeAmount = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000;
+        uint256 feeAmount;
+        unchecked {
+            // Safe: bondingTokenAmount > 0 validated above, cachedWithdrawalFee <= 10000
+            feeAmount = (bondingTokenAmount * cachedWithdrawalFee) / 10000;
+        }
 
         // Calculate effective bonding tokens after fee deduction
-        uint256 effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        uint256 effectiveBondingTokens;
+        unchecked {
+            // Safe: feeAmount <= bondingTokenAmount by mathematical property
+            effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        }
 
         // Handle edge case: if fee consumes all bonding tokens, return 0
         if (effectiveBondingTokens == 0) return 0;

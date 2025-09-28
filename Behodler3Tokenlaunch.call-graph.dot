@@ -1,0 +1,125 @@
+strict digraph {
+rankdir="LR"
+node [shape=box]
+subgraph cluster_1002_ReentrancyGuard {
+label = "ReentrancyGuard"
+"1002__reentrancyGuardEntered" [label="_reentrancyGuardEntered"]
+"1002_constructor" [label="constructor"]
+"1002__nonReentrantBefore" [label="_nonReentrantBefore"]
+"1002__nonReentrantAfter" [label="_nonReentrantAfter"]
+}subgraph cluster_147_Ownable {
+label = "Ownable"
+"147_renounceOwnership" [label="renounceOwnership"]
+"147_owner" [label="owner"]
+"147__checkOwner" [label="_checkOwner"]
+"147_transferOwnership" [label="transferOwnership"]
+"147_constructor" [label="constructor"]
+"147__transferOwnership" [label="_transferOwnership"]
+"147_constructor" -> "147__transferOwnership"
+"147_renounceOwnership" -> "147_onlyOwner"
+"147_renounceOwnership" -> "147__transferOwnership"
+"147_transferOwnership" -> "147_onlyOwner"
+"147_transferOwnership" -> "147__transferOwnership"
+"147__checkOwner" -> "147_owner"
+"147__checkOwner" -> "147__msgSender"
+}subgraph cluster_933_Context {
+label = "Context"
+"933__msgSender" [label="_msgSender"]
+"933__contextSuffixLength" [label="_contextSuffixLength"]
+"933__msgData" [label="_msgData"]
+}subgraph cluster_2418_Behodler3Tokenlaunch {
+label = "Behodler3Tokenlaunch"
+"2418_getTotalRaised" [label="getTotalRaised"]
+"2418__calculateInputTokensOut" [label="_calculateInputTokensOut"]
+"2418_removeLiquidity" [label="removeLiquidity"]
+"2418_getCurrentMarginalPrice" [label="getCurrentMarginalPrice"]
+"2418_initializeVaultApproval" [label="initializeVaultApproval"]
+"2418__checkPriceBounds" [label="_checkPriceBounds"]
+"2418__calculateVirtualLiquidityQuoteGeneral" [label="_calculateVirtualLiquidityQuoteGeneral"]
+"2418_getInitialMarginalPrice" [label="getInitialMarginalPrice"]
+"2418_quoteRemoveLiquidity" [label="quoteRemoveLiquidity"]
+"2418_setGoals" [label="setGoals"]
+"2418_setAutoLock" [label="setAutoLock"]
+"2418__getInitialMarginalPriceInternal" [label="_getInitialMarginalPriceInternal"]
+"2418__setVault" [label="_setVault"]
+"2418_getAveragePrice" [label="getAveragePrice"]
+"2418_constructor" [label="constructor"]
+"2418_disableToken" [label="disableToken"]
+"2418__updateVirtualLiquidityState" [label="_updateVirtualLiquidityState"]
+"2418_setInputToken" [label="setInputToken"]
+"2418_unlock" [label="unlock"]
+"2418_getVirtualPair" [label="getVirtualPair"]
+"2418_setWithdrawalFee" [label="setWithdrawalFee"]
+"2418__setInputToken" [label="_setInputToken"]
+"2418__calculateBondingTokensOut" [label="_calculateBondingTokensOut"]
+"2418_addLiquidity" [label="addLiquidity"]
+"2418_quoteAddLiquidity" [label="quoteAddLiquidity"]
+"2418_virtualLDifferentFromTotalSupply" [label="virtualLDifferentFromTotalSupply"]
+"2418_isVirtualPairInitialized" [label="isVirtualPairInitialized"]
+"2418__calculateVirtualLiquidityQuoteOptimized" [label="_calculateVirtualLiquidityQuoteOptimized"]
+"2418__getCurrentMarginalPriceInternal" [label="_getCurrentMarginalPriceInternal"]
+"2418__calculateVirtualLiquidityQuote" [label="_calculateVirtualLiquidityQuote"]
+"2418_lock" [label="lock"]
+"2418__calculateVirtualPairQuote" [label="_calculateVirtualPairQuote"]
+"2418_setVault" [label="setVault"]
+"2418_getFinalMarginalPrice" [label="getFinalMarginalPrice"]
+"2418_getAveragePrice" -> "2418_getTotalRaised"
+"2418_removeLiquidity" -> "2418_nonReentrant"
+"2418_removeLiquidity" -> "2418__calculateInputTokensOut"
+"2418_quoteAddLiquidity" -> "2418__calculateBondingTokensOut"
+"2418_addLiquidity" -> "2418_notLocked"
+"2418_removeLiquidity" -> "2418__updateVirtualLiquidityState"
+"2418_addLiquidity" -> "2418_nonReentrant"
+"2418_setInputToken" -> "2418_onlyOwner"
+"2418__calculateVirtualPairQuote" -> "2418__calculateVirtualLiquidityQuote"
+"2418_getCurrentMarginalPrice" -> "2418__getCurrentMarginalPriceInternal"
+"2418__updateVirtualLiquidityState" -> "2418__checkPriceBounds"
+"2418_setVault" -> "2418_onlyOwner"
+"2418_getInitialMarginalPrice" -> "2418__getInitialMarginalPriceInternal"
+"2418_initializeVaultApproval" -> "2418_onlyOwner"
+"2418_setVault" -> "2418__setVault"
+"2418__checkPriceBounds" -> "2418__getInitialMarginalPriceInternal"
+"2418_addLiquidity" -> "2418__calculateBondingTokensOut"
+"2418_addLiquidity" -> "2418__updateVirtualLiquidityState"
+"2418_disableToken" -> "2418_onlyOwner"
+"2418__calculateVirtualLiquidityQuote" -> "2418__calculateVirtualLiquidityQuoteGeneral"
+"2418__calculateVirtualLiquidityQuote" -> "2418__calculateVirtualLiquidityQuoteOptimized"
+"2418_removeLiquidity" -> "2418_notLocked"
+"2418_setGoals" -> "2418_onlyOwner"
+"2418__calculateBondingTokensOut" -> "2418__calculateVirtualPairQuote"
+"2418_constructor" -> "2418_constructor"
+"2418_quoteRemoveLiquidity" -> "2418__calculateInputTokensOut"
+"2418_lock" -> "2418_onlyOwner"
+"2418_setAutoLock" -> "2418_onlyOwner"
+"2418__checkPriceBounds" -> "2418__getCurrentMarginalPriceInternal"
+"2418_unlock" -> "2418_onlyOwner"
+"2418_setWithdrawalFee" -> "2418_onlyOwner"
+"2418__calculateInputTokensOut" -> "2418__calculateVirtualPairQuote"
+"2418_setInputToken" -> "2418__setInputToken"
+}subgraph cluster_solidity {
+label = "[Solidity]"
+"require(bool,string)" 
+"revert ReentrancyGuardReentrantCall()" 
+"revert OwnableInvalidOwner(address)" 
+"revert OwnableUnauthorizedAccount(address)" 
+"2418__checkPriceBounds" -> "require(bool,string)"
+"2418__calculateVirtualPairQuote" -> "require(bool,string)"
+"2418_setGoals" -> "require(bool,string)"
+"2418__getCurrentMarginalPriceInternal" -> "require(bool,string)"
+"2418_removeLiquidity" -> "require(bool,string)"
+"147_transferOwnership" -> "revert OwnableInvalidOwner(address)"
+"2418_setWithdrawalFee" -> "require(bool,string)"
+"2418_getTotalRaised" -> "require(bool,string)"
+"2418__updateVirtualLiquidityState" -> "require(bool,string)"
+"2418__calculateVirtualLiquidityQuoteGeneral" -> "require(bool,string)"
+"2418_addLiquidity" -> "require(bool,string)"
+"2418__setInputToken" -> "require(bool,string)"
+"1002__nonReentrantBefore" -> "revert ReentrancyGuardReentrantCall()"
+"2418__getInitialMarginalPriceInternal" -> "require(bool,string)"
+"2418_initializeVaultApproval" -> "require(bool,string)"
+"2418__calculateVirtualLiquidityQuoteOptimized" -> "require(bool,string)"
+"2418_disableToken" -> "require(bool,string)"
+"147__checkOwner" -> "revert OwnableUnauthorizedAccount(address)"
+"147_constructor" -> "revert OwnableInvalidOwner(address)"
+}
+}

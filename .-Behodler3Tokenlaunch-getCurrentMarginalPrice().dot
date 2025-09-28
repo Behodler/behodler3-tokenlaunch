@@ -1,0 +1,9 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="RETURN _getCurrentMarginalPriceInternal()
+id: 1"];
+0->1;
+2[label="RETURN price
+id: 2"];
+}

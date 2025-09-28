@@ -1,0 +1,13 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION __ScribbleUtilsLib__127.setInContract(true)
+id: 1"];
+0->1;
+2[label="EXPRESSION __scribble_check_state_invariants()
+id: 2"];
+1->2;
+3[label="EXPRESSION __ScribbleUtilsLib__127.setInContract(false)
+id: 3"];
+2->3;
+}

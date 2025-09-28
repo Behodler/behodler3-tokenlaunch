@@ -1,0 +1,19 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(amount > 0,Amount must be positive)
+id: 1"];
+0->1;
+2[label="EXPRESSION balance += amount
+id: 2"];
+1->2;
+3[label="EXPRESSION totalDeposits += amount
+id: 3"];
+2->3;
+4[label="EXPRESSION userDeposits[msg.sender] += amount
+id: 4"];
+3->4;
+5[label="EXPRESSION Deposit(msg.sender,amount)
+id: 5"];
+4->5;
+}

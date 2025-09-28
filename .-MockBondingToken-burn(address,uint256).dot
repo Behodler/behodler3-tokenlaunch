@@ -1,0 +1,16 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(from != address(0),MockBondingToken: burn from zero address)
+id: 1"];
+0->1;
+2[label="EXPRESSION require(bool,string)(amount > 0,MockBondingToken: burn amount is zero)
+id: 2"];
+1->2;
+3[label="EXPRESSION require(bool,string)(balanceOf(from) >= amount,MockBondingToken: burn amount exceeds balance)
+id: 3"];
+2->3;
+4[label="EXPRESSION _burn(from,amount)
+id: 4"];
+3->4;
+}

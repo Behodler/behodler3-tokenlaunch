@@ -1,0 +1,12 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION bondingTokensOut = _calculateVirtualPairQuote(virtualL,virtualInputTokens,inputAmount)
+id: 1"];
+0->1;
+2[label="RETURN bondingTokensOut
+id: 2"];
+1->2;
+3[label="RETURN bondingTokensOut
+id: 3"];
+}

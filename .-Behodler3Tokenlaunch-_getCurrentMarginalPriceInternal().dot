@@ -1,0 +1,18 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(virtualK > 0,VL: Goals not set - call setGoals first)
+id: 1"];
+0->1;
+2[label="NEW VARIABLE xPlusAlpha = virtualInputTokens + alpha
+id: 2"];
+1->2;
+3[label="EXPRESSION price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK
+id: 3"];
+2->3;
+4[label="RETURN price
+id: 4"];
+3->4;
+5[label="RETURN price
+id: 5"];
+}

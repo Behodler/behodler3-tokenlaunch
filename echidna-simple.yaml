@@ -1,0 +1,22 @@
+# Echidna Configuration for Simple Testing (Without Foundry)
+# Avoids Solidity version compatibility issues by using direct compilation
+
+# Test execution parameters
+testLimit: 50 # Reduced for quick testing
+seqLen: 5 # Short sequences for basic testing
+
+# Use direct solc compilation instead of Foundry to avoid version conflicts
+# cryticArgs: ["--compile-force-framework", "foundry"]  # Commented out
+
+# Compilation settings compatible with solc 0.8.13
+solcArgs: "--evm-version istanbul --optimize --optimize-runs 200"
+
+# Coverage and reporting
+coverage: false # Disable coverage to avoid issues
+
+# Test discovery
+sender: ["0x10000", "0x20000", "0x30000"] # Test sender addresses
+
+# Keep simple for compatibility
+quiet: false
+format: "text"

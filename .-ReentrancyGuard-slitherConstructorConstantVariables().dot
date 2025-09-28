@@ -1,0 +1,6 @@
+digraph{
+0[label="OTHER_ENTRYPOINT NOT_ENTERED = 1
+id: 0"];
+1[label="OTHER_ENTRYPOINT ENTERED = 2
+id: 1"];
+}

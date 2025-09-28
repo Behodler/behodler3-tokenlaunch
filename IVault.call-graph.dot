@@ -1,0 +1,15 @@
+strict digraph {
+rankdir="LR"
+node [shape=box]
+subgraph cluster_1058_IVault {
+label = "IVault"
+"1058_balanceOf" [label="balanceOf"]
+"1058_setClient" [label="setClient"]
+"1058_withdraw" [label="withdraw"]
+"1058_emergencyWithdraw" [label="emergencyWithdraw"]
+"1058_deposit" [label="deposit"]
+"1058_totalWithdrawal" [label="totalWithdrawal"]
+}subgraph cluster_solidity {
+label = "[Solidity]"
+}
+}

@@ -1,0 +1,19 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="EXPRESSION require(bool,string)(_feeBasisPoints <= 10000,B3: Fee must be <= 10000 basis points)
+id: 1"];
+5->1;
+2[label="NEW VARIABLE oldFee = withdrawalFeeBasisPoints
+id: 2"];
+1->2;
+3[label="EXPRESSION withdrawalFeeBasisPoints = _feeBasisPoints
+id: 3"];
+2->3;
+4[label="EXPRESSION WithdrawalFeeUpdated(oldFee,_feeBasisPoints)
+id: 4"];
+3->4;
+5[label="EXPRESSION onlyOwner()
+id: 5"];
+0->5;
+}

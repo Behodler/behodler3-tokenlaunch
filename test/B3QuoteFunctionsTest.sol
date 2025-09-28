@@ -180,8 +180,8 @@ contract B3QuoteFunctionsTest is Test {
             // Avoid underflow in calculations
             if (quotientWithOffset > alpha) {
                 uint256 expectedNewVirtualInput = quotientWithOffset - alpha;
-                expectedQuote = currentVirtualInput > expectedNewVirtualInput ?
-                    currentVirtualInput - expectedNewVirtualInput : 0;
+                expectedQuote =
+                    currentVirtualInput > expectedNewVirtualInput ? currentVirtualInput - expectedNewVirtualInput : 0;
             } else {
                 expectedQuote = 0;
             }
@@ -233,7 +233,6 @@ contract B3QuoteFunctionsTest is Test {
 
             // With zero seed, all quotes should be zero until liquidity is added
             assertEq(quote, 0, "Quote should be zero with no input tokens available");
-
         }
     }
 

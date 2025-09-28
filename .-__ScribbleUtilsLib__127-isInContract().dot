@@ -1,0 +1,16 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="INLINE ASM
+id: 1"];
+0->1;
+2[label="EXPRESSION res = sload(uint256)(0x5f0b92cf9616afdee4f4136f66393f1343b027f01be893fa569eb2e2b667a40c)
+id: 2"];
+1->2;
+3[label="END INLINE ASM
+id: 3"];
+2->3;
+4[label="RETURN res
+id: 4"];
+3->4;
+}

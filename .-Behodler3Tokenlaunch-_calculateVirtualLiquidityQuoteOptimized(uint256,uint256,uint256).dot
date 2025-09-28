@@ -1,0 +1,27 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="NEW VARIABLE denominator = virtualTo + inputAmount + alpha
+id: 1"];
+0->1;
+2[label="NEW VARIABLE newVirtualFromWithOffset = virtualK / denominator
+id: 2"];
+1->2;
+3[label="EXPRESSION require(bool,string)(newVirtualFromWithOffset >= alpha,VL: Subtraction would underflow)
+id: 3"];
+2->3;
+4[label="NEW VARIABLE newVirtualFrom = newVirtualFromWithOffset - alpha
+id: 4"];
+3->4;
+5[label="EXPRESSION require(bool,string)(virtualFrom >= newVirtualFrom,VL: Subtraction would underflow)
+id: 5"];
+4->5;
+6[label="EXPRESSION outputAmount = virtualFrom - newVirtualFrom
+id: 6"];
+5->6;
+7[label="RETURN outputAmount
+id: 7"];
+6->7;
+8[label="RETURN outputAmount
+id: 8"];
+}

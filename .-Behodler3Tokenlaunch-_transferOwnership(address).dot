@@ -1,0 +1,13 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="NEW VARIABLE oldOwner = _owner
+id: 1"];
+0->1;
+2[label="EXPRESSION _owner = newOwner
+id: 2"];
+1->2;
+3[label="EXPRESSION OwnershipTransferred(oldOwner,newOwner)
+id: 3"];
+2->3;
+}

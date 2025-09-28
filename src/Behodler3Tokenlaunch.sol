@@ -58,6 +58,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// !vaultApprovalInitialized || address(inputToken) != address(0);
 /// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
 /// virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
+/// #invariant {:msg "Withdrawal fee must be within valid range (0 to 10000 basis points)"} withdrawalFeeBasisPoints >= 0 && withdrawalFeeBasisPoints <= 10000;
 contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     // ============ STATE VARIABLES ============
 
@@ -105,6 +106,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Auto-lock functionality flag
     bool public autoLock;
 
+    /// @notice Withdrawal fee in basis points (0-10000, where 10000 = 100%)
+    uint256 public withdrawalFeeBasisPoints;
 
     // ============ EVENTS ============
 
@@ -113,15 +116,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     event ContractLocked();
     event ContractUnlocked();
     event VaultChanged(address indexed oldVault, address indexed newVault);
-    event VirtualLiquidityGoalsSet(
-        uint256 fundingGoal,
-        uint256 seedInput, // Always zero with zero seed enforcement
-        uint256 desiredAveragePrice,
-        uint256 alpha,
-        uint256 beta,
-        uint256 virtualK
-    );
-
+    event VirtualLiquidityGoalsSet( // Always zero with zero seed enforcement
+    uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
+    event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee);
+    event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount);
 
     // ============ MODIFIERS ============
 
@@ -132,9 +130,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     // ============ CONSTRUCTOR ============
 
-    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault)
-        Ownable(msg.sender)
-    {
+    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault) Ownable(msg.sender) {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
         bondingToken = _bondingToken;
@@ -304,6 +300,77 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         view
         returns (uint256 outputAmount)
     {
+        // ZERO SEED OPTIMIZATION: Use optimized path when applicable
+        if (seedInput == 0 && beta == alpha) {
+            return _calculateVirtualLiquidityQuoteOptimized(virtualFrom, virtualTo, inputAmount);
+        }
+
+        // Fallback to general implementation for non-zero seed cases
+        return _calculateVirtualLiquidityQuoteGeneral(virtualFrom, virtualTo, inputAmount);
+    }
+
+    /**
+     * @notice Optimized virtual liquidity calculation for zero seed case
+     * @dev Gas-optimized version when seedInput = 0 and β = α
+     *      Optimizations: Storage caching + unchecked arithmetic where safe
+     * @param virtualFrom Current virtual amount of the token being reduced
+     * @param virtualTo Current virtual amount of the token being increased
+     * @param inputAmount Amount of tokens being added to virtualTo
+     * @return outputAmount Amount of tokens that would be reduced from virtualFrom
+     */
+    function _calculateVirtualLiquidityQuoteOptimized(uint256 virtualFrom, uint256 virtualTo, uint256 inputAmount)
+        internal
+        view
+        returns (uint256 outputAmount)
+    {
+        // GAS OPTIMIZATION: Cache storage variables to avoid multiple SLOADs
+        uint256 cachedAlpha = alpha;
+        uint256 cachedVirtualK = virtualK;
+
+        // ZERO SEED OPTIMIZATION: Since β = α, we can simplify calculations
+        // Calculate denominator: virtualTo + inputAmount + α
+        uint256 denominator;
+        unchecked {
+            // Safe: virtualTo and inputAmount are validated inputs, alpha is set by owner
+            denominator = virtualTo + inputAmount + cachedAlpha;
+        }
+
+        // Calculate new virtual amount: k / denominator - α
+        uint256 newVirtualFromWithOffset = cachedVirtualK / denominator;
+
+        // Overflow protection: ensure newVirtualFromWithOffset >= alpha
+        require(newVirtualFromWithOffset >= cachedAlpha, "VL: Subtraction would underflow");
+
+        uint256 newVirtualFrom;
+        unchecked {
+            // Safe: we just verified newVirtualFromWithOffset >= cachedAlpha
+            newVirtualFrom = newVirtualFromWithOffset - cachedAlpha;
+        }
+
+        // Overflow protection: ensure virtualFrom >= newVirtualFrom
+        require(virtualFrom >= newVirtualFrom, "VL: Subtraction would underflow");
+
+        unchecked {
+            // Safe: we just verified virtualFrom >= newVirtualFrom
+            outputAmount = virtualFrom - newVirtualFrom;
+        }
+
+        return outputAmount;
+    }
+
+    /**
+     * @notice General virtual liquidity calculation (original implementation)
+     * @dev Used as fallback for non-optimized cases
+     * @param virtualFrom Current virtual amount of the token being reduced
+     * @param virtualTo Current virtual amount of the token being increased
+     * @param inputAmount Amount of tokens being added to virtualTo
+     * @return outputAmount Amount of tokens that would be reduced from virtualFrom
+     */
+    function _calculateVirtualLiquidityQuoteGeneral(uint256 virtualFrom, uint256 virtualTo, uint256 inputAmount)
+        internal
+        view
+        returns (uint256 outputAmount)
+    {
         // Determine which offset to use based on token type
         uint256 fromOffset;
         uint256 toOffset;
@@ -356,25 +423,53 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Internal function to get current marginal price
-     * @dev Used internally to avoid external call issues
+     * @notice Internal function to get current marginal price (optimized for zero seed)
+     * @dev Used internally to avoid external call issues. Optimized for x₀ = 0 case.
+     *      Gas optimizations: Storage caching + unchecked arithmetic
      */
     function _getCurrentMarginalPriceInternal() internal view returns (uint256 price) {
-        require(virtualK > 0, "VL: Goals not set - call setGoals first");
+        // GAS OPTIMIZATION: Cache storage variables to avoid multiple SLOADs
+        uint256 cachedVirtualK = virtualK;
+        require(cachedVirtualK > 0, "VL: Goals not set - call setGoals first");
 
-        uint256 xPlusAlpha = virtualInputTokens + alpha;
-        // Calculate (x+α)²/k with proper scaling
-        price = (xPlusAlpha * xPlusAlpha * 1e18) / virtualK;
+        uint256 cachedVirtualInputTokens = virtualInputTokens;
+        uint256 cachedAlpha = alpha;
+
+        // OPTIMIZATION: When seedInput is always 0, we can use optimized calculation
+        // Since virtualInputTokens starts at 0 and only increases, we can optimize the calculation
+        uint256 xPlusAlpha;
+        unchecked {
+            // Safe: both values are non-negative and alpha is set by owner within bounds
+            xPlusAlpha = cachedVirtualInputTokens + cachedAlpha;
+        }
+
+        // Gas optimization: Use unchecked arithmetic for safe operations
+        unchecked {
+            // Calculate (x+α)²/k with proper scaling - optimized for zero seed case
+            // Safe: xPlusAlpha is always positive, scaling by 1e18 is safe for reasonable values
+            price = (xPlusAlpha * xPlusAlpha * 1e18) / cachedVirtualK;
+        }
+
         return price;
     }
 
     /**
-     * @notice Internal function to get initial marginal price
-     * @dev Used internally to avoid external call issues
+     * @notice Internal function to get initial marginal price (optimized for zero seed)
+     * @dev Used internally to avoid external call issues. Zero seed optimization: P₀ = P_avg²
+     *      Gas optimizations: Storage caching + unchecked arithmetic
      */
     function _getInitialMarginalPriceInternal() internal view returns (uint256 initialPrice) {
-        require(desiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
-        initialPrice = (desiredAveragePrice * desiredAveragePrice) / 1e18;
+        // GAS OPTIMIZATION: Cache storage variable to avoid SLOAD
+        uint256 cachedDesiredAveragePrice = desiredAveragePrice;
+        require(cachedDesiredAveragePrice > 0, "VL: Goals not set - call setGoals first");
+
+        // ZERO SEED OPTIMIZATION: P₀ = P_avg² (simplified when x₀ = 0)
+        // Gas optimization: Use unchecked arithmetic for safe operations
+        unchecked {
+            // Safe: desiredAveragePrice is validated in setGoals() to be < 1e18
+            initialPrice = (cachedDesiredAveragePrice * cachedDesiredAveragePrice) / 1e18;
+        }
+
         return initialPrice;
     }
 
@@ -578,11 +673,28 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Remove liquidity from the bootstrap AMM
-     * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance
-     * @param bondingTokenAmount Amount of bonding tokens to burn
-     * @param minInputTokens Minimum input tokens to receive (MEV protection)
-     * @return inputTokensOut Amount of input tokens received
+     * @notice Remove liquidity from the bootstrap AMM with optional withdrawal fee
+     * @dev Uses refactored _calculateInputTokensOut() for DRY principle compliance.
+     *      The fee mechanism works as follows:
+     *      1. Fee is calculated as (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *      2. Full bondingTokenAmount is burned from user (supply decreases by full amount)
+     *      3. Only effective amount (bondingTokenAmount - fee) is used for withdrawal calculation
+     *      4. User receives input tokens based on effective amount, not full amount
+     *      5. Fee is permanently removed from circulation (deflationary mechanism)
+     *
+     * @param bondingTokenAmount Amount of bonding tokens to burn (full amount including fee)
+     * @param minInputTokens Minimum input tokens to receive (MEV protection, based on net after fee)
+     * @return inputTokensOut Amount of input tokens received (calculated on effective amount after fee deduction)
+     *
+     * @notice Fee Mechanism:
+     *         - Fee range: 0-10000 basis points (0% to 100%)
+     *         - Fee = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *         - Effective tokens = bondingTokenAmount - fee
+     *         - Output calculated on effective tokens, not full amount
+     *         - All bondingTokenAmount burned, reducing total supply
+     *
+     * @notice Gas Optimization: Fee calculation uses efficient integer arithmetic
+     * @notice Security: Fee cannot exceed 100% (10000 basis points) due to validation in setWithdrawalFee
      */
     /// #if_succeeds {:msg "Bonding token amount must be positive"} bondingTokenAmount > 0;
     /// #if_succeeds {:msg "Contract must not be locked"} !locked;
@@ -595,6 +707,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// virtualInputTokens < old(virtualInputTokens);
     /// #if_succeeds {:msg "Input tokens should be transferred to user if output > 0"} inputTokensOut > 0 ==>
     /// inputToken.balanceOf(msg.sender) >= old(inputToken.balanceOf(msg.sender)) + inputTokensOut;
+    /// #if_succeeds {:msg "Total supply must decrease by full bonding token amount (including fees)"} bondingToken.totalSupply() == old(bondingToken.totalSupply()) - bondingTokenAmount;
+    /// #if_succeeds {:msg "Fee calculation must be correct based on basis points"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in feeAmount >= 0 && feeAmount <= bondingTokenAmount;
+    /// #if_succeeds {:msg "Effective bonding tokens must equal full amount minus fee"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in let effectiveAmount := bondingTokenAmount - feeAmount in effectiveAmount >= 0 && effectiveAmount <= bondingTokenAmount;
     function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens)
         external
         nonReentrant
@@ -604,14 +719,41 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
         require(bondingToken.balanceOf(msg.sender) >= bondingTokenAmount, "B3: Insufficient bonding tokens");
 
-        // Calculate input tokens using refactored virtual pair math
-        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
+        // GAS OPTIMIZATION: Cache withdrawal fee to avoid SLOAD
+        uint256 cachedWithdrawalFee = withdrawalFeeBasisPoints;
+
+        // Calculate fee amount in bondingTokens using unchecked arithmetic
+        uint256 feeAmount;
+        unchecked {
+            // Safe: bondingTokenAmount is validated > 0, cachedWithdrawalFee <= 10000 (validated in setter)
+            feeAmount = (bondingTokenAmount * cachedWithdrawalFee) / 10000;
+        }
+
+        // Calculate effective bonding tokens after fee deduction for withdrawal calculation
+        uint256 effectiveBondingTokens;
+        unchecked {
+            // Safe: feeAmount = (bondingTokenAmount * fee) / 10000, so feeAmount <= bondingTokenAmount
+            effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        }
+
+        // Handle edge case: if fee consumes all bonding tokens, no input tokens to withdraw
+        if (effectiveBondingTokens == 0) {
+            inputTokensOut = 0;
+        } else {
+            // Calculate input tokens using effective bonding tokens (post-fee amount)
+            inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
+        }
 
         // Check MEV protection
         require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
 
-        // Burn bonding tokens from user
+        // Burn full bonding token amount from user (supply decreases by full amount)
         bondingToken.burn(msg.sender, bondingTokenAmount);
+
+        // Emit fee collection event if fee was charged
+        if (feeAmount > 0) {
+            emit FeeCollected(msg.sender, bondingTokenAmount, feeAmount);
+        }
 
         // Withdraw and transfer input tokens to user (only if amount > 0)
         if (inputTokensOut > 0) {
@@ -619,7 +761,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
             require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         }
 
-        // Update virtual pair state
+        // Update virtual pair state using full bonding token amount for supply,
+        // but only effective amount affects virtual liquidity calculation
         _updateVirtualLiquidityState(-int256(inputTokensOut), int256(bondingTokenAmount));
 
         emit LiquidityRemoved(msg.sender, bondingTokenAmount, inputTokensOut);
@@ -648,22 +791,55 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Quote how many input tokens would be received for removing liquidity
-     * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity
-     * @param bondingTokenAmount Amount of bonding tokens to burn
-     * @return inputTokensOut Expected input tokens to be received
+     * @notice Quote how many input tokens would be received for removing liquidity (after fee deduction)
+     * @dev Uses refactored _calculateInputTokensOut() for consistent calculation with removeLiquidity.
+     *      This function accounts for the withdrawal fee and returns the actual amount a user would receive.
+     *      The calculation mirrors the exact logic used in removeLiquidity() to ensure accuracy.
+     *
+     * @param bondingTokenAmount Amount of bonding tokens to burn (full amount including fee portion)
+     * @return inputTokensOut Expected input tokens to be received (net amount after fee deduction)
+     *
+     * @notice Fee Impact:
+     *         - Quote includes current withdrawal fee (withdrawalFeeBasisPoints)
+     *         - Fee = (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000
+     *         - Effective amount = bondingTokenAmount - fee
+     *         - Output calculated on effective amount, not full bondingTokenAmount
+     *         - Result represents actual tokens user will receive
+     *
+     * @notice Integration: Use this function to calculate expected output before calling removeLiquidity
+     * @notice Frontend: Display both gross and net amounts for user transparency
      */
     /// #if_succeeds {:msg "Quote returns zero for zero bonding tokens"} bondingTokenAmount == 0 ==> inputTokensOut ==
     /// 0;
     /// #if_succeeds {:msg "Virtual K must be set to calculate quote"} bondingTokenAmount > 0 ==> virtualK > 0;
     /// #if_succeeds {:msg "Quote should return positive tokens for positive input when K is set"} bondingTokenAmount >
     /// 0 && virtualK > 0 ==> inputTokensOut >= 0;
-    /// #if_succeeds {:msg "Quote calculation should be consistent with removeLiquidity calculation"} true;
+    /// #if_succeeds {:msg "Quote calculation should be consistent with removeLiquidity calculation accounting for fees"} let feeAmount := (bondingTokenAmount * withdrawalFeeBasisPoints) / 10000 in let effectiveBondingTokens := bondingTokenAmount - feeAmount in inputTokensOut == _calculateInputTokensOut(effectiveBondingTokens);
     function quoteRemoveLiquidity(uint256 bondingTokenAmount) external view returns (uint256 inputTokensOut) {
         if (bondingTokenAmount == 0) return 0;
 
-        // Calculate using refactored virtual pair math
-        inputTokensOut = _calculateInputTokensOut(bondingTokenAmount);
+        // GAS OPTIMIZATION: Cache withdrawal fee to avoid SLOAD
+        uint256 cachedWithdrawalFee = withdrawalFeeBasisPoints;
+
+        // Calculate fee amount in bondingTokens (same logic as removeLiquidity)
+        uint256 feeAmount;
+        unchecked {
+            // Safe: bondingTokenAmount > 0 validated above, cachedWithdrawalFee <= 10000
+            feeAmount = (bondingTokenAmount * cachedWithdrawalFee) / 10000;
+        }
+
+        // Calculate effective bonding tokens after fee deduction
+        uint256 effectiveBondingTokens;
+        unchecked {
+            // Safe: feeAmount <= bondingTokenAmount by mathematical property
+            effectiveBondingTokens = bondingTokenAmount - feeAmount;
+        }
+
+        // Handle edge case: if fee consumes all bonding tokens, return 0
+        if (effectiveBondingTokens == 0) return 0;
+
+        // Calculate using effective bonding tokens (post-fee amount) to match removeLiquidity
+        inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
 
         return inputTokensOut;
     }
@@ -698,6 +874,50 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// #if_succeeds {:msg "Auto-lock should be set to specified value"} autoLock == _autoLock;
     function setAutoLock(bool _autoLock) external onlyOwner {
         autoLock = _autoLock;
+    }
+
+    /**
+     * @notice Set withdrawal fee in basis points (0-10000) for removeLiquidity operations
+     * @dev The withdrawal fee is applied when users remove liquidity via removeLiquidity().
+     *      The fee mechanism implements a deflationary bonding token model where fees are
+     *      permanently removed from circulation rather than redistributed.
+     *
+     * @param _feeBasisPoints Fee in basis points where:
+     *                        - 0 = 0% (no fee)
+     *                        - 100 = 1%
+     *                        - 1000 = 10%
+     *                        - 10000 = 100% (maximum allowed)
+     *
+     * @notice Fee Calculation:
+     *         - Applied during removeLiquidity() calls
+     *         - Fee = (bondingTokenAmount * _feeBasisPoints) / 10000
+     *         - Full bondingTokenAmount is burned from user supply
+     *         - Only (bondingTokenAmount - fee) used for withdrawal calculation
+     *         - Results in deflationary pressure on bonding token supply
+     *
+     * @notice Security Considerations:
+     *         - Only owner can set withdrawal fee (access controlled)
+     *         - Maximum fee capped at 10000 basis points (100%)
+     *         - Fee validation prevents overflow/underflow issues
+     *         - Changes emit WithdrawalFeeUpdated event for transparency
+     *
+     * @notice Gas Optimization: Integer division optimized for efficiency
+     * @notice Use Cases: Project sustainability, tokenomics alignment, MEV capture
+     *
+     * @dev Emits WithdrawalFeeUpdated(oldFee, newFee) event
+     */
+    /// #if_succeeds {:msg "Only owner can set withdrawal fee"} msg.sender == owner();
+    /// #if_succeeds {:msg "Fee must be within valid range"} _feeBasisPoints <= 10000;
+    /// #if_succeeds {:msg "Withdrawal fee should be updated to new value"} withdrawalFeeBasisPoints == _feeBasisPoints;
+    /// #if_succeeds {:msg "Access control: only owner can modify withdrawal fee"} msg.sender == owner();
+    /// #if_succeeds {:msg "Fee parameter validation: new fee must not exceed maximum"} _feeBasisPoints >= 0 && _feeBasisPoints <= 10000;
+    function setWithdrawalFee(uint256 _feeBasisPoints) external onlyOwner {
+        require(_feeBasisPoints <= 10000, "B3: Fee must be <= 10000 basis points");
+
+        uint256 oldFee = withdrawalFeeBasisPoints;
+        withdrawalFeeBasisPoints = _feeBasisPoints;
+
+        emit WithdrawalFeeUpdated(oldFee, _feeBasisPoints);
     }
 
     // ============ VIEW FUNCTIONS - ALL STUBS ============

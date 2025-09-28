@@ -1,0 +1,51 @@
+digraph{
+0[label="ENTRY_POINT
+id: 0"];
+1[label="IF from == address(0)
+id: 1"];
+0->1;
+2[label="EXPRESSION _totalSupply += value
+id: 2
+dominance frontier: [8]"];
+1->2;
+3[label="NEW VARIABLE fromBalance = _balances[from]
+id: 3
+dominance frontier: [8]"];
+1->3;
+4[label="IF fromBalance < value
+id: 4
+dominance frontier: [8, 6]"];
+3->4;
+5[label="EXPRESSION revert ERC20InsufficientBalance(address,uint256,uint256)(from,fromBalance,value)
+id: 5
+dominance frontier: [6]"];
+4->5;
+6[label="END_IF
+id: 6
+dominance frontier: [8]"];
+4->6;
+7[label="EXPRESSION _balances[from] = fromBalance - value
+id: 7
+dominance frontier: [8]"];
+6->7;
+8[label="END_IF
+id: 8"];
+1->8;
+9[label="IF to == address(0)
+id: 9"];
+8->9;
+10[label="EXPRESSION _totalSupply -= value
+id: 10
+dominance frontier: [12]"];
+9->10;
+11[label="EXPRESSION _balances[to] += value
+id: 11
+dominance frontier: [12]"];
+9->11;
+12[label="END_IF
+id: 12"];
+9->12;
+13[label="EXPRESSION Transfer(from,to,value)
+id: 13"];
+12->13;
+}

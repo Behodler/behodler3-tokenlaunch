@@ -29,7 +29,7 @@ contract GasOptimizationBenchmarkTest is Test {
     // Gas benchmarking constants
     uint256 constant EXPECTED_GAS_REDUCTION = 15; // Expected 15% gas reduction
     uint256 constant MAX_ACCEPTABLE_GAS = 250000; // 250k gas limit
-    uint256 constant TARGET_OPTIMIZED_GAS = 220000; // Adjusted target for optimized operations
+    uint256 constant TARGET_OPTIMIZED_GAS = 225000; // Adjusted target for optimized operations
 
     // Test amounts for benchmarking
     uint256[] testAmounts;

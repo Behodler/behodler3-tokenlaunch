@@ -19,12 +19,15 @@ import "../src/mocks/MockERC20.sol";
  * Production bonding token MUST implement proper access control on mint() function
  * ONLY the Behodler3Tokenlaunch contract should be authorized to mint bonding tokens
  *
- * PROTECTION MECHANISM:
- * ====================
+ * PROTECTION MECHANISM (Story 035 - Anti-Cantillon):
+ * ==================================================
  * - VirtualL tracks legitimate bonding curve operations separately from totalSupply()
  * - External minting increases totalSupply but does NOT affect virtualL
- * - Redemption formula uses virtualL for calculations, limiting attack impact
- * - However, repeated small redemptions can still gradually drain the vault
+ * - When external minting is detected (totalSupply > _lastKnownSupply):
+ *   - Redemption switches to proportional mode: (bondingTokens / totalSupply) * vaultBalance
+ *   - This ensures fair dilution (rebase effect) instead of Cantillon wealth extraction
+ * - Normal curve operations continue using bonding curve formula
+ * - Result: External minters get exactly their % of total supply, no more
  *
  * RECOMMENDATION:
  * ==============

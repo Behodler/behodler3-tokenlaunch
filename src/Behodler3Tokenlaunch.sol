@@ -81,8 +81,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// @notice Virtual amount of input tokens in the pair (starts at 10000)
     uint256 public virtualInputTokens;
 
-    /// @notice Virtual amount of L tokens in the pair (starts at 100000000)
-    uint256 public virtualL;
+    /// @notice Base virtual L from curve operations only (for rebase mechanism)
+    uint256 private _baseVirtualL;
+
+    /// @notice Last known supply from curve operations (for external mint detection)
+    uint256 private _lastKnownSupply;
+
+    /// @notice Virtual amount of L tokens from curve operations (public view for compatibility)
+    /// @dev Returns _baseVirtualL. External minting dilution is handled separately in redemption logic.
+    function virtualL() public view returns (uint256) {
+        return _baseVirtualL;
+    }
 
     // Virtual Liquidity Parameters for (x+α)(y+β)=k formula
     /// @notice Virtual liquidity offset for input tokens (α)
@@ -192,7 +201,10 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         // Initialize virtual bonding token balance for zero seed: y_0 = k/α - α
         // When x₀ = 0, x₀ + α = α, so y_0 = k/α - α
         require(alpha > 0, "VL: Alpha must be positive for calculations");
-        virtualL = virtualK / alpha - alpha;
+        _baseVirtualL = virtualK / alpha - alpha;
+
+        // Initialize tracking variables for anti-Cantillon protection
+        _lastKnownSupply = 0;  // No tokens minted yet
 
         // Set virtual input tokens to zero (enforced seed)
         virtualInputTokens = 0;
@@ -474,8 +486,8 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Update virtual pair state for virtual liquidity mode
-     * @dev Updates state using virtual liquidity formula instead of traditional xy=k
+     * @notice Update virtual pair state for virtual liquidity mode with anti-Cantillon protection
+     * @dev Updates state using virtual liquidity formula and tracks supply for rebase mechanism
      * @param inputTokenDelta Change in input tokens (positive for add, negative for remove)
      * @param bondingTokenDelta Change in bonding tokens (negative for add, positive for remove)
      */
@@ -489,12 +501,16 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
             virtualInputTokens -= uint256(-inputTokenDelta);
         }
 
-        // Update virtual bonding tokens
+        // Update BASE virtualL (the "true" curve value, excluding external mints)
         if (bondingTokenDelta >= 0) {
-            virtualL += uint256(bondingTokenDelta);
+            _baseVirtualL += uint256(bondingTokenDelta);
         } else {
-            virtualL -= uint256(-bondingTokenDelta);
+            _baseVirtualL -= uint256(-bondingTokenDelta);
         }
+
+        // CRITICAL: Sync supply tracking after curve operation
+        // This ensures _lastKnownSupply reflects legitimate curve operations
+        _lastKnownSupply = bondingToken.totalSupply();
 
         // Check price bounds after state update
         _checkPriceBounds();
@@ -586,19 +602,24 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /**
      * @notice Calculate bonding tokens output for a given input amount using virtual pair math
      * @dev Uses generalized quote logic to eliminate duplication across quote system
+     *      Uses _baseVirtualL for curve calculation (external minting doesn't affect deposits)
      * @param inputAmount Amount of input tokens being added
      * @return bondingTokensOut Amount of bonding tokens that would be minted
      */
     function _calculateBondingTokensOut(uint256 inputAmount) internal view returns (uint256 bondingTokensOut) {
-        // Use generalized quote: virtualL reduces, virtualInputTokens increases
-        bondingTokensOut = _calculateVirtualPairQuote(virtualL, virtualInputTokens, inputAmount);
+        // Use generalized quote: _baseVirtualL reduces, virtualInputTokens increases
+        // Note: We use _baseVirtualL (not virtualL()) because deposits follow the curve,
+        // regardless of external minting
+        bondingTokensOut = _calculateVirtualPairQuote(_baseVirtualL, virtualInputTokens, inputAmount);
 
         return bondingTokensOut;
     }
 
     /**
-     * @notice Calculate input tokens output for a given bonding token amount using virtual pair math
-     * @dev Uses generalized quote logic to eliminate duplication across quote system
+     * @notice Calculate input tokens output for a given bonding token amount using virtual pair math with anti-Cantillon protection
+     * @dev When external minting is detected, uses proportional share instead of bonding curve to ensure fair dilution
+     *      Formula: When external minting detected: (bondingTokenAmount / totalSupply) * vaultBalance
+     *               Normal operation: Bonding curve formula via _calculateVirtualPairQuote
      * @param bondingTokenAmount Amount of bonding tokens being burned
      * @return inputTokensOut Amount of input tokens that would be received
      */
@@ -608,8 +629,18 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
             return 0;
         }
 
-        // Use generalized quote: virtualInputTokens reduces, virtualL increases
-        inputTokensOut = _calculateVirtualPairQuote(virtualInputTokens, virtualL, bondingTokenAmount);
+        uint256 currentSupply = bondingToken.totalSupply();
+
+        // Check if external minting occurred
+        if (currentSupply > _lastKnownSupply && _lastKnownSupply > 0) {
+            // External minting detected - use proportional redemption to ensure fairness
+            // This prevents Cantillon effect by making redemption proportional to % of total supply
+            // Formula: (bondingTokenAmount / totalSupply) * vaultBalance
+            inputTokensOut = (bondingTokenAmount * virtualInputTokens) / currentSupply;
+        } else {
+            // Normal curve operation - use bonding curve formula
+            inputTokensOut = _calculateVirtualPairQuote(virtualInputTokens, _baseVirtualL, bondingTokenAmount);
+        }
 
         return inputTokensOut;
     }
@@ -925,14 +956,14 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /**
      * @notice Get the current virtual pair state
      * @return inputTokens Virtual input tokens in the pair
-     * @return lTokens Virtual L tokens in the pair
+     * @return lTokens Virtual L tokens in the pair (base value from curve operations)
      * @return k The virtual liquidity constant K (not x*y, but the actual virtualK)
      */
     /// #if_succeeds {:msg "Input tokens should match virtual storage"} inputTokens == virtualInputTokens;
-    /// #if_succeeds {:msg "L tokens should match virtual storage"} lTokens == virtualL;
+    /// #if_succeeds {:msg "L tokens should match virtual storage"} lTokens == virtualL();
     /// #if_succeeds {:msg "K should return the virtual liquidity constant"} k == virtualK;
     function getVirtualPair() external view returns (uint256 inputTokens, uint256 lTokens, uint256 k) {
-        return (virtualInputTokens, virtualL, virtualK);
+        return (virtualInputTokens, virtualL(), virtualK);
     }
 
     /**
@@ -949,13 +980,15 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Verify that virtualL != bondingToken.totalSupply()
+     * @notice Verify that virtualL (base) != bondingToken.totalSupply()
+     * @dev After implementing anti-Cantillon protection, _baseVirtualL tracks curve operations
+     *      while totalSupply may include external minting. They will naturally differ.
      * @return True if they are different (as expected in virtual pair architecture)
      */
-    /// #if_succeeds {:msg "Result should reflect difference between virtual L and actual supply"} $result == (virtualL
+    /// #if_succeeds {:msg "Result should reflect difference between virtual L and actual supply"} $result == (virtualL()
     /// != bondingToken.totalSupply());
     /// #if_succeeds {:msg "Virtual pair architecture requires separation of virtual and actual tokens"} true;
     function virtualLDifferentFromTotalSupply() external view returns (bool) {
-        return virtualL != bondingToken.totalSupply();
+        return virtualL() != bondingToken.totalSupply();
     }
 }

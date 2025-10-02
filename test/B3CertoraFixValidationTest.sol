@@ -342,17 +342,21 @@ contract B3CertoraFixValidationTest is Test {
 
         uint256 bondingAmount = 1000 * 1e18;
 
-        uint256 quoteBefore = b3.quoteRemoveLiquidity(bondingAmount);
-
-        // Execute actual removal
+        // IMPORTANT: User must have tokens BEFORE getting quote for accurate results
+        // This test was previously creating external minting scenario inadvertently
         vm.startPrank(user1);
         bondingToken.mint(user1, bondingAmount);
         bondingToken.approve(address(b3), bondingAmount);
 
+        // Get quote AFTER user has tokens (normal flow)
+        uint256 quoteBefore = b3.quoteRemoveLiquidity(bondingAmount);
+
+        // Execute actual removal
         uint256 actualAmount = b3.removeLiquidity(bondingAmount, 1);
         vm.stopPrank();
 
-        // Quote and actual should match
+        // Quote and actual should match when no external minting occurs between them
+        // Note: After Story 035, external minting between quote and removal would cause mismatch
         assertEq(actualAmount, quoteBefore, "Quote and actual removal should match");
 
         // Fee should have been properly applied

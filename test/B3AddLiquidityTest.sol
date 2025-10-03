@@ -312,11 +312,17 @@ contract B3AddLiquidityTest is Test {
     function testAddLiquidityMultipleUsers() public {
         uint256 inputAmount = 1000 * 1e18; // Use meaningful amounts for virtual liquidity
 
+        // Get initial state for bonding curve calculation
+        (uint256 initialVInput, uint256 initialVL, uint256 k) = b3.getVirtualPair();
+
         // User 1 adds liquidity
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
         uint256 user1Tokens = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
+
+        // Get state after user 1 for calculating expected user 2 tokens
+        (uint256 vInputAfterUser1, uint256 vLAfterUser1,) = b3.getVirtualPair();
 
         // User 2 adds liquidity
         vm.startPrank(user2);
@@ -330,14 +336,146 @@ contract B3AddLiquidityTest is Test {
         assertEq(bondingToken.balanceOf(user1), user1Tokens, "User 1 should have correct bonding token balance");
         assertEq(bondingToken.balanceOf(user2), user2Tokens, "User 2 should have correct bonding token balance");
 
-        // With virtual liquidity, difference should be within reasonable tolerance for ERC20 precision
-        // Using 10^4 tolerance for 10^18 scale values as instructed by user
-        if (user1Tokens != user2Tokens) {
-            assertTrue(user2Tokens <= user1Tokens, "Second user should get same or fewer tokens");
-        } else {
-            // Virtual liquidity curve is so flat that difference is negligible - this is expected
-            assertEq(user1Tokens, user2Tokens, "Tokens should be equal when curve is very flat");
+        // BONDING CURVE VALIDATION: Second user MUST receive fewer tokens (price increases along curve)
+        // This is the fundamental property of a bonding curve - no tolerance, strict inequality
+        assertTrue(user2Tokens < user1Tokens, "Second user must receive strictly fewer tokens - bonding curve price increases");
+
+        // Calculate expected bonding curve slope behavior
+        // For bonding curve (x+α)(y+β)=k, when adding same input amount:
+        // - First addition: y_out1 = virtualL - k/(virtualInput + inputAmount + α) + β
+        // - Second addition: y_out2 = virtualL_after_first - k/(virtualInput_after_first + inputAmount + α) + β
+        // - Because virtualInput increased, denominator is larger, so y_out2 < y_out1
+
+        // Calculate expected user2 tokens based on curve formula
+        uint256 alpha = b3.alpha();
+        uint256 expectedUser2Tokens = vLAfterUser1 - (k / (vInputAfterUser1 + inputAmount + alpha) - alpha);
+
+        // Validate that actual user2 tokens match mathematical expectation
+        // Using 0.0001% relative tolerance (1e12) as established in story 036.11
+        assertApproxEqRel(user2Tokens, expectedUser2Tokens, 1e12, "User 2 tokens should match bonding curve formula expectation");
+
+        // Validate the token difference is significant (not negligible)
+        // Price increase should be at least 0.01% for these deposit amounts
+        uint256 percentDifference = ((user1Tokens - user2Tokens) * 1e18) / user1Tokens;
+        assertTrue(percentDifference >= 1e14, "Token difference should be at least 0.01% - curve not flat");
+    }
+
+    function testBondingCurveSlopeWithLargerDeposits() public {
+        // Use significantly larger deposit amounts to verify curve slope is working correctly
+        uint256 largeDeposit = 100_000 * 1e18; // 100k tokens per deposit
+
+        // Get initial state
+        (uint256 initialVInput, uint256 initialVL, uint256 k) = b3.getVirtualPair();
+        uint256 alpha = b3.alpha();
+
+        // User 1 makes large deposit
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), largeDeposit);
+        uint256 user1Tokens = b3.addLiquidity(largeDeposit, 0);
+        vm.stopPrank();
+
+        // Get state after user 1
+        (uint256 vInputAfterUser1, uint256 vLAfterUser1,) = b3.getVirtualPair();
+
+        // User 2 makes same large deposit
+        vm.startPrank(user2);
+        inputToken.approve(address(b3), largeDeposit);
+        uint256 user2Tokens = b3.addLiquidity(largeDeposit, 0);
+        vm.stopPrank();
+
+        // Calculate expected user2 tokens based on bonding curve formula
+        uint256 expectedUser2Tokens = vLAfterUser1 - (k / (vInputAfterUser1 + largeDeposit + alpha) - alpha);
+
+        // Verify mathematical expectation with 0.0001% tolerance
+        assertApproxEqRel(user2Tokens, expectedUser2Tokens, 1e12, "Large deposit user 2 tokens should match curve formula");
+
+        // Verify strict price increase (second user gets fewer tokens)
+        assertTrue(user2Tokens < user1Tokens, "Large deposit: second user must get strictly fewer tokens");
+
+        // With larger deposits, the price increase should be more pronounced
+        // Calculate percentage difference
+        uint256 percentDiff = ((user1Tokens - user2Tokens) * 1e18) / user1Tokens;
+
+        // For large deposits, expect at least 0.1% difference to demonstrate curve slope
+        assertTrue(percentDiff >= 1e15, "Large deposits should show at least 0.1% price increase");
+
+        // Verify the curve slope is steeper than with small deposits
+        // Calculate tokens per input token for each user
+        uint256 user1TokensPerInput = (user1Tokens * 1e18) / largeDeposit;
+        uint256 user2TokensPerInput = (user2Tokens * 1e18) / largeDeposit;
+
+        // Second user should get strictly fewer tokens per input token
+        assertTrue(user2TokensPerInput < user1TokensPerInput, "Tokens per input should decrease along curve");
+    }
+
+    function testMarginalPriceIncreaseValidation() public {
+        // Test marginal price increase validation between sequential operations
+        // This validates that each successive operation results in measurably higher price (fewer tokens per input)
+        uint256 depositAmount = 10_000 * 1e18; // 10k tokens per deposit
+        uint256 numOperations = 5; // Test 5 sequential operations
+
+        uint256[] memory tokensReceived = new uint256[](numOperations);
+        uint256 alpha = b3.alpha();
+
+        // Perform sequential deposits and track tokens received
+        for (uint256 i = 0; i < numOperations; i++) {
+            address user;
+            if (i == 0) user = user1;
+            else if (i == 1) user = user2;
+            else if (i == 2) user = address(0x4);
+            else if (i == 3) user = address(0x5);
+            else user = address(0x6);
+
+            // Mint tokens for new users
+            if (i >= 2) {
+                inputToken.mint(user, depositAmount);
+            }
+
+            // Get state before deposit for validation
+            (uint256 vInputBefore, uint256 vLBefore, uint256 k) = b3.getVirtualPair();
+
+            // Execute deposit
+            vm.startPrank(user);
+            inputToken.approve(address(b3), depositAmount);
+            tokensReceived[i] = b3.addLiquidity(depositAmount, 0);
+            vm.stopPrank();
+
+            // Calculate expected tokens based on bonding curve formula
+            uint256 expectedTokens = vLBefore - (k / (vInputBefore + depositAmount + alpha) - alpha);
+
+            // Validate actual tokens match mathematical expectation (0.0001% tolerance)
+            assertApproxEqRel(
+                tokensReceived[i],
+                expectedTokens,
+                1e12,
+                string.concat("Operation ", vm.toString(i), " should match curve formula")
+            );
+
+            // Validate marginal price increase: each successive operation yields fewer tokens
+            if (i > 0) {
+                assertTrue(
+                    tokensReceived[i] < tokensReceived[i - 1],
+                    string.concat("Operation ", vm.toString(i), " must yield fewer tokens than previous")
+                );
+
+                // Validate the price increase is measurable (at least 0.001% difference)
+                uint256 percentDecrease = ((tokensReceived[i - 1] - tokensReceived[i]) * 1e18) / tokensReceived[i - 1];
+                assertTrue(
+                    percentDecrease >= 1e13,
+                    string.concat("Operation ", vm.toString(i), " should show at least 0.001% price increase")
+                );
+            }
         }
+
+        // Final validation: compare first and last operation
+        // The cumulative price increase should be significant
+        uint256 totalPriceIncrease = ((tokensReceived[0] - tokensReceived[numOperations - 1]) * 1e18) / tokensReceived[0];
+
+        // Over 5 operations with 10k deposits each, expect at least 0.1% cumulative price increase
+        assertTrue(
+            totalPriceIncrease >= 1e15,
+            "Cumulative price increase over 5 operations should be at least 0.1%"
+        );
     }
 
     // ============ REENTRANCY TESTS ============

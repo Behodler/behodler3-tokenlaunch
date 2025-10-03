@@ -498,4 +498,388 @@ contract ZeroSeedVirtualLiquidityTest is Test {
             assertApproxEqRel(actualPrice, expectedPrice, 1e15, "Price should match formula P(x) = (x+alpha)^2/k");
         }
     }
+
+    // ============================================
+    // STORY 036.21: ZERO SEED MATHEMATICS TESTS
+    // ============================================
+
+    /**
+     * @notice Test alpha calculation precision using formula: alpha = (P_avg * x_fin)/(1-P_avg)
+     * @dev Validates the alpha calculation matches the architectural formula exactly
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Section 2
+     */
+    function test_AlphaCalculationPrecision_FormulaValidation() public {
+        // Test with multiple P_avg values to ensure formula consistency
+        uint256[6] memory testPrices = [MIN_P_AVG, LOW_P_AVG, MID_P_AVG, HIGH_P_AVG, VERY_HIGH_P_AVG, MAX_P_AVG];
+
+        for (uint256 i = 0; i < testPrices.length; i++) {
+            uint256 pAvg = testPrices[i];
+
+            vm.prank(owner);
+            b3.setGoals(FUNDING_GOAL, pAvg);
+
+            // Get actual alpha from contract
+            uint256 actualAlpha = b3.alpha();
+
+            // Calculate expected alpha using architecture formula: alpha = (P_avg * x_fin)/(1-P_avg)
+            // Breaking down to avoid overflow and maintain precision:
+            // numerator = P_avg * x_fin / 1e18 (scale down P_avg)
+            // denominator = 1e18 - P_avg
+            // expectedAlpha = (numerator * 1e18) / denominator (scale back up)
+            uint256 numerator = (pAvg * FUNDING_GOAL) / 1e18;
+            uint256 denominator = 1e18 - pAvg;
+            uint256 expectedAlpha = (numerator * 1e18) / denominator;
+
+            // Verify exact match (zero tolerance for mathematical correctness)
+            assertEq(
+                actualAlpha,
+                expectedAlpha,
+                string(abi.encodePacked(
+                    "Alpha must match formula: alpha = (P_avg * x_fin)/(1-P_avg) for P_avg=",
+                    vm.toString(pAvg / 1e15), // Convert to readable format
+                    "/1000"
+                ))
+            );
+
+            // Verify alpha is always positive (critical for curve calculations)
+            assertGt(actualAlpha, 0, "Alpha must be positive for valid curve mathematics");
+        }
+    }
+
+    /**
+     * @notice Test verifying beta equals alpha for zero seed configuration
+     * @dev In zero seed implementation, beta = alpha by design for mathematical consistency
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Section 3
+     */
+    function test_BetaEqualsAlpha_ZeroSeedProperty() public {
+        uint256[6] memory testPrices = [MIN_P_AVG, LOW_P_AVG, MID_P_AVG, HIGH_P_AVG, VERY_HIGH_P_AVG, MAX_P_AVG];
+
+        for (uint256 i = 0; i < testPrices.length; i++) {
+            uint256 pAvg = testPrices[i];
+
+            vm.prank(owner);
+            b3.setGoals(FUNDING_GOAL, pAvg);
+
+            uint256 alpha = b3.alpha();
+            uint256 beta = b3.beta();
+
+            // Verify β = α (zero tolerance - must be exact)
+            assertEq(
+                beta,
+                alpha,
+                string(abi.encodePacked(
+                    "Beta must equal alpha for zero seed (P_avg=",
+                    vm.toString(pAvg / 1e15),
+                    "/1000)"
+                ))
+            );
+
+            // Verify both are positive
+            assertGt(alpha, 0, "Alpha must be positive");
+            assertGt(beta, 0, "Beta must be positive");
+        }
+
+        // Test with extreme values
+        vm.prank(owner);
+        b3.setGoals(100_000_000 * 1e18, MIN_P_AVG); // Large funding goal
+        assertEq(b3.beta(), b3.alpha(), "Beta must equal alpha even with large funding goal");
+
+        vm.prank(owner);
+        b3.setGoals(1000 * 1e18, MAX_P_AVG); // Small funding goal, high P_avg
+        assertEq(b3.beta(), b3.alpha(), "Beta must equal alpha even with small funding goal");
+    }
+
+    /**
+     * @notice Test for initial virtualL calculation using formula: y_0 = k/alpha - alpha
+     * @dev Validates the initial virtual L token amount matches the architectural formula
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Section 5
+     */
+    function test_InitialVirtualL_FormulaValidation() public {
+        uint256[6] memory testPrices = [MIN_P_AVG, LOW_P_AVG, MID_P_AVG, HIGH_P_AVG, VERY_HIGH_P_AVG, MAX_P_AVG];
+
+        for (uint256 i = 0; i < testPrices.length; i++) {
+            uint256 pAvg = testPrices[i];
+
+            vm.prank(owner);
+            b3.setGoals(FUNDING_GOAL, pAvg);
+
+            uint256 alpha = b3.alpha();
+            uint256 virtualK = b3.virtualK();
+            (uint256 virtualInputTokens, uint256 virtualL,) = b3.getVirtualPair();
+
+            // Verify initial state: virtualInputTokens must be 0 (zero seed enforcement)
+            assertEq(
+                virtualInputTokens,
+                0,
+                "Virtual input tokens must start at zero for zero seed"
+            );
+
+            // Calculate expected y_0 using formula: y_0 = k/alpha - alpha
+            uint256 expectedVirtualL = virtualK / alpha - alpha;
+
+            // Verify exact match
+            assertEq(
+                virtualL,
+                expectedVirtualL,
+                string(abi.encodePacked(
+                    "Virtual L must match formula: y_0 = k/alpha - alpha for P_avg=",
+                    vm.toString(pAvg / 1e15),
+                    "/1000"
+                ))
+            );
+
+            // Verify invariant: (x + alpha)(y + beta) = k at initialization
+            // Since x_0 = 0 and beta = alpha: (0 + alpha)(y_0 + alpha) = k
+            // Therefore: alpha(y_0 + alpha) = k
+            // Note: Due to integer division rounding in y_0 = k/alpha - alpha,
+            // we allow small tolerance for mathematical correctness
+            uint256 invariantCheck = alpha * (virtualL + alpha);
+            uint256 tolerance = virtualK / 1e12; // Very tight 0.0001% tolerance
+            assertApproxEqAbs(
+                invariantCheck,
+                virtualK,
+                tolerance,
+                "Invariant (x+alpha)(y+beta)=k must hold at initialization within tolerance"
+            );
+        }
+    }
+
+    /**
+     * @notice Test for first deposit when virtualInputTokens = 0
+     * @dev Validates behavior of initial liquidity addition from zero state
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Section 2.1
+     */
+    function test_FirstDeposit_FromZeroVirtualInputTokens() public {
+        vm.prank(owner);
+        b3.setGoals(FUNDING_GOAL, MID_P_AVG);
+
+        // Verify initial state
+        (uint256 initialVirtualInput, uint256 initialVirtualL,) = b3.getVirtualPair();
+        assertEq(initialVirtualInput, 0, "Must start with zero virtual input tokens");
+
+        uint256 firstDepositAmount = 1000 * 1e18;
+        uint256 initialPrice = b3.getInitialMarginalPrice();
+        uint256 alpha = b3.alpha();
+        uint256 virtualK = b3.virtualK();
+
+        // Perform first deposit
+        deal(address(inputToken), user1, firstDepositAmount);
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), firstDepositAmount);
+        uint256 bondingTokensReceived = b3.addLiquidity(firstDepositAmount, 0);
+        vm.stopPrank();
+
+        // Verify bonding tokens were received
+        assertGt(bondingTokensReceived, 0, "Should receive bonding tokens on first deposit");
+
+        // Verify virtual input tokens updated correctly
+        (uint256 newVirtualInput, uint256 newVirtualL,) = b3.getVirtualPair();
+        assertEq(
+            newVirtualInput,
+            firstDepositAmount,
+            "Virtual input tokens should equal first deposit amount"
+        );
+
+        // Verify price increased after first deposit
+        uint256 newPrice = b3.getCurrentMarginalPrice();
+        assertGt(newPrice, initialPrice, "Price must increase after first deposit");
+
+        // Verify invariant still holds: (x + alpha)(y + beta) = k
+        uint256 beta = b3.beta();
+        uint256 invariantCheck = (newVirtualInput + alpha) * (newVirtualL + beta);
+        // Allow small tolerance for rounding in state updates
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            invariantCheck,
+            virtualK,
+            tolerance,
+            "Invariant must hold after first deposit"
+        );
+
+        // Verify price matches formula: P(x) = (x + alpha)^2 / k
+        uint256 expectedPrice = ((newVirtualInput + alpha) * (newVirtualInput + alpha) * 1e18) / virtualK;
+        assertApproxEqRel(
+            newPrice,
+            expectedPrice,
+            1e15, // 0.1% tolerance
+            "Price must match formula P(x) = (x+alpha)^2/k after first deposit"
+        );
+    }
+
+    /**
+     * @notice Test validating all virtual liquidity formulas match architectural documentation
+     * @dev Comprehensive validation of all key formulas from architecture docs
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Sections 1-7
+     */
+    function test_AllVirtualLiquidityFormulas_ArchitectureCompliance() public {
+        vm.prank(owner);
+        b3.setGoals(FUNDING_GOAL, MID_P_AVG);
+
+        // FORMULA 1: Initial Price P_0 = P_avg^2
+        assertEq(
+            b3.getInitialMarginalPrice(),
+            (MID_P_AVG * MID_P_AVG) / 1e18,
+            "FORMULA 1: P_0 must equal P_avg^2 for zero seed"
+        );
+
+        // FORMULA 2: alpha = (P_avg * x_fin)/(1 - P_avg)
+        assertEq(
+            b3.alpha(),
+            ((MID_P_AVG * FUNDING_GOAL) / 1e18 * 1e18) / (1e18 - MID_P_AVG),
+            "FORMULA 2: alpha must equal (P_avg * x_fin)/(1 - P_avg)"
+        );
+
+        // FORMULA 3: beta = alpha
+        assertEq(
+            b3.beta(),
+            b3.alpha(),
+            "FORMULA 3: beta must equal alpha for zero seed"
+        );
+
+        // FORMULA 4: k = (x_fin + alpha)^2
+        {
+            uint256 alphaLocal = b3.alpha();
+            assertEq(
+                b3.virtualK(),
+                (FUNDING_GOAL + alphaLocal) * (FUNDING_GOAL + alphaLocal),
+                "FORMULA 4: k must equal (x_fin + alpha)^2"
+            );
+        }
+
+        // FORMULA 5: y_0 = k/alpha - alpha
+        {
+            uint256 alphaLocal = b3.alpha();
+            uint256 virtualKLocal = b3.virtualK();
+            (, uint256 virtualL,) = b3.getVirtualPair();
+            assertEq(
+                virtualL,
+                virtualKLocal / alphaLocal - alphaLocal,
+                "FORMULA 5: y_0 must equal k/alpha - alpha"
+            );
+        }
+
+        // FORMULA 6: x_0 = 0 (Zero Seed Enforcement)
+        {
+            (uint256 virtualInputTokens,,) = b3.getVirtualPair();
+            assertEq(
+                virtualInputTokens,
+                0,
+                "FORMULA 6: x_0 must be zero for zero seed enforcement"
+            );
+        }
+
+        // FORMULA 7: (x + alpha)(y + beta) = k (Core Invariant)
+        {
+            uint256 alphaLocal = b3.alpha();
+            uint256 betaLocal = b3.beta();
+            uint256 virtualKLocal = b3.virtualK();
+            (uint256 virtualInputTokens, uint256 virtualL,) = b3.getVirtualPair();
+            // Note: Due to integer division rounding, allow small tolerance
+            uint256 tolerance = virtualKLocal / 1e12; // Very tight 0.0001% tolerance
+            assertApproxEqAbs(
+                (virtualInputTokens + alphaLocal) * (virtualL + betaLocal),
+                virtualKLocal,
+                tolerance,
+                "FORMULA 7: Core invariant (x+alpha)(y+beta)=k must hold within tolerance"
+            );
+        }
+
+        // FORMULA 8: P(x) = (x + alpha)^2 / k (Marginal Price Function)
+        {
+            uint256 testAmount = FUNDING_GOAL / 10;
+            deal(address(inputToken), user1, testAmount);
+            vm.startPrank(user1);
+            inputToken.approve(address(b3), testAmount);
+            b3.addLiquidity(testAmount, 0);
+            vm.stopPrank();
+
+            uint256 alphaLocal = b3.alpha();
+            uint256 virtualKLocal = b3.virtualK();
+            (uint256 newVirtualInput,,) = b3.getVirtualPair();
+            uint256 xPlusAlpha = newVirtualInput + alphaLocal;
+            assertApproxEqRel(
+                b3.getCurrentMarginalPrice(),
+                (xPlusAlpha * xPlusAlpha * 1e18) / virtualKLocal,
+                1e15, // 0.1% tolerance
+                "FORMULA 8: P(x) must equal (x+alpha)^2/k"
+            );
+        }
+    }
+
+    /**
+     * @notice Test for zero seed enforcement across optimized and general calculation paths
+     * @dev Ensures zero seed is enforced consistently in all code paths
+     * Reference: docs/zero-seed-virtual-liquidity-mathematics.md Section 2
+     */
+    function test_ZeroSeedEnforcement_AllCalculationPaths() public {
+        // Test across different P_avg values
+        uint256[6] memory testPrices = [MIN_P_AVG, LOW_P_AVG, MID_P_AVG, HIGH_P_AVG, VERY_HIGH_P_AVG, MAX_P_AVG];
+
+        for (uint256 i = 0; i < testPrices.length; i++) {
+            uint256 pAvg = testPrices[i];
+
+            vm.prank(owner);
+            b3.setGoals(FUNDING_GOAL, pAvg);
+
+            // VERIFICATION 1: seedInput is immutably zero
+            assertEq(b3.seedInput(), 0, "seedInput must always be zero");
+
+            // VERIFICATION 2: virtualInputTokens starts at zero
+            (uint256 virtualInputTokens,,) = b3.getVirtualPair();
+            assertEq(virtualInputTokens, 0, "virtualInputTokens must start at zero");
+
+            // VERIFICATION 3: getTotalRaised starts at zero
+            assertEq(b3.getTotalRaised(), 0, "totalRaised must start at zero");
+
+            // VERIFICATION 4: Initial price matches P_avg^2 (zero seed formula)
+            uint256 initialPrice = b3.getInitialMarginalPrice();
+            uint256 expectedPrice = (pAvg * pAvg) / 1e18;
+            assertEq(
+                initialPrice,
+                expectedPrice,
+                "Initial price must follow zero seed formula P_0=P_avg^2"
+            );
+
+            // VERIFICATION 5: Test quote functions respect zero seed
+            uint256 quoteAmount = FUNDING_GOAL / 100;
+            uint256 quotedTokens = b3.quoteAddLiquidity(quoteAmount);
+            assertGt(quotedTokens, 0, "Quote should work correctly with zero seed");
+
+            // VERIFICATION 6: Test actual liquidity addition from zero state
+            deal(address(inputToken), user1, quoteAmount);
+            vm.startPrank(user1);
+            inputToken.approve(address(b3), quoteAmount);
+            uint256 actualTokens = b3.addLiquidity(quoteAmount, 0);
+            vm.stopPrank();
+
+            assertGt(actualTokens, 0, "Should receive tokens when adding liquidity from zero state");
+
+            // Verify virtualInputTokens updated correctly from zero
+            (uint256 newVirtualInput,,) = b3.getVirtualPair();
+            assertEq(
+                newVirtualInput,
+                quoteAmount,
+                "Virtual input should equal deposit amount after first deposit from zero"
+            );
+        }
+
+        // VERIFICATION 7: Test with different funding goals (optimized path variations)
+        vm.prank(owner);
+        b3.setGoals(1_000 * 1e18, MID_P_AVG); // Small
+        assertEq(b3.seedInput(), 0, "Zero seed must be enforced for small funding goal");
+        (uint256 vInput1,,) = b3.getVirtualPair();
+        assertEq(vInput1, 0, "Zero virtual input must be enforced for small funding goal");
+
+        vm.prank(owner);
+        b3.setGoals(1_000_000 * 1e18, MID_P_AVG); // Medium
+        assertEq(b3.seedInput(), 0, "Zero seed must be enforced for medium funding goal");
+        (uint256 vInput2,,) = b3.getVirtualPair();
+        assertEq(vInput2, 0, "Zero virtual input must be enforced for medium funding goal");
+
+        vm.prank(owner);
+        b3.setGoals(100_000_000 * 1e18, MID_P_AVG); // Large
+        assertEq(b3.seedInput(), 0, "Zero seed must be enforced for large funding goal");
+        (uint256 vInput3,,) = b3.getVirtualPair();
+        assertEq(vInput3, 0, "Zero virtual input must be enforced for large funding goal");
+    }
 }

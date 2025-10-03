@@ -173,7 +173,10 @@ contract B3VirtualPairTest is Test {
         uint256 virtualK = b3.virtualK();
 
         uint256 leftSide = (inputTokens + alpha) * (lTokens + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold"); // 0.1% tolerance
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision");
     }
 
     function testVirtualPairPreservesKAfterOperations() public {
@@ -220,11 +223,14 @@ contract B3VirtualPairTest is Test {
         assertEq(virtualL, returnedL, "Virtual L tokens should be consistent");
         assertEq(returnedK, virtualK, "Returned K should equal virtualK");
 
-        // Also check virtual liquidity invariant consistency
+        // Also check virtual liquidity invariant consistency with strict precision
         uint256 alpha = b3.alpha();
         uint256 beta = b3.beta();
         uint256 leftSide = (virtualInput + alpha) * (virtualL + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold");
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision");
     }
 
     // ============ ARCHITECTURE VALIDATION TESTS ============
@@ -244,12 +250,15 @@ contract B3VirtualPairTest is Test {
         // K should be the product for compatibility
         assertEq(k, b3.virtualK(), "Virtual liquidity architecture: k should equal virtualK");
 
-        // Verify virtual liquidity invariant (x+alpha)(y+beta)=virtualK
+        // Verify virtual liquidity invariant (x+alpha)(y+beta)=virtualK with strict precision
         uint256 alpha = b3.alpha();
         uint256 beta = b3.beta();
         uint256 virtualK = b3.virtualK();
         uint256 leftSide = (inputTokens + alpha) * (lTokens + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold");
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision");
     }
 
     function testVirtualPairNotStandardBondingCurve() public view {

@@ -513,7 +513,10 @@ contract B3SecurityIntegrationTest is Test {
             uint256 beta = b3.beta();
             uint256 virtualK = b3.virtualK();
             uint256 leftSide = (vInput + alpha) * (vL + beta);
-            assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold"); // 0.1% tolerance
+            // K invariant must be preserved with strict tolerance for mathematical correctness
+            // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+            uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+            assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision");
 
             // Virtual L should be different from bonding token supply
             assertTrue(vL != bondingToken.totalSupply(), "VirtualL should differ from total supply");

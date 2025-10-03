@@ -200,14 +200,15 @@ contract B3RemoveLiquidityTest is Test {
         uint256 finalVirtualK = freshB3.virtualK();
         assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change");
 
-        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with precision tolerance
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
         uint256 alpha = freshB3.alpha();
         uint256 beta = freshB3.beta();
         uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
-        // Use larger tolerance for ERC20 precision as instructed by user (10^4 for 10^18 values)
-        uint256 tolerance = initialVirtualK / 1e14; // 0.01% tolerance for large numbers
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
         assertApproxEqAbs(
-            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within precision"
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision"
         );
 
         vm.stopPrank();
@@ -456,6 +457,54 @@ contract B3RemoveLiquidityTest is Test {
         emit LiquidityRemoved(user1, bondingTokenAmount, expectedInputTokensOut);
 
         b3.removeLiquidity(bondingTokenAmount, 0);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test K invariant preservation with minimal withdrawal (1 wei)
+     * @dev Critical test for mathematical precision at extreme values
+     */
+    function testRemoveLiquidityPreservesKMinimalDeposit() public {
+        // Create fresh B3 contract for this test
+        Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+        );
+
+        vault.setClient(address(freshB3), true);
+        freshB3.initializeVaultApproval();
+        freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
+
+        // First add liquidity to get bonding tokens
+        uint256 inputAmount = 1000 * 1e18;
+
+        vm.startPrank(user1);
+        inputToken.approve(address(freshB3), inputAmount);
+        uint256 bondingTokensReceived = freshB3.addLiquidity(inputAmount, 0);
+
+        // Capture virtual K after adding liquidity
+        uint256 initialVirtualK = freshB3.virtualK();
+
+        // Now remove minimal liquidity (1 wei of bonding tokens)
+        uint256 bondingTokenAmount = 1;
+        freshB3.removeLiquidity(bondingTokenAmount, 0);
+
+        (uint256 finalVInput, uint256 finalVL,) = freshB3.getVirtualPair();
+
+        // Virtual K constant should remain unchanged
+        uint256 finalVirtualK = freshB3.virtualK();
+        assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change");
+
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
+        uint256 alpha = freshB3.alpha();
+        uint256 beta = freshB3.beta();
+        uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
+        // K invariant must be preserved with strict tolerance even for minimal withdrawals
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision for minimal withdrawal"
+        );
 
         vm.stopPrank();
     }

@@ -367,9 +367,12 @@ contract ZeroSeedVirtualLiquidityTest is Test {
         uint256 beta = b3.beta();
         uint256 virtualK = b3.virtualK();
 
-        // Check (x+alpha)(y+beta)=k invariant
+        // Check (x+alpha)(y+beta)=k invariant with strict precision
         uint256 leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold");
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision");
 
         // Add liquidity and check invariant still holds
         uint256 testAmount = FUNDING_GOAL / 20;
@@ -382,7 +385,9 @@ contract ZeroSeedVirtualLiquidityTest is Test {
 
         (virtualInputTokens, virtualL,) = b3.getVirtualPair();
         leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Virtual liquidity invariant should hold after operation");
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Virtual liquidity invariant should hold after operation within 0.0001% precision");
     }
 
     /**

@@ -376,9 +376,12 @@ contract VirtualLiquidityTest is Test {
         uint256 beta = b3.beta();
         uint256 virtualK = b3.virtualK();
 
-        // Check initial invariant
+        // Check initial invariant with strict precision
         uint256 leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Initial invariant should hold"); // 0.1% tolerance
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+        uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Initial invariant should hold within 0.0001% precision");
 
         // Add liquidity and check invariant still holds
         uint256 inputAmount = 1000 * 1e18;
@@ -389,10 +392,12 @@ contract VirtualLiquidityTest is Test {
         b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
 
-        // Check invariant after operation
+        // Check invariant after operation with strict precision
         (virtualInputTokens, virtualL,) = b3.getVirtualPair();
         leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
-        assertApproxEqRel(leftSide, virtualK, 1e15, "Invariant should hold after add liquidity"); // 0.1% tolerance
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        tolerance = virtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(leftSide, virtualK, tolerance, "Invariant should hold after add liquidity within 0.0001% precision");
     }
 
     /**

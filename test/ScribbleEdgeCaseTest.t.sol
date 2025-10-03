@@ -160,10 +160,14 @@ contract ScribbleEdgeCaseTest is Test {
         uint256 alpha = tokenLaunch.alpha();
         uint256 beta = tokenLaunch.beta();
 
-        // Verify virtual K invariant holds even with extreme parameters
+        // Verify virtual K invariant holds even with extreme parameters with strict precision
         if (virtualK > 0) {
-            assertApproxEqRel(
-                virtualK, (virtualInputTokens + alpha) * (virtualL + beta), 1e15, "Virtual K invariant should hold"
+            // K invariant must be preserved with strict tolerance for mathematical correctness
+            // Using relative tolerance of 0.0001% (1000x stricter than original 0.1%)
+            uint256 leftSide = (virtualInputTokens + alpha) * (virtualL + beta);
+            uint256 tolerance = virtualK / 1e18; // 0.0001% tolerance
+            assertApproxEqAbs(
+                virtualK, leftSide, tolerance, "Virtual K invariant should hold within 0.0001% precision"
             );
             assertTrue(alpha > 0);
             assertTrue(beta > 0);

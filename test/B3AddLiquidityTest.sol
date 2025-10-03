@@ -157,14 +157,15 @@ contract B3AddLiquidityTest is Test {
         uint256 finalVirtualK = b3.virtualK();
         assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change");
 
-        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with precision tolerance
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
         uint256 alpha = b3.alpha();
         uint256 beta = b3.beta();
         uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
-        // Use larger tolerance for ERC20 precision as instructed by user (10^4 for 10^18 values)
-        uint256 tolerance = initialVirtualK / 1e14; // 0.01% tolerance for large numbers
+        // K invariant must be preserved with strict tolerance for mathematical correctness
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
         assertApproxEqAbs(
-            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within precision"
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision"
         );
 
         vm.stopPrank();
@@ -372,6 +373,129 @@ contract B3AddLiquidityTest is Test {
         emit LiquidityAdded(user1, inputAmount, expectedBondingTokensOut);
 
         b3.addLiquidity(inputAmount, 0);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test K invariant preservation with minimal deposit (1 wei)
+     * @dev Critical test for mathematical precision at extreme values
+     */
+    function testAddLiquidityPreservesKMinimalDeposit() public {
+        uint256 inputAmount = 1; // Minimal deposit: 1 wei
+
+        uint256 initialVirtualK = b3.virtualK();
+
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), inputAmount);
+
+        b3.addLiquidity(inputAmount, 0);
+
+        (uint256 finalVInput, uint256 finalVL,) = b3.getVirtualPair();
+
+        // Virtual K constant should remain unchanged
+        uint256 finalVirtualK = b3.virtualK();
+        assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change");
+
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
+        // K invariant must be preserved with strict tolerance even for minimal deposits
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision for minimal deposit"
+        );
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test K invariant preservation near funding goal saturation
+     * @dev Critical test for mathematical precision when approaching funding goal
+     */
+    function testKPreservationNearFundingGoalSaturation() public {
+        // Add liquidity to approach funding goal (99% of goal)
+        uint256 nearSaturationAmount = (FUNDING_GOAL * 99) / 100;
+
+        vm.startPrank(user1);
+        inputToken.approve(address(b3), nearSaturationAmount);
+        b3.addLiquidity(nearSaturationAmount, 0);
+
+        uint256 initialVirtualK = b3.virtualK();
+
+        // Add small additional amount to push closer to saturation
+        uint256 additionalAmount = FUNDING_GOAL / 200; // 0.5% more
+        inputToken.approve(address(b3), additionalAmount);
+        b3.addLiquidity(additionalAmount, 0);
+
+        (uint256 finalVInput, uint256 finalVL,) = b3.getVirtualPair();
+
+        // Virtual K constant should remain unchanged even near saturation
+        uint256 finalVirtualK = b3.virtualK();
+        assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change near saturation");
+
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
+        uint256 alpha = b3.alpha();
+        uint256 beta = b3.beta();
+        uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
+        // K invariant must be preserved with strict tolerance even near funding goal saturation
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision near saturation"
+        );
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test K invariant preservation over 1000+ sequential operations
+     * @dev Critical test for cumulative precision loss detection
+     */
+    function testKPreservationCumulativePrecisionLoss() public {
+        // Create fresh B3 contract for clean state
+        Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+        );
+
+        vault.setClient(address(freshB3), true);
+        freshB3.initializeVaultApproval();
+        freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
+
+        uint256 initialVirtualK = freshB3.virtualK();
+
+        // Perform 1000 sequential add/remove liquidity operations
+        vm.startPrank(user1);
+
+        uint256 operationAmount = 100 * 1e18; // Reasonable amount per operation
+        inputToken.approve(address(freshB3), type(uint256).max); // Approve large amount for all operations
+
+        for (uint256 i = 0; i < 1000; i++) {
+            // Add liquidity
+            uint256 bondingTokensReceived = freshB3.addLiquidity(operationAmount, 0);
+
+            // Remove half of the liquidity received
+            freshB3.removeLiquidity(bondingTokensReceived / 2, 0);
+        }
+
+        (uint256 finalVInput, uint256 finalVL,) = freshB3.getVirtualPair();
+
+        // Virtual K constant should remain unchanged after 1000+ operations
+        uint256 finalVirtualK = freshB3.virtualK();
+        assertEq(finalVirtualK, initialVirtualK, "Virtual K constant should not change after 1000+ operations");
+
+        // Check virtual liquidity invariant (x+alpha)(y+beta)=k holds with strict precision
+        uint256 alpha = freshB3.alpha();
+        uint256 beta = freshB3.beta();
+        uint256 leftSide = (finalVInput + alpha) * (finalVL + beta);
+        // K invariant must be preserved with strict tolerance even after 1000+ sequential operations
+        // Using relative tolerance of 0.0001% (100x stricter than original 0.01%)
+        uint256 tolerance = initialVirtualK / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            leftSide, initialVirtualK, tolerance, "Virtual liquidity invariant should hold within 0.0001% precision after 1000+ operations"
+        );
 
         vm.stopPrank();
     }

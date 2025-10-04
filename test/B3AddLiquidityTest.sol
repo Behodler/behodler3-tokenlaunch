@@ -70,16 +70,37 @@ contract B3AddLiquidityTest is Test {
     function testAddLiquidityBasic() public {
         uint256 inputAmount = 1000 * 1e18;
 
+        // Record all balances before operation
+        uint256 initialUserInputBalance = inputToken.balanceOf(user1);
+        uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialBondingTotalSupply = bondingToken.totalSupply();
+
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
         uint256 bondingTokensOut = b3.addLiquidity(inputAmount, 0);
 
+        // Comprehensive state validation
+        uint256 finalUserInputBalance = inputToken.balanceOf(user1);
+        uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalBondingTotalSupply = bondingToken.totalSupply();
+
         // Should return non-zero bonding tokens
         assertTrue(bondingTokensOut > 0, "Should mint bonding tokens");
 
-        // Check that bonding tokens were actually minted
-        assertEq(bondingToken.balanceOf(user1), bondingTokensOut, "User should receive bonding tokens");
+        // Check that bonding tokens were actually minted to user
+        assertEq(finalUserBondingBalance - initialUserBondingBalance, bondingTokensOut, "User should receive bonding tokens");
+
+        // Validate user input token balance decreased
+        assertEq(initialUserInputBalance - finalUserInputBalance, inputAmount, "User input tokens should decrease by exact amount");
+
+        // Validate vault balance increased
+        assertEq(finalVaultBalance - initialVaultBalance, inputAmount, "Vault balance should increase by deposited amount");
+
+        // Validate bonding token total supply increased
+        assertEq(finalBondingTotalSupply - initialBondingTotalSupply, bondingTokensOut, "Total supply should increase by minted amount");
 
         vm.stopPrank();
     }
@@ -87,16 +108,34 @@ contract B3AddLiquidityTest is Test {
     function testAddLiquidityVaultDeposit() public {
         uint256 inputAmount = 1000 * 1e18;
 
+        // Record all balances before operation
+        uint256 initialUserInputBalance = inputToken.balanceOf(user1);
+        uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialBondingTotalSupply = bondingToken.totalSupply();
+
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 bondingTokensOut = b3.addLiquidity(inputAmount, 0);
 
-        b3.addLiquidity(inputAmount, 0);
+        // Comprehensive state validation
+        uint256 finalUserInputBalance = inputToken.balanceOf(user1);
+        uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         // Check that tokens were deposited to vault
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
         assertEq(finalVaultBalance - initialVaultBalance, inputAmount, "Tokens should be deposited to vault");
+
+        // Validate user input token balance decreased
+        assertEq(initialUserInputBalance - finalUserInputBalance, inputAmount, "User input tokens should decrease");
+
+        // Validate user bonding token balance increased
+        assertEq(finalUserBondingBalance - initialUserBondingBalance, bondingTokensOut, "User bonding tokens should increase");
+
+        // Validate bonding token total supply increased
+        assertEq(finalBondingTotalSupply - initialBondingTotalSupply, bondingTokensOut, "Total supply should increase");
 
         vm.stopPrank();
     }
@@ -130,6 +169,12 @@ contract B3AddLiquidityTest is Test {
         // Quote the expected bonding tokens
         uint256 expectedBondingTokens = b3.quoteAddLiquidity(inputAmount);
 
+        // Record all balances before operation
+        uint256 initialUserInputBalance = inputToken.balanceOf(user1);
+        uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialBondingTotalSupply = bondingToken.totalSupply();
+
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
@@ -137,6 +182,24 @@ contract B3AddLiquidityTest is Test {
 
         // The bonding tokens out should match the quote
         assertEq(bondingTokensOut, expectedBondingTokens, "Bonding tokens should match quote");
+
+        // Comprehensive state validation
+        uint256 finalUserInputBalance = inputToken.balanceOf(user1);
+        uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalBondingTotalSupply = bondingToken.totalSupply();
+
+        // Validate user input token balance decreased
+        assertEq(initialUserInputBalance - finalUserInputBalance, inputAmount, "User input tokens should decrease");
+
+        // Validate user bonding token balance increased
+        assertEq(finalUserBondingBalance - initialUserBondingBalance, bondingTokensOut, "User bonding tokens should increase");
+
+        // Validate vault balance increased
+        assertEq(finalVaultBalance - initialVaultBalance, inputAmount, "Vault balance should increase");
+
+        // Validate bonding token total supply increased
+        assertEq(finalBondingTotalSupply - initialBondingTotalSupply, bondingTokensOut, "Total supply should increase");
 
         vm.stopPrank();
     }
@@ -292,12 +355,36 @@ contract B3AddLiquidityTest is Test {
         // Mint more tokens for this test
         inputToken.mint(user1, inputAmount);
 
+        // Record all balances before operation
+        uint256 initialUserInputBalance = inputToken.balanceOf(user1);
+        uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialBondingTotalSupply = bondingToken.totalSupply();
+
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
 
         uint256 bondingTokensOut = b3.addLiquidity(inputAmount, 0);
 
+        // Comprehensive state validation
+        uint256 finalUserInputBalance = inputToken.balanceOf(user1);
+        uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
+        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalBondingTotalSupply = bondingToken.totalSupply();
+
         assertTrue(bondingTokensOut > 0, "Should handle large amounts");
+
+        // Validate user input token balance decreased
+        assertEq(initialUserInputBalance - finalUserInputBalance, inputAmount, "User input tokens should decrease");
+
+        // Validate user bonding token balance increased
+        assertEq(finalUserBondingBalance - initialUserBondingBalance, bondingTokensOut, "User bonding tokens should increase");
+
+        // Validate vault balance increased
+        assertEq(finalVaultBalance - initialVaultBalance, inputAmount, "Vault balance should increase");
+
+        // Validate bonding token total supply increased
+        assertEq(finalBondingTotalSupply - initialBondingTotalSupply, bondingTokensOut, "Total supply should increase");
 
         // Check virtual pair math still works
         (uint256 vInput, uint256 vL, uint256 k) = b3.getVirtualPair();
@@ -315,11 +402,18 @@ contract B3AddLiquidityTest is Test {
         // Get initial state for bonding curve calculation
         (uint256 initialVInput, uint256 initialVL, uint256 k) = b3.getVirtualPair();
 
+        // Record initial global state
+        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialBondingTotalSupply = bondingToken.totalSupply();
+
         // User 1 adds liquidity
         vm.startPrank(user1);
         inputToken.approve(address(b3), inputAmount);
         uint256 user1Tokens = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
+
+        // Validate user1 bonding tokens received
+        assertEq(bondingToken.balanceOf(user1), user1Tokens, "User1 bonding tokens should increase");
 
         // Get state after user 1 for calculating expected user 2 tokens
         (uint256 vInputAfterUser1, uint256 vLAfterUser1,) = b3.getVirtualPair();
@@ -330,11 +424,26 @@ contract B3AddLiquidityTest is Test {
         uint256 user2Tokens = b3.addLiquidity(inputAmount, 0);
         vm.stopPrank();
 
+        // Validate user2 bonding tokens received
+        assertEq(bondingToken.balanceOf(user2), user2Tokens, "User2 bonding tokens should increase");
+
         // Both users should have bonding tokens
         assertTrue(user1Tokens > 0, "User 1 should have bonding tokens");
         assertTrue(user2Tokens > 0, "User 2 should have bonding tokens");
         assertEq(bondingToken.balanceOf(user1), user1Tokens, "User 1 should have correct bonding token balance");
         assertEq(bondingToken.balanceOf(user2), user2Tokens, "User 2 should have correct bonding token balance");
+
+        // Validate cumulative state changes
+        assertEq(
+            vault.balanceOf(address(inputToken), address(b3)) - initialVaultBalance,
+            2 * inputAmount,
+            "Vault should increase by total deposited"
+        );
+        assertEq(
+            bondingToken.totalSupply() - initialBondingTotalSupply,
+            user1Tokens + user2Tokens,
+            "Total supply should increase by total minted"
+        );
 
         // BONDING CURVE VALIDATION: Second user MUST receive fewer tokens (price increases along curve)
         // This is the fundamental property of a bonding curve - no tolerance, strict inequality

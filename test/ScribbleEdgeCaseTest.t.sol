@@ -138,6 +138,15 @@ contract ScribbleEdgeCaseTest is Test {
         assertTrue(tokenLaunch.desiredAveragePrice() > 0);
         assertTrue(tokenLaunch.desiredAveragePrice() < 1e18);
 
+        // Test price just below minimum (866025403784438646) - should revert
+        vm.expectRevert("VL: Average price must be >= sqrt(0.75) for P0 >= 0.75");
+        tokenLaunch.setGoals(1000 ether, 866025403784438646);
+
+        // Test price just above minimum (866025403784438648) - should succeed
+        tokenLaunch.setGoals(1000 ether, 866025403784438648);
+        assertEq(tokenLaunch.desiredAveragePrice(), 866025403784438648);
+        assertTrue(tokenLaunch.virtualK() > 0, "Virtual K should be set for just-above-minimum price");
+
         // Test price below minimum should fail
         vm.expectRevert("VL: Average price must be >= sqrt(0.75) for P0 >= 0.75");
         tokenLaunch.setGoals(1000 ether, 8e17); // 0.8, below sqrt(0.75)
@@ -322,5 +331,160 @@ contract ScribbleEdgeCaseTest is Test {
         assertEq(address(newTokenLaunch.bondingToken()), address(newBondingToken));
         assertEq(address(newTokenLaunch.vault()), address(newVault));
         assertFalse(newTokenLaunch.vaultApprovalInitialized());
+    }
+
+    /**
+     * @notice Test negative case: Operations fail when goals not set
+     * @dev Validates that attempting operations before setGoals() fails with appropriate error
+     */
+    function testOperationsFailWhenGoalsNotSet() public {
+        // Create a fresh TokenLaunch instance without setting goals
+        MockERC20 newInputToken = new MockERC20("Test", "TEST", 18);
+        MockBondingToken newBondingToken = new MockBondingToken("Bond", "BOND");
+        MockVault newVault = new MockVault(address(this));
+
+        Behodler3Tokenlaunch newTokenLaunch = new Behodler3Tokenlaunch(
+            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IVault(address(newVault))
+        );
+
+        newVault.setClient(address(newTokenLaunch), true);
+        newTokenLaunch.initializeVaultApproval();
+
+        // Mint and approve tokens
+        newInputToken.mint(address(this), 1000 ether);
+        newInputToken.approve(address(newTokenLaunch), 1000 ether);
+
+        // Attempt addLiquidity without setting goals - should fail with goals not set error
+        vm.expectRevert("VL: Goals not set - call setGoals first");
+        newTokenLaunch.addLiquidity(100 ether, 0);
+
+        // For removeLiquidity, first we need to mint some bonding tokens to the user
+        // Otherwise it will fail with "B3: Insufficient bonding tokens" before checking virtualK
+        newBondingToken.mint(address(this), 100 ether);
+
+        // Attempt removeLiquidity without setting goals - should now fail with correct error
+        vm.expectRevert("VL: Goals not set - call setGoals first");
+        newTokenLaunch.removeLiquidity(1, 0);
+
+        // Attempt getCurrentMarginalPrice without setting goals - should fail with Scribble assertion
+        // (Scribble postcondition requires virtualK > 0)
+        vm.expectRevert();
+        newTokenLaunch.getCurrentMarginalPrice();
+    }
+
+    /**
+     * @notice Test initialization state before setGoals()
+     * @dev Validates that contract state is properly initialized to zero values before setGoals()
+     */
+    function testInitializationStateBeforeSetGoals() public {
+        // Create a fresh TokenLaunch instance
+        MockERC20 newInputToken = new MockERC20("Test", "TEST", 18);
+        MockBondingToken newBondingToken = new MockBondingToken("Bond", "BOND");
+        MockVault newVault = new MockVault(address(this));
+
+        Behodler3Tokenlaunch newTokenLaunch = new Behodler3Tokenlaunch(
+            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IVault(address(newVault))
+        );
+
+        // Verify all state variables are properly initialized to zero
+        assertEq(newTokenLaunch.fundingGoal(), 0, "Funding goal should be 0 before setGoals");
+        assertEq(newTokenLaunch.seedInput(), 0, "Seed input should be 0 before setGoals");
+        assertEq(newTokenLaunch.desiredAveragePrice(), 0, "Desired average price should be 0 before setGoals");
+        assertEq(newTokenLaunch.alpha(), 0, "Alpha should be 0 before setGoals");
+        assertEq(newTokenLaunch.beta(), 0, "Beta should be 0 before setGoals");
+        assertEq(newTokenLaunch.virtualK(), 0, "Virtual K should be 0 before setGoals");
+        assertEq(newTokenLaunch.virtualInputTokens(), 0, "Virtual input tokens should be 0 before setGoals");
+        assertEq(newTokenLaunch.virtualL(), 0, "Virtual L should be 0 before setGoals");
+        assertFalse(newTokenLaunch.locked(), "Contract should not be locked initially");
+        assertFalse(newTokenLaunch.vaultApprovalInitialized(), "Vault approval should not be initialized yet");
+    }
+
+    /**
+     * @notice Test negative case: P_avg just below minimum (should revert)
+     * @dev Tests that 866025403784438646 (one unit below minimum) is rejected
+     */
+    function testDesiredAveragePriceBelowMinimumReverts() public {
+        // Test value just below minimum sqrt(0.75)
+        uint256 belowMinimum = 866025403784438646;
+
+        vm.expectRevert("VL: Average price must be >= sqrt(0.75) for P0 >= 0.75");
+        tokenLaunch.setGoals(1000 ether, belowMinimum);
+    }
+
+    /**
+     * @notice Test positive case: P_avg just above minimum (should succeed)
+     * @dev Tests that 866025403784438648 (one unit above minimum) is accepted
+     */
+    function testDesiredAveragePriceAboveMinimumSucceeds() public {
+        // Test value just above minimum sqrt(0.75)
+        uint256 aboveMinimum = 866025403784438648;
+
+        // Should succeed without reverting
+        tokenLaunch.setGoals(1000 ether, aboveMinimum);
+
+        // Verify the goals were set correctly
+        assertEq(tokenLaunch.fundingGoal(), 1000 ether);
+        assertEq(tokenLaunch.desiredAveragePrice(), aboveMinimum);
+        assertTrue(tokenLaunch.virtualK() > 0, "Virtual K should be set");
+        assertTrue(tokenLaunch.alpha() > 0, "Alpha should be set");
+        assertTrue(tokenLaunch.beta() > 0, "Beta should be set");
+    }
+
+    /**
+     * @notice Test P₀ = P_avg² precision at boundary
+     * @dev Validates that initial price P₀ equals P_avg² at minimum boundary
+     *      For minimum P_avg = sqrt(0.75), P₀ should equal 0.75 exactly
+     */
+    function testInitialPricePrecisionAtBoundary() public {
+        // Use minimum P_avg = sqrt(0.75) = 866025403784438647
+        uint256 minPavg = 866025403784438647;
+        tokenLaunch.setGoals(1000 ether, minPavg);
+
+        // Calculate initial price P₀
+        uint256 initialPrice = tokenLaunch.getCurrentMarginalPrice();
+
+        // P₀ should equal P_avg² at the boundary
+        // P_avg² = (866025403784438647)² / 1e18 ≈ 750000000000000000 (0.75 * 1e18)
+        uint256 expectedP0 = (minPavg * minPavg) / 1e18;
+
+        // Allow for minimal precision loss due to integer arithmetic
+        // Using the empirically validated threshold from story 036.33-P3
+        uint256 tolerance = expectedP0 / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            initialPrice,
+            expectedP0,
+            tolerance,
+            "Initial price should equal P_avg squared at minimum boundary"
+        );
+    }
+
+    /**
+     * @notice Test that initial price exactly equals 0.75 at minimum boundary
+     * @dev Validates P₀ = 0.75 when P_avg = sqrt(0.75) at initialization
+     */
+    function testInitialPriceExactlyPointSevenFiveAtMinimumBoundary() public {
+        // Use minimum P_avg = sqrt(0.75) = 866025403784438647
+        uint256 minPavg = 866025403784438647;
+        tokenLaunch.setGoals(1000 ether, minPavg);
+
+        // Get initial price (before any liquidity is added)
+        uint256 initialPrice = tokenLaunch.getCurrentMarginalPrice();
+
+        // Expected initial price is exactly 0.75 (scaled by 1e18)
+        uint256 expectedInitialPrice = 75e16; // 0.75 * 1e18
+
+        // Allow for minimal precision loss due to integer arithmetic
+        // Using the empirically validated threshold from story 036.33-P3
+        uint256 tolerance = expectedInitialPrice / 1e18; // 0.0001% tolerance
+        assertApproxEqAbs(
+            initialPrice,
+            expectedInitialPrice,
+            tolerance,
+            "Initial price should be exactly 0.75 at minimum P_avg boundary"
+        );
+
+        // Also verify it's within reasonable bounds
+        assertTrue(initialPrice >= 749999e12, "Initial price should be >= 0.749999");
+        assertTrue(initialPrice <= 750001e12, "Initial price should be <= 0.750001");
     }
 }

@@ -439,4 +439,172 @@ contract B3FuzzTest is Test {
     function getEdgeCaseCount() external view returns (uint256) {
         return discoveredEdgeCases.length;
     }
+
+    // ============ PRECISION BOUNDARY TESTS (Story 036.31) ============
+
+    /**
+     * @notice Test minimum deposit (1 wei) preserves K invariant
+     * @dev Verifies that even the smallest possible deposit maintains virtual pair consistency
+     */
+    function testMinimumDepositKPreservation() public {
+        vm.startPrank(user1);
+
+        // Get initial K value
+        (, , uint256 initialK) = b3.getVirtualPair();
+
+        // Add minimum possible liquidity (1 wei)
+        uint256 minDeposit = 1;
+        uint256 bondingTokensOut = b3.addLiquidity(minDeposit, 0);
+
+        // Verify we received some bonding tokens
+        assertGt(bondingTokensOut, 0, "Should receive bonding tokens for 1 wei deposit");
+
+        // Get K after operation
+        (, , uint256 finalK) = b3.getVirtualPair();
+
+        // K should remain constant (within rounding tolerance for very small amounts)
+        assertEq(initialK, finalK, "K invariant must be preserved for minimum deposit");
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test maximum safe value deposit without overflow
+     * @dev Verifies that large deposits within safe bounds work correctly
+     */
+    function testMaximumSafeValueDeposit() public {
+        vm.startPrank(user1);
+
+        // Get initial K value
+        (, , uint256 initialK) = b3.getVirtualPair();
+
+        // Use the safe upper bound established in earlier fuzz testing (1e24)
+        uint256 maxSafeDeposit = 1e24;
+
+        // Add maximum safe liquidity
+        uint256 bondingTokensOut = b3.addLiquidity(maxSafeDeposit, 0);
+
+        // Verify we received bonding tokens
+        assertGt(bondingTokensOut, 0, "Should receive bonding tokens for max safe deposit");
+
+        // Get K after operation
+        (, , uint256 finalK) = b3.getVirtualPair();
+
+        // K should remain constant
+        assertEq(initialK, finalK, "K invariant must be preserved for maximum safe deposit");
+
+        // Verify no overflow in bonding token amount
+        assertLt(bondingTokensOut, type(uint128).max, "Bonding tokens should not overflow");
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test precision accumulation over 1000+ sequential operations
+     * @dev Verifies that K invariant holds across many small operations
+     */
+    function testPrecisionAccumulationManyOperations() public {
+        vm.startPrank(user1);
+
+        // Get initial K value
+        (, , uint256 initialK) = b3.getVirtualPair();
+
+        // Perform 1000+ small sequential operations
+        uint256 smallDeposit = 1e18; // 1 token each
+        uint256 totalOperations = 1100;
+
+        uint256 totalBondingTokens = 0;
+
+        // Add liquidity in small increments
+        for (uint256 i = 0; i < totalOperations; i++) {
+            uint256 bondingTokensOut = b3.addLiquidity(smallDeposit, 0);
+            totalBondingTokens += bondingTokensOut;
+
+            // Check K invariant every 100 operations
+            if (i % 100 == 99) {
+                (, , uint256 currentK) = b3.getVirtualPair();
+                assertEq(initialK, currentK, "K invariant must hold during accumulation");
+            }
+        }
+
+        // Final K check after all operations
+        (, , uint256 finalK) = b3.getVirtualPair();
+        assertEq(initialK, finalK, "K invariant must be preserved after 1000+ operations");
+
+        // Verify total bonding tokens received is reasonable
+        assertGt(totalBondingTokens, 0, "Should have accumulated bonding tokens");
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test boundary for very small withdrawals (1 wei)
+     * @dev Verifies that minimum withdrawal operations maintain invariants
+     */
+    function testBoundaryVerySmallWithdrawal() public {
+        vm.startPrank(user1);
+
+        // First deposit to have liquidity
+        uint256 depositAmount = 1000 * 1e18;
+        uint256 bondingTokensReceived = b3.addLiquidity(depositAmount, 0);
+
+        // Get K before withdrawal
+        (, , uint256 kBeforeWithdrawal) = b3.getVirtualPair();
+
+        // Withdraw minimum amount (1 wei of bonding token)
+        uint256 minWithdrawal = 1;
+        uint256 inputTokensOut = b3.removeLiquidity(minWithdrawal, 0);
+
+        // Should receive some input tokens back (even if tiny)
+        assertGt(inputTokensOut, 0, "Should receive input tokens for 1 wei withdrawal");
+
+        // Get K after withdrawal
+        (, , uint256 kAfterWithdrawal) = b3.getVirtualPair();
+
+        // K should remain constant
+        assertEq(kBeforeWithdrawal, kAfterWithdrawal, "K invariant must be preserved for minimum withdrawal");
+
+        // Verify remaining bonding tokens
+        uint256 remainingBondingTokens = bondingToken.balanceOf(user1);
+        assertEq(remainingBondingTokens, bondingTokensReceived - minWithdrawal, "Bonding token balance should be correct");
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @notice Test boundary for full withdrawal of position
+     * @dev Verifies that complete position withdrawal works correctly
+     */
+    function testBoundaryFullWithdrawal() public {
+        vm.startPrank(user1);
+
+        // First deposit to create a position
+        uint256 depositAmount = 5000 * 1e18;
+        uint256 bondingTokensReceived = b3.addLiquidity(depositAmount, 0);
+
+        // Get K before withdrawal
+        (, , uint256 kBeforeWithdrawal) = b3.getVirtualPair();
+
+        // Withdraw entire position
+        uint256 inputTokensOut = b3.removeLiquidity(bondingTokensReceived, 0);
+
+        // Should receive input tokens back (less fees if applicable)
+        assertGt(inputTokensOut, 0, "Should receive input tokens for full withdrawal");
+
+        // Get K after withdrawal
+        (, , uint256 kAfterWithdrawal) = b3.getVirtualPair();
+
+        // K should remain constant
+        assertEq(kBeforeWithdrawal, kAfterWithdrawal, "K invariant must be preserved for full withdrawal");
+
+        // Verify no bonding tokens remain
+        uint256 remainingBondingTokens = bondingToken.balanceOf(user1);
+        assertEq(remainingBondingTokens, 0, "Should have zero bonding tokens after full withdrawal");
+
+        // Verify withdrawal fee was applied (if configured)
+        uint256 expectedMinReturn = depositAmount * (10000 - b3.withdrawalFeeBasisPoints()) / 10000;
+        assertGe(inputTokensOut, expectedMinReturn, "Should account for withdrawal fee correctly");
+
+        vm.stopPrank();
+    }
 }

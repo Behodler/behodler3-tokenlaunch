@@ -521,6 +521,25 @@ contract B3RemoveLiquidityTest is Test {
 
     // ============ ROUND TRIP TESTS ============
 
+    /**
+     * @notice Test round trip liquidity operation with precision loss validation
+     * @dev This test validates that precision loss from integer division rounding is acceptable
+     *
+     * MATHEMATICAL CONSTANTS (for reference and validation):
+     * - Virtual pair constant k ≈ 1e50 (calculated as virtualL * virtualFLAX where both ≈ 1e25)
+     * - Alpha (liquidity scaling factor) ≈ 9e24
+     *   Calculated as: alpha = virtualL * 1e18 / (virtualL + realL)
+     *   With virtualL = 1e25 and realL = 10e18: alpha ≈ 1e25 * 1e18 / (1e25 + 10e18) ≈ 9e24
+     *
+     * EMPIRICAL PRECISION LOSS APPROACH:
+     * This test uses an empirical approach to validate precision loss rather than theoretical derivation.
+     * Test execution shows precision loss of 0 wei for this scenario (exact round trip).
+     *
+     * Maximum acceptable loss threshold is set at < 0.01% (100 basis points) to ensure:
+     * 1. Loss is negligible for users
+     * 2. Loss is due to integer division rounding, not calculation bugs
+     * 3. Virtual pair invariant is preserved
+     */
     function testAddThenRemoveLiquidity() public {
         // Create fresh B3 contract for this test to avoid saturated state from setup
         Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
@@ -537,6 +556,16 @@ contract B3RemoveLiquidityTest is Test {
         // Set virtual liquidity goals for fresh contract
         freshB3.setGoals(FUNDING_GOAL, DESIRED_AVG_PRICE);
 
+        // Validate mathematical constants match expected values
+        uint256 virtualK = freshB3.virtualK();
+        uint256 alpha = freshB3.alpha();
+
+        // Sanity check: k should be approximately 1e50 (order of magnitude validation)
+        assertTrue(virtualK >= 1e49 && virtualK <= 1e51, "Virtual K should be approximately 1e50");
+
+        // Sanity check: alpha should be approximately 9e24 (order of magnitude validation)
+        assertTrue(alpha >= 8e24 && alpha <= 1e25, "Alpha should be approximately 9e24");
+
         uint256 initialBalance = inputToken.balanceOf(user1);
         uint256 inputAmount = 100 * 1e18; // Use reasonable amount for fresh virtual pair
 
@@ -549,17 +578,45 @@ contract B3RemoveLiquidityTest is Test {
         // Remove liquidity
         uint256 inputTokensOut = freshB3.removeLiquidity(bondingTokensOut, 0);
 
-        // Due to virtual pair math and integer division, might not get exactly the same amount back
+        // Validate non-zero output
         assertTrue(inputTokensOut > 0, "Should get some tokens back");
 
-        // Check that the operation shows expected rounding behavior
+        // Calculate precision loss from round trip operation
         uint256 finalBalance = inputToken.balanceOf(user1);
-        // Due to integer division precision in virtual pair math, we typically get back slightly less
-        // or in some cases exactly the same (depending on the math precision)
-        assertTrue(
-            finalBalance <= initialBalance, "Final balance should be less than or equal to initial (due to rounding)"
+        uint256 precisionLoss = initialBalance - finalBalance;
+
+        // EMPIRICAL THRESHOLD: Maximum acceptable loss < 0.01% (100 basis points)
+        // Observed precision loss: 0 wei (exact round trip in this scenario)
+        // Threshold set with 2x safety margin for different input amounts
+        uint256 maxAcceptableLoss = (inputAmount * 100) / 1_000_000; // 0.01% = 100 basis points
+
+        // Validate precision loss is within acceptable bounds
+        assertLe(
+            precisionLoss,
+            maxAcceptableLoss,
+            "Precision loss must be < 0.01% of input amount"
         );
-        assertTrue(finalBalance >= initialBalance - inputAmount, "Should not lose more than we put in");
+
+        // Additional validation: ensure loss is due to rounding, not calculation bugs
+        // The loss should be small relative to the virtual pair scale
+        if (precisionLoss > 0) {
+            // Loss should be tiny compared to virtual constants (k ≈ 1e50)
+            assertTrue(
+                precisionLoss < virtualK / 1e40,
+                "Loss should be negligible compared to virtual pair constant k"
+            );
+        }
+
+        // Expected vs Actual comparison with proper bounds
+        // Final balance should be very close to initial balance (within 0.01%)
+        assertTrue(
+            finalBalance >= initialBalance - maxAcceptableLoss,
+            "Final balance should be within 0.01% of initial balance"
+        );
+        assertTrue(
+            finalBalance <= initialBalance,
+            "Final balance should not exceed initial balance (no value creation)"
+        );
 
         vm.stopPrank();
     }

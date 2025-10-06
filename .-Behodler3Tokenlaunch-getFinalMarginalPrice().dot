@@ -1,9 +1,0 @@
-digraph{
-0[label="ENTRY_POINT
-id: 0"];
-1[label="RETURN 1e18
-id: 1"];
-0->1;
-2[label="RETURN finalPrice
-id: 2"];
-}

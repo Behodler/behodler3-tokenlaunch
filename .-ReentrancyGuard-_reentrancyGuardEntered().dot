@@ -1,7 +1,0 @@
-digraph{
-0[label="ENTRY_POINT
-id: 0"];
-1[label="RETURN _status == ENTERED
-id: 1"];
-0->1;
-}

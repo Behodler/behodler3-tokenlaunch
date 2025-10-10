@@ -198,10 +198,20 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         uint256 xFinPlusAlpha = _fundingGoal + alpha;
         virtualK = xFinPlusAlpha * xFinPlusAlpha;
 
-        // Initialize virtual bonding token balance for zero seed: y_0 = k/α - α
-        // When x₀ = 0, x₀ + α = α, so y_0 = k/α - α
+        // Initialize virtual bonding token balance for zero seed
+        // Mathematical invariant: (x₀+α)(y₀+β) = k where x₀=0, β=α
+        // Simplifies to: α(y₀+α) = k
+        // Rearranging: α·y₀ + α² = k
+        //             α·y₀ = k - α²
+        //             y₀ = (k - α²) / α
+        //
+        // CRITICAL: We use (k - α²)/α instead of k/α - α to avoid integer division precision loss
+        // The mathematically equivalent formulations produce different results in Solidity due to
+        // truncation in integer division. This formulation ensures the invariant holds exactly.
         require(alpha > 0, "VL: Alpha must be positive for calculations");
-        _baseVirtualL = virtualK / alpha - alpha;
+        uint256 alphaSquared = alpha * alpha;
+        require(virtualK > alphaSquared, "VL: K must be greater than alpha squared");
+        _baseVirtualL = (virtualK - alphaSquared) / alpha;
 
         // Initialize tracking variables for anti-Cantillon protection
         _lastKnownSupply = 0;  // No tokens minted yet

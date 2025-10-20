@@ -44,7 +44,7 @@ contract B3RemoveLiquidityTest is Test {
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         vm.stopPrank();
@@ -242,7 +242,7 @@ contract B3RemoveLiquidityTest is Test {
     function testRemoveLiquidityPreservesK() public {
         // Create fresh B3 contract for this test to avoid saturated state from setup
         Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Set vault bonding curve for fresh contract
@@ -306,7 +306,7 @@ contract B3RemoveLiquidityTest is Test {
             // Create fresh B3 contract for each test to avoid saturation
             // Deploy outside of prank so test contract is the owner
             Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
-                IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+                IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
             );
 
             vault.setClient(address(freshB3), true);
@@ -543,7 +543,7 @@ contract B3RemoveLiquidityTest is Test {
     function testAddThenRemoveLiquidity() public {
         // Create fresh B3 contract for this test to avoid saturated state from setup
         Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Set vault bonding curve for fresh contract
@@ -647,7 +647,7 @@ contract B3RemoveLiquidityTest is Test {
     function testRemoveLiquidityPreservesKMinimalDeposit() public {
         // Create fresh B3 contract for this test
         Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         vault.setClient(address(freshB3), true);

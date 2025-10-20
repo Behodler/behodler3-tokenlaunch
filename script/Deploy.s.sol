@@ -5,7 +5,7 @@ import "forge-std/Script.sol";
 import "../src/Behodler3Tokenlaunch.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../src/interfaces/IBondingToken.sol";
-import "@vault/interfaces/IVault.sol";
+import "@vault/interfaces/IYieldStrategy.sol";
 
 /**
  * @title Deploy
@@ -25,7 +25,7 @@ contract Deploy is Script {
 
         // Deploy the TokenLaunch contract
         Behodler3Tokenlaunch tokenLaunch =
-            new Behodler3Tokenlaunch(IERC20(inputTokenAddr), IBondingToken(bondingTokenAddr), IVault(vaultAddr));
+            new Behodler3Tokenlaunch(IERC20(inputTokenAddr), IBondingToken(bondingTokenAddr), IYieldStrategy(vaultAddr));
 
         console.log("Behodler3Tokenlaunch deployed to:", address(tokenLaunch));
         console.log("Owner:", tokenLaunch.owner());

@@ -29,7 +29,7 @@ contract ScribbleEdgeCaseTest is Test {
         vault = new MockVault(address(this));
 
         tokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Initialize vault approval
@@ -323,7 +323,7 @@ contract ScribbleEdgeCaseTest is Test {
 
         // This should succeed with valid parameters
         Behodler3Tokenlaunch newTokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IVault(address(newVault))
+            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IYieldStrategy(address(newVault))
         );
 
         // Verify initial state
@@ -344,7 +344,7 @@ contract ScribbleEdgeCaseTest is Test {
         MockVault newVault = new MockVault(address(this));
 
         Behodler3Tokenlaunch newTokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IVault(address(newVault))
+            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IYieldStrategy(address(newVault))
         );
 
         newVault.setClient(address(newTokenLaunch), true);
@@ -383,7 +383,7 @@ contract ScribbleEdgeCaseTest is Test {
         MockVault newVault = new MockVault(address(this));
 
         Behodler3Tokenlaunch newTokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IVault(address(newVault))
+            IERC20(address(newInputToken)), IBondingToken(address(newBondingToken)), IYieldStrategy(address(newVault))
         );
 
         // Verify all state variables are properly initialized to zero

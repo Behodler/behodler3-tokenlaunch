@@ -44,7 +44,7 @@ contract B3AddLiquidityTest is Test {
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         vm.stopPrank();
@@ -704,7 +704,7 @@ contract B3AddLiquidityTest is Test {
     function testKPreservationCumulativePrecisionLoss() public {
         // Create fresh B3 contract for clean state
         Behodler3Tokenlaunch freshB3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         vault.setClient(address(freshB3), true);

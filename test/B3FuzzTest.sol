@@ -69,7 +69,7 @@ contract B3FuzzTest is Test {
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Set up B3 configuration

@@ -66,7 +66,7 @@ contract B3VirtualLiquidityPathTest is Test {
         vault = new MockVault(owner);
 
         b3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         vault.setClient(address(b3), true);
@@ -81,7 +81,7 @@ contract B3VirtualLiquidityPathTest is Test {
         b3General = new Behodler3Tokenlaunch(
             IERC20(address(inputTokenGeneral)),
             IBondingToken(address(bondingTokenGeneral)),
-            IVault(address(vaultGeneral))
+            IYieldStrategy(address(vaultGeneral))
         );
 
         vaultGeneral.setClient(address(b3General), true);

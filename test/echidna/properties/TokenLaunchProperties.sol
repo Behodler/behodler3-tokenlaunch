@@ -4,14 +4,14 @@ pragma solidity ^0.8.13;
 import "../../../src/Behodler3Tokenlaunch.sol";
 import "../../../src/mocks/MockERC20.sol";
 import "../../../src/mocks/MockBondingToken.sol";
-import "../../../lib/vault/src/interfaces/IVault.sol";
+import "@vault/interfaces/IYieldStrategy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title MockVault
  * @notice Simple vault implementation for testing
  */
-contract MockVault is IVault {
+contract MockVault is IYieldStrategy {
     mapping(address => bool) public clients;
     mapping(address => mapping(address => uint256)) public accountBalances;
 
@@ -42,6 +42,18 @@ contract MockVault is IVault {
 
     function totalWithdrawal(address token, address client) external override {
         // Simplified for testing
+    }
+
+    function withdrawFrom(
+        address token,
+        address client,
+        uint256 amount,
+        address recipient
+    ) external override {
+        require(clients[msg.sender], "Not authorized");
+        require(accountBalances[token][client] >= amount, "Insufficient balance");
+        accountBalances[token][client] -= amount;
+        IERC20(token).transfer(recipient, amount);
     }
 }
 

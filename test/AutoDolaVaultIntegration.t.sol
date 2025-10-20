@@ -6,7 +6,7 @@ import "../src/Behodler3Tokenlaunch.sol";
 import "@vault/mocks/MockVault.sol";
 import "../src/mocks/MockBondingToken.sol";
 import "../src/mocks/MockERC20.sol";
-import "@vault/interfaces/IVault.sol";
+import "@vault/interfaces/IYieldStrategy.sol";
 
 /**
  * @title AutoDolaVaultIntegration
@@ -65,7 +65,7 @@ contract AutoDolaVaultIntegration is Test {
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Authorize B3 contract to interact with vault
@@ -431,7 +431,7 @@ contract AutoDolaVaultIntegration is Test {
         vm.startPrank(user1);
         inputToken.approve(address(unauthorizedVault), MEDIUM_AMOUNT);
 
-        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vm.expectRevert("AYieldStrategy: unauthorized, only authorized clients");
         unauthorizedVault.deposit(address(inputToken), MEDIUM_AMOUNT, user1);
 
         vm.stopPrank();
@@ -445,7 +445,7 @@ contract AutoDolaVaultIntegration is Test {
 
         vm.startPrank(user1);
 
-        vm.expectRevert("Vault: unauthorized, only authorized clients");
+        vm.expectRevert("AYieldStrategy: unauthorized, only authorized clients");
         unauthorizedVault.withdraw(address(inputToken), MEDIUM_AMOUNT, user1);
 
         vm.stopPrank();

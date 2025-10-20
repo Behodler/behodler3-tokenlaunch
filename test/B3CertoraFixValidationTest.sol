@@ -49,7 +49,7 @@ contract B3CertoraFixValidationTest is Test {
         b3 = new Behodler3Tokenlaunch(
             IERC20(address(inputToken)),
             IBondingToken(address(bondingToken)),
-            IVault(address(vault))
+            IYieldStrategy(address(vault))
         );
 
         vm.stopPrank();

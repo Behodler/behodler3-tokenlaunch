@@ -29,7 +29,7 @@ contract ScribbleInvariantTest is Test {
         vault = new MockVault(address(this));
 
         tokenLaunch = new Behodler3Tokenlaunch(
-            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IVault(address(vault))
+            IERC20(address(inputToken)), IBondingToken(address(bondingToken)), IYieldStrategy(address(vault))
         );
 
         // Initialize vault approval

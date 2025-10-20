@@ -59,7 +59,7 @@ contract GasBenchmarkTest is Test {
         tokenLaunch = new Behodler3Tokenlaunch(
             IERC20(address(inputToken)),
             IBondingToken(address(bondingToken)),
-            IVault(address(vault))
+            IYieldStrategy(address(vault))
         );
 
         // Setup vault authorization

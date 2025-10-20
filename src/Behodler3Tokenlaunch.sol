@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@vault/interfaces/IVault.sol";
+import "@vault/interfaces/IYieldStrategy.sol";
 import "./interfaces/IBondingToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -69,7 +69,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     IBondingToken public bondingToken;
 
     /// @notice The vault contract for token storage
-    IVault public vault;
+    IYieldStrategy public vault;
 
     /// @notice Whether the contract is locked for emergency purposes
     bool public locked;
@@ -139,7 +139,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     // ============ CONSTRUCTOR ============
 
-    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IVault _vault) Ownable(msg.sender) {
+    constructor(IERC20 _inputToken, IBondingToken _bondingToken, IYieldStrategy _vault) Ownable(msg.sender) {
         // Store references but defer approval until vault authorizes this contract
         inputToken = _inputToken;
         bondingToken = _bondingToken;
@@ -590,7 +590,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     /// #if_succeeds {:msg "Vault should be updated to new address"} address(vault) == _vault;
     /// #if_succeeds {:msg "Vault approval state should be reset"} vaultApprovalInitialized == false;
     function setVault(address _vault) external onlyOwner {
-        _setVault(IVault(_vault));
+        _setVault(IYieldStrategy(_vault));
     }
 
     /**
@@ -598,7 +598,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
      * @dev Sets vault address and resets approval state for security
      * @param _vault The new vault contract address
      */
-    function _setVault(IVault _vault) internal {
+    function _setVault(IYieldStrategy _vault) internal {
         address oldVault = address(vault);
         vault = _vault;
 

@@ -177,7 +177,7 @@ contract B3InflationAttackTest is Test {
         uint256 legitimateBondingTokens = b3.addLiquidity(LEGITIMATE_DEPOSIT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalanceAfterDeposit = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalanceAfterDeposit = vault.principalOf(address(inputToken), address(b3));
         console.log("\n=== STEP 1: Legitimate Liquidity Added ===");
         console.log("Vault balance:", vaultBalanceAfterDeposit);
         console.log("Legitimate bonding tokens:", legitimateBondingTokens);
@@ -211,7 +211,7 @@ contract B3InflationAttackTest is Test {
         console.log("% of vault drained:", (tokensReceived * 100) / vaultBalanceAfterDeposit);
 
         // STEP 4: Verify vault has been partially drained
-        uint256 vaultAfter = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfter = vault.principalOf(address(inputToken), address(b3));
         console.log("\n=== STEP 4: Vault Impact ===");
         console.log("Vault remaining:", vaultAfter);
         console.log("Vault drained:", vaultBalanceAfterDeposit - vaultAfter);
@@ -339,7 +339,7 @@ contract B3InflationAttackTest is Test {
         b3.addLiquidity(LEGITIMATE_DEPOSIT, 0);
         vm.stopPrank();
 
-        uint256 vaultBefore = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBefore = vault.principalOf(address(inputToken), address(b3));
 
         // Attacker inflates supply
         vm.startPrank(attacker);
@@ -360,7 +360,7 @@ contract B3InflationAttackTest is Test {
 
         vm.stopPrank();
 
-        uint256 vaultAfter = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfter = vault.principalOf(address(inputToken), address(b3));
         uint256 percentDrained = (totalDrained * 100) / vaultBefore;
 
         console.log("\n=== MULTIPLE REDEMPTIONS ATTACK ===");

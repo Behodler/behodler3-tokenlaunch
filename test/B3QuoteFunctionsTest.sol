@@ -277,7 +277,7 @@ contract B3QuoteFunctionsTest is Test {
         // Store initial state
         (uint256 initialVInput, uint256 initialVL, uint256 initialK) = b3.getVirtualPair();
         uint256 initialBondingSupply = bondingToken.totalSupply();
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         // Call quote functions multiple times
         for (uint256 i = 0; i < 10; i++) {
@@ -288,7 +288,7 @@ contract B3QuoteFunctionsTest is Test {
         // State should be unchanged
         (uint256 finalVInput, uint256 finalVL, uint256 finalK) = b3.getVirtualPair();
         uint256 finalBondingSupply = bondingToken.totalSupply();
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         assertEq(initialVInput, finalVInput, "Virtual input should not change");
         assertEq(initialVL, finalVL, "Virtual L should not change");

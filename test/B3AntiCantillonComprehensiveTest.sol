@@ -116,7 +116,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens1 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance1 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance1 = vault.principalOf(address(inputToken), address(b3));
         console.log("Round 1 - Vault balance:", vaultBalance1);
         console.log("Round 1 - Bonding tokens:", bondingTokens1);
 
@@ -139,7 +139,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens2 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance2 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance2 = vault.principalOf(address(inputToken), address(b3));
         console.log("Round 2 - Vault balance:", vaultBalance2);
         console.log("Round 2 - Bonding tokens minted:", bondingTokens2);
 
@@ -188,7 +188,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens1 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultAfterAdd1 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfterAdd1 = vault.principalOf(address(inputToken), address(b3));
         console.log("After Add 1 - Vault balance:", vaultAfterAdd1);
         console.log("After Add 1 - Bonding tokens:", bondingTokens1);
 
@@ -212,7 +212,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens2 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultAfterAdd2 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfterAdd2 = vault.principalOf(address(inputToken), address(b3));
         console.log("After Add 2 - Vault balance:", vaultAfterAdd2);
         console.log("After Add 2 - Bonding tokens:", bondingTokens2);
 
@@ -257,7 +257,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
         console.log("Legitimate bonding tokens:", bondingTokens);
         console.log("Vault balance:", vaultBalance);
 
@@ -320,7 +320,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
 
         // Verify initial state
         uint256 initialSupply = bondingToken.totalSupply();
-        uint256 initialVault = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVault = vault.principalOf(address(inputToken), address(b3));
         console.log("Initial supply:", initialSupply);
         console.log("Initial vault balance:", initialVault);
         assertEq(initialSupply, 0, "Initial supply should be zero");
@@ -346,7 +346,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultAfterAdd = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfterAdd = vault.principalOf(address(inputToken), address(b3));
         uint256 totalSupplyAfterAdd = bondingToken.totalSupply();
         console.log("Bonding tokens from add:", bondingTokens);
         console.log("Vault after add:", vaultAfterAdd);
@@ -396,7 +396,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens2 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
         console.log("Vault balance:", vaultBalance);
         console.log("User1 tokens:", bondingTokens1);
         console.log("User2 tokens:", bondingTokens2);
@@ -455,7 +455,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance1 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance1 = vault.principalOf(address(inputToken), address(b3));
 
         // Get bonding curve quote for a SMALL redemption (normal mode)
         uint256 smallRedemption = bondingTokens / 10; // 10% of tokens
@@ -500,7 +500,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
 
         // After this add, _lastKnownSupply is updated to current totalSupply
         // So the external mint from Phase 2 is now "absorbed" and no longer detected
-        uint256 vaultBalance2 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance2 = vault.principalOf(address(inputToken), address(b3));
         uint256 totalSupply2 = bondingToken.totalSupply();
 
         console.log("\nPhase 3 - Total supply after Add 2:", totalSupply2);
@@ -546,7 +546,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 legitTokens = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
         console.log("Initial vault balance:", vaultBalance);
         console.log("Legitimate tokens:", legitTokens);
 
@@ -644,7 +644,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         uint256 bondingTokens1 = b3.addLiquidity(DEPOSIT_AMOUNT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance1 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance1 = vault.principalOf(address(inputToken), address(b3));
 
         vm.prank(externalMinter);
         bondingToken.mint(externalMinter, 1); // 1 wei external mint
@@ -663,14 +663,14 @@ contract B3AntiCantillonComprehensiveTest is Test {
         vm.prank(externalMinter);
         bondingToken.mint(externalMinter, SMALL_MINT);
 
-        uint256 vaultBeforeRedeem = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBeforeRedeem = vault.principalOf(address(inputToken), address(b3));
 
         // External minter redeems all
         vm.startPrank(externalMinter);
         uint256 redeemed = b3.removeLiquidity(SMALL_MINT + 1, 0); // +1 from previous case
         vm.stopPrank();
 
-        uint256 vaultAfterRedeem = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfterRedeem = vault.principalOf(address(inputToken), address(b3));
         console.log("Vault before redeem:", vaultBeforeRedeem);
         console.log("Vault after redeem:", vaultAfterRedeem);
         console.log("Amount redeemed:", redeemed);
@@ -705,7 +705,7 @@ contract B3AntiCantillonComprehensiveTest is Test {
         console.log("\n--- Edge Case 4: State Consistency ---");
 
         uint256 currentSupply = bondingToken.totalSupply();
-        uint256 currentVault = vault.balanceOf(address(inputToken), address(b3));
+        uint256 currentVault = vault.principalOf(address(inputToken), address(b3));
 
         console.log("Final total supply:", currentSupply);
         console.log("Final vault balance:", currentVault);

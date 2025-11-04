@@ -162,7 +162,7 @@ contract AutoDolaVaultIntegration is Test {
         recordGasBenchmark("DEPOSIT", "small_amount", SMALL_AMOUNT, gasUsed);
 
         // Verify deposit
-        assertEq(vault.balanceOf(address(inputToken), address(this)), SMALL_AMOUNT);
+        assertEq(vault.principalOf(address(inputToken), address(this)), SMALL_AMOUNT);
         assertEq(vault.getTotalDeposits(address(inputToken)), SMALL_AMOUNT);
     }
 
@@ -178,7 +178,7 @@ contract AutoDolaVaultIntegration is Test {
 
         recordGasBenchmark("DEPOSIT", "medium_amount", MEDIUM_AMOUNT, gasUsed);
 
-        assertEq(vault.balanceOf(address(inputToken), address(this)), MEDIUM_AMOUNT);
+        assertEq(vault.principalOf(address(inputToken), address(this)), MEDIUM_AMOUNT);
         assertEq(vault.getTotalDeposits(address(inputToken)), MEDIUM_AMOUNT);
     }
 
@@ -194,7 +194,7 @@ contract AutoDolaVaultIntegration is Test {
 
         recordGasBenchmark("DEPOSIT", "large_amount", LARGE_AMOUNT, gasUsed);
 
-        assertEq(vault.balanceOf(address(inputToken), address(this)), LARGE_AMOUNT);
+        assertEq(vault.principalOf(address(inputToken), address(this)), LARGE_AMOUNT);
         assertEq(vault.getTotalDeposits(address(inputToken)), LARGE_AMOUNT);
     }
 
@@ -219,7 +219,7 @@ contract AutoDolaVaultIntegration is Test {
 
         // Verify withdrawal
         assertEq(inputToken.balanceOf(address(this)), balanceBefore + SMALL_AMOUNT);
-        assertEq(vault.balanceOf(address(inputToken), address(this)), 0);
+        assertEq(vault.principalOf(address(inputToken), address(this)), 0);
         assertEq(vault.getTotalDeposits(address(inputToken)), 0);
     }
 
@@ -239,7 +239,7 @@ contract AutoDolaVaultIntegration is Test {
         recordGasBenchmark("WITHDRAW", "medium_amount", MEDIUM_AMOUNT, gasUsed);
 
         assertEq(inputToken.balanceOf(address(this)), balanceBefore + MEDIUM_AMOUNT);
-        assertEq(vault.balanceOf(address(inputToken), address(this)), 0);
+        assertEq(vault.principalOf(address(inputToken), address(this)), 0);
     }
 
     /**
@@ -258,7 +258,7 @@ contract AutoDolaVaultIntegration is Test {
         recordGasBenchmark("WITHDRAW", "large_amount", LARGE_AMOUNT, gasUsed);
 
         assertEq(inputToken.balanceOf(address(this)), balanceBefore + LARGE_AMOUNT);
-        assertEq(vault.balanceOf(address(inputToken), address(this)), 0);
+        assertEq(vault.principalOf(address(inputToken), address(this)), 0);
     }
 
     // ============ INTEGRATED OPERATIONS WITH B3 TOKENLAUNCH ============
@@ -279,7 +279,7 @@ contract AutoDolaVaultIntegration is Test {
         recordGasBenchmark("INTEGRATED_DEPOSIT", "add_liquidity", depositAmount, gasUsed);
 
         // Verify vault received tokens through B3
-        assertTrue(vault.balanceOf(address(inputToken), address(b3)) > 0);
+        assertTrue(vault.principalOf(address(inputToken), address(b3)) > 0);
         assertTrue(bondingToken.balanceOf(user1) > 0);
 
         vm.stopPrank();
@@ -375,7 +375,7 @@ contract AutoDolaVaultIntegration is Test {
 
         recordGasBenchmark("DEPOSIT", "max_amount", MAX_AMOUNT, gasUsed);
 
-        assertEq(vault.balanceOf(address(inputToken), address(this)), MAX_AMOUNT);
+        assertEq(vault.principalOf(address(inputToken), address(this)), MAX_AMOUNT);
     }
 
     // ============ FUTURE AUTODOLA OPERATIONS (PLACEHOLDERS) ============
@@ -473,7 +473,7 @@ contract AutoDolaVaultIntegration is Test {
         recordGasBenchmark("MULTI_USER_DEPOSIT", "second_deposit", MEDIUM_AMOUNT, gasUsed2);
 
         // Verify both deposits - note that mock vault tracks balance by caller (authorized client)
-        assertEq(vault.balanceOf(address(inputToken), address(this)), MEDIUM_AMOUNT * 2);
+        assertEq(vault.principalOf(address(inputToken), address(this)), MEDIUM_AMOUNT * 2);
         assertEq(vault.getTotalDeposits(address(inputToken)), MEDIUM_AMOUNT * 2);
     }
 

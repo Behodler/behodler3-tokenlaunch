@@ -81,7 +81,7 @@ contract B3RemoveLiquidityTest is Test {
         // Record all balances before operation
         uint256 initialUserInputBalance = inputToken.balanceOf(user1);
         uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
 
         uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
@@ -92,7 +92,7 @@ contract B3RemoveLiquidityTest is Test {
         // Comprehensive state validation
         uint256 finalUserInputBalance = inputToken.balanceOf(user1);
         uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         // Validate user input token balance increased
@@ -116,7 +116,7 @@ contract B3RemoveLiquidityTest is Test {
         // Record all balances before operation
         uint256 initialUserInputBalance = inputToken.balanceOf(user1);
         uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
 
         vm.startPrank(user1);
@@ -126,7 +126,7 @@ contract B3RemoveLiquidityTest is Test {
         // Comprehensive state validation
         uint256 finalUserInputBalance = inputToken.balanceOf(user1);
         uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         // Check that bonding tokens were burned from user
@@ -147,7 +147,7 @@ contract B3RemoveLiquidityTest is Test {
     function testRemoveLiquidityVaultWithdrawal() public {
         uint256 bondingTokenAmount = 10_000;
 
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialUserInputBalance = inputToken.balanceOf(user1);
         uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
@@ -157,7 +157,7 @@ contract B3RemoveLiquidityTest is Test {
         uint256 inputTokensOut = b3.removeLiquidity(bondingTokenAmount, 0);
 
         // Check that tokens were withdrawn from vault
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         assertEq(initialVaultBalance - finalVaultBalance, inputTokensOut, "Tokens should be withdrawn from vault");
 
         // Check that user received input tokens
@@ -208,7 +208,7 @@ contract B3RemoveLiquidityTest is Test {
         // Record all balances before operation
         uint256 initialUserInputBalance = inputToken.balanceOf(user1);
         uint256 initialUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
 
         vm.startPrank(user1);
@@ -221,7 +221,7 @@ contract B3RemoveLiquidityTest is Test {
         // Comprehensive state validation
         uint256 finalUserInputBalance = inputToken.balanceOf(user1);
         uint256 finalUserBondingBalance = bondingToken.balanceOf(user1);
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         // Validate user input token balance increased
@@ -403,7 +403,7 @@ contract B3RemoveLiquidityTest is Test {
         // Simulate vault being drained by directly manipulating the vault state
         // We'll prank as the B3 contract to withdraw its own balance
         vm.startPrank(address(b3));
-        vault.withdraw(address(inputToken), vault.balanceOf(address(inputToken), address(b3)), address(b3));
+        vault.withdraw(address(inputToken), vault.principalOf(address(inputToken), address(b3)), address(b3));
         vm.stopPrank();
 
         vm.startPrank(user1);
@@ -420,7 +420,7 @@ contract B3RemoveLiquidityTest is Test {
 
         // Record all balances before operation
         uint256 initialUserInputBalance = inputToken.balanceOf(user1);
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
 
         vm.startPrank(user1);
@@ -429,7 +429,7 @@ contract B3RemoveLiquidityTest is Test {
 
         // Comprehensive state validation
         uint256 finalUserInputBalance = inputToken.balanceOf(user1);
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         // Should have no bonding tokens left
@@ -459,7 +459,7 @@ contract B3RemoveLiquidityTest is Test {
         uint256 bondingAmount = 10_000;
 
         // Record initial state
-        uint256 initialVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 initialVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 initialBondingTotalSupply = bondingToken.totalSupply();
 
         // User 1 removes liquidity - record balances before
@@ -474,7 +474,7 @@ contract B3RemoveLiquidityTest is Test {
         assertEq(inputToken.balanceOf(user1) - user1InitialInputBalance, user1TokensOut, "User1 should receive exact input tokens");
         assertEq(user1InitialBondingBalance - bondingToken.balanceOf(user1), bondingAmount, "User1 bonding tokens should decrease");
 
-        uint256 vaultAfterUser1 = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultAfterUser1 = vault.principalOf(address(inputToken), address(b3));
         uint256 totalSupplyAfterUser1 = bondingToken.totalSupply();
 
         // User 2 removes liquidity - record balances before
@@ -494,7 +494,7 @@ contract B3RemoveLiquidityTest is Test {
         assertTrue(user2TokensOut > 0, "User 2 should receive tokens");
 
         // Validate cumulative state changes
-        uint256 finalVaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 finalVaultBalance = vault.principalOf(address(inputToken), address(b3));
         uint256 finalBondingTotalSupply = bondingToken.totalSupply();
 
         assertEq(initialVaultBalance - finalVaultBalance, user1TokensOut + user2TokensOut, "Vault should decrease by total withdrawn");

@@ -80,7 +80,7 @@ contract B3RebaseTest is Test {
 
         console.log("=== STEP 1: Initial Deposit ===");
         console.log("Bonding tokens received:", bondingTokensReceived);
-        console.log("Vault balance:", vault.balanceOf(address(inputToken), address(b3)));
+        console.log("Vault balance:", vault.principalOf(address(inputToken), address(b3)));
 
         // Calculate redemption value BEFORE external minting
         uint256 redemptionBefore = b3.quoteRemoveLiquidity(bondingTokensReceived);
@@ -138,7 +138,7 @@ contract B3RebaseTest is Test {
         bondingToken.mint(attacker, EXTERNAL_MINT_AMOUNT);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         // Calculate what EVERYONE could redeem
         uint256 legitRedemption = b3.quoteRemoveLiquidity(legitTokens);
@@ -173,7 +173,7 @@ contract B3RebaseTest is Test {
         b3.addLiquidity(LEGITIMATE_DEPOSIT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         // Step 2: External mint
         vm.startPrank(attacker);
@@ -228,7 +228,7 @@ contract B3RebaseTest is Test {
         vm.stopPrank();
 
         uint256 totalSupply = bondingToken.totalSupply();
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         // Legitimate user's share of supply
         uint256 legitSharePercent = (legitTokens * 100) / totalSupply;
@@ -266,7 +266,7 @@ contract B3RebaseTest is Test {
         uint256 legitTokens = b3.addLiquidity(LEGITIMATE_DEPOSIT, 0);
         vm.stopPrank();
 
-        uint256 vaultBalance = vault.balanceOf(address(inputToken), address(b3));
+        uint256 vaultBalance = vault.principalOf(address(inputToken), address(b3));
 
         // Step 2: Extreme external mint (10x the legitimate supply)
         uint256 extremeMint = legitTokens * 10;

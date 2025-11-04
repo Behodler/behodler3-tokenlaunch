@@ -36,6 +36,14 @@ contract MockVault is IYieldStrategy {
         return accountBalances[token][account];
     }
 
+    function principalOf(address token, address account) external view override returns (uint256) {
+        return accountBalances[token][account];
+    }
+
+    function totalBalanceOf(address token, address account) external view override returns (uint256) {
+        return accountBalances[token][account];
+    }
+
     function emergencyWithdraw(uint256 amount) external override {
         // Simplified for testing
     }

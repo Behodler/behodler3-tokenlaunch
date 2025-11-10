@@ -3,9 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Behodler3Tokenlaunch.sol";
-import "../src/mocks/MockERC20.sol";
 import "../src/mocks/MockBondingToken.sol";
-import "@vault/mocks/MockVault.sol";
+import "@vault/mocks/MockERC20.sol";
+import "@vault/concreteYieldStrategies/AutoDolaYieldStrategy.sol";
+import "@vault/mocks/MockAutoDOLA.sol";
+import "@vault/mocks/MockMainRewarder.sol";
 
 /**
  * @title Gas Benchmark Test for TokenLaunch Contract
@@ -16,7 +18,7 @@ contract GasBenchmarkTest is Test {
     Behodler3Tokenlaunch public tokenLaunch;
     MockERC20 public inputToken;
     MockBondingToken public bondingToken;
-    MockVault public vault;
+    AutoDolaYieldStrategy public vault;
 
     address public owner;
     address public user1;
@@ -53,7 +55,20 @@ contract GasBenchmarkTest is Test {
         // Deploy mock contracts
         inputToken = new MockERC20("Test Token", "TEST", 18);
         bondingToken = new MockBondingToken("Bonding Token", "BOND");
-        vault = new MockVault(address(this));
+
+        // Deploy mocked external dependencies first
+        MockERC20 tokeToken = new MockERC20("TOKE", "TOKE", 18);
+        MockMainRewarder mainRewarder = new MockMainRewarder(address(tokeToken));
+        MockAutoDOLA autoDolaVault = new MockAutoDOLA(address(inputToken), address(mainRewarder));
+
+        // Deploy real AutoDolaYieldStrategy with mocked externals
+        vault = new AutoDolaYieldStrategy(
+            owner,
+            address(inputToken),
+            address(tokeToken),
+            address(autoDolaVault),
+            address(mainRewarder)
+        );
 
         // Deploy TokenLaunch contract
         tokenLaunch = new Behodler3Tokenlaunch(

@@ -6,7 +6,9 @@ import "../src/Behodler3Tokenlaunch.sol";
 import "../src/Pauser.sol";
 import "../src/mocks/MockBondingToken.sol";
 import "@vault/mocks/MockERC20.sol";
-import "@vault/mocks/MockVault.sol";
+import "@vault/concreteYieldStrategies/AutoDolaYieldStrategy.sol";
+import "@vault/mocks/MockAutoDOLA.sol";
+import "@vault/mocks/MockMainRewarder.sol";
 
 /**
  * @title PauserTest
@@ -19,7 +21,7 @@ contract PauserTest is Test {
     MockBondingToken public bondingToken;
     MockERC20 public inputToken;
     MockERC20 public eyeToken;
-    MockVault public vault;
+    AutoDolaYieldStrategy public vault;
 
     address public owner = address(0x1);
     address public user1 = address(0x2);
@@ -45,7 +47,20 @@ contract PauserTest is Test {
         bondingToken = new MockBondingToken("BondingToken", "BOND");
         inputToken = new MockERC20("TestToken", "TEST", 18);
         eyeToken = new MockERC20("EYE", "EYE", 18);
-        vault = new MockVault(owner);
+
+        // Deploy mocked external dependencies first
+        MockERC20 tokeToken = new MockERC20("TOKE", "TOKE", 18);
+        MockMainRewarder mainRewarder = new MockMainRewarder(address(tokeToken));
+        MockAutoDOLA autoDolaVault = new MockAutoDOLA(address(inputToken), address(mainRewarder));
+
+        // Deploy real AutoDolaYieldStrategy with mocked externals
+        vault = new AutoDolaYieldStrategy(
+            owner,
+            address(inputToken),
+            address(tokeToken),
+            address(autoDolaVault),
+            address(mainRewarder)
+        );
 
         // Deploy B3 contract
         b3 = new Behodler3Tokenlaunch(inputToken, bondingToken, vault);

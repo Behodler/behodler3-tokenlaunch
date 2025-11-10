@@ -6,6 +6,7 @@ import "./interfaces/IBondingToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title Behodler3Tokenlaunch (B3)
@@ -59,7 +60,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// #invariant {:msg "Cross-function invariant: virtual L and bonding token supply remain mathematically linked"}
 /// virtualK == 0 || (virtualL > 0 && bondingToken.totalSupply() >= 0);
 /// #invariant {:msg "Withdrawal fee must be within valid range (0 to 10000 basis points)"} withdrawalFeeBasisPoints >= 0 && withdrawalFeeBasisPoints <= 10000;
-contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
+contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     // ============ STATE VARIABLES ============
 
     /// @notice The input token being bootstrapped
@@ -76,6 +77,9 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
 
     /// @notice Whether the vault approval has been initialized
     bool public vaultApprovalInitialized;
+
+    /// @notice Address of the Pauser contract that can trigger pause
+    address public pauser;
 
     // Virtual Pair State - CRITICAL: These are separate from actual token balances
     /// @notice Virtual amount of input tokens in the pair (starts at 10000)
@@ -129,11 +133,17 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
     uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
     event WithdrawalFeeUpdated(uint256 oldFee, uint256 newFee);
     event FeeCollected(address indexed user, uint256 bondingTokenAmount, uint256 feeAmount);
+    event PauserUpdated(address indexed oldPauser, address indexed newPauser);
 
     // ============ MODIFIERS ============
 
     modifier notLocked() {
         require(!locked, "B3: Contract is locked");
+        _;
+    }
+
+    modifier onlyPauser() {
+        require(msg.sender == pauser, "B3: Caller is not the pauser");
         _;
     }
 
@@ -680,6 +690,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         external
         nonReentrant
         notLocked
+        whenNotPaused
         returns (uint256 bondingTokensOut)
     {
         require(inputAmount > 0, "B3: Input amount must be greater than 0");
@@ -755,6 +766,7 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         external
         nonReentrant
         notLocked
+        whenNotPaused
         returns (uint256 inputTokensOut)
     {
         require(bondingTokenAmount > 0, "B3: Bonding token amount must be greater than 0");
@@ -959,6 +971,40 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable {
         withdrawalFeeBasisPoints = _feeBasisPoints;
 
         emit WithdrawalFeeUpdated(oldFee, _feeBasisPoints);
+    }
+
+    /**
+     * @notice Set the pauser contract address
+     * @param _pauser Address of the Pauser contract
+     */
+    /// #if_succeeds {:msg "Only owner can set pauser"} msg.sender == owner();
+    /// #if_succeeds {:msg "Pauser should be updated to new address"} pauser == _pauser;
+    function setPauser(address _pauser) external onlyOwner {
+        require(_pauser != address(0), "B3: Pauser cannot be zero address");
+
+        address oldPauser = pauser;
+        pauser = _pauser;
+
+        emit PauserUpdated(oldPauser, _pauser);
+    }
+
+    /**
+     * @notice Pause the contract (only callable by Pauser contract)
+     */
+    /// #if_succeeds {:msg "Only pauser can pause the contract"} msg.sender == pauser;
+    /// #if_succeeds {:msg "Contract should be paused after function call"} paused() == true;
+    function pause() external onlyPauser {
+        _pause();
+    }
+
+    /**
+     * @notice Unpause the contract (only callable by owner or pauser contract)
+     */
+    /// #if_succeeds {:msg "Only owner or pauser can unpause the contract"} msg.sender == owner() || msg.sender == pauser;
+    /// #if_succeeds {:msg "Contract should be unpaused after function call"} paused() == false;
+    function unpause() external {
+        require(msg.sender == owner() || msg.sender == pauser, "B3: Caller is not owner or pauser");
+        _unpause();
     }
 
     // ============ VIEW FUNCTIONS - ALL STUBS ============

@@ -36,7 +36,11 @@ contract ZeroSeedVirtualLiquidityTest is Test {
     uint256 constant MAX_P_AVG = 0.985e18; // Just below 0.99 to avoid overflow
 
     // Gas cost tracking
-    uint256 constant MAX_ACCEPTABLE_GAS = 250000; // 250k gas limit for operations
+    // NOTE: Threshold raised to 400k to account for AutoDolaYieldStrategy vs MockVault
+    // AutoDolaYieldStrategy is a real implementation (not a mock) and consumes ~50% more gas
+    // This is expected behavior - the migration from MockVault to AutoDolaYieldStrategy
+    // trades simplicity for production-ready functionality
+    uint256 constant MAX_ACCEPTABLE_GAS = 400000; // 400k gas limit for operations (raised from 250k)
 
     event VirtualLiquidityGoalsSet(
         uint256 fundingGoal,

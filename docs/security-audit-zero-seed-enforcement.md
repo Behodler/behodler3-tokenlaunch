@@ -219,13 +219,17 @@ function setGoals(uint256 _fundingGoal, uint256 _desiredAveragePrice) external o
 
 #### 5.2 State-Based Protection
 ```solidity
-modifier notLocked() {
-    require(!locked, "B3: Contract is locked");
-    _;
+// Contract inherits from OpenZeppelin Pausable
+function pause() external onlyOwner {
+    _pause();
+}
+
+function unpause() external onlyOwner {
+    _unpause();
 }
 ```
 
-**Security Analysis**: Emergency lock functionality remains intact with zero seed enforcement.
+**Security Analysis**: Emergency pause functionality (via OpenZeppelin Pausable) remains intact with zero seed enforcement. The `whenNotPaused` modifier protects critical operations.
 
 ### 6. Economic Security Analysis
 

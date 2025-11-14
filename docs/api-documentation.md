@@ -57,7 +57,7 @@ Adds liquidity to the pool using standard ERC20 approve/transfer pattern.
 
 **Prerequisites:**
 - User must approve the contract: `inputToken.approve(contractAddress, inputAmount)`
-- Contract must not be locked
+- Contract must not be paused
 - Vault approval must be initialized
 
 **Parameters:**
@@ -95,7 +95,7 @@ Removes liquidity from the pool by burning bonding tokens with optional withdraw
 
 **Prerequisites:**
 - User must own sufficient bonding tokens
-- Contract must not be locked
+- Contract must not be paused
 
 **Parameters:**
 - `bondingTokenAmount`: Amount of bonding tokens to burn (full amount including fee portion)
@@ -342,38 +342,27 @@ Emergency function to revoke vault approval for the input token.
 
 ### Access Control
 
-#### lock
+#### pause
 
 ```solidity
-function lock() external onlyOwner
+function pause() external onlyOwner
 ```
 
-Locks the contract to prevent all operations.
+Pauses the contract to prevent critical operations (addLiquidity, removeLiquidity).
 
 **Events Emitted:**
-- `ContractLocked()`
+- `Paused(address account)`
 
-#### unlock
+#### unpause
 
 ```solidity
-function unlock() external onlyOwner
+function unpause() external onlyOwner
 ```
 
-Unlocks the contract to resume operations.
+Unpauses the contract to resume normal operations.
 
 **Events Emitted:**
-- `ContractUnlocked()`
-
-#### setAutoLock
-
-```solidity
-function setAutoLock(bool _autoLock) external onlyOwner
-```
-
-Configures automatic locking when funding goal is reached.
-
-**Parameters:**
-- `_autoLock`: Whether to enable auto-lock functionality
+- `Unpaused(address account)`
 
 #### setWithdrawalFee
 
@@ -422,19 +411,19 @@ event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256
 
 Emitted when liquidity is removed from the pool.
 
-### ContractLocked
+### Paused
 ```solidity
-event ContractLocked()
+event Paused(address account)
 ```
 
-Emitted when the contract is locked.
+Emitted when the contract is paused.
 
-### ContractUnlocked
+### Unpaused
 ```solidity
-event ContractUnlocked()
+event Unpaused(address account)
 ```
 
-Emitted when the contract is unlocked.
+Emitted when the contract is unpaused.
 
 ### VaultChanged
 ```solidity
@@ -476,7 +465,7 @@ Emitted when virtual liquidity parameters are configured.
 
 ### Common Errors
 
-- **"Contract is locked"**: Operations attempted while contract is locked
+- **"Pausable: paused"**: Operations attempted while contract is paused
 - **"Insufficient input tokens out"**: Slippage protection triggered on remove liquidity
 - **"Insufficient bonding tokens out"**: Slippage protection triggered on add liquidity
 - **"Transfer failed"**: ERC20 transfer failed (check approval and balance)

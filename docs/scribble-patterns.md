@@ -37,8 +37,6 @@ This document captures the effective patterns, practices, and guidelines discove
 **Pattern**: Ensure boolean states remain valid
 
 ```solidity
-/// #invariant {:msg "Contract cannot be locked and unlocked simultaneously"}
-/// locked == true || locked == false;
 /// #invariant {:msg "Vault approval state must be consistent"}
 /// vaultApprovalInitialized == true || vaultApprovalInitialized == false;
 ```
@@ -74,7 +72,6 @@ This document captures the effective patterns, practices, and guidelines discove
 
 ```solidity
 /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
-/// #if_succeeds {:msg "Contract must not be locked"} !old(locked);
 /// #if_succeeds {:msg "Vault approval must be initialized"} old(vaultApprovalInitialized);
 /// #if_succeeds {:msg "Virtual K must be set (goals initialized)"} old(virtualK) > 0;
 /// #if_succeeds {:msg "User must have sufficient input token balance"}
@@ -148,7 +145,6 @@ This document captures the effective patterns, practices, and guidelines discove
 
 ```solidity
 /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
-/// #if_succeeds {:msg "Contract must not be locked"} !old(locked);
 /// #if_succeeds {:msg "Vault approval must be initialized"} old(vaultApprovalInitialized);
 /// #if_succeeds {:msg "Virtual K must be set (goals initialized)"} old(virtualK) > 0;
 /// #if_succeeds {:msg "User must have sufficient input token balance"}
@@ -161,7 +157,7 @@ This document captures the effective patterns, practices, and guidelines discove
 /// baseBondingTokenOut == 0 || bondingToken.balanceOf(msg.sender) == old(bondingToken.balanceOf(msg.sender)) + baseBondingTokenOut;
 /// #if_succeeds {:msg "Virtual input tokens should increase"}
 /// baseBondingTokenOut == 0 || virtualInputTokens == old(virtualInputTokens) + inputAmount;
-function addLiquidity(uint inputAmount, uint minBondingTokens) external nonReentrant returns (uint baseBondingTokenOut)
+function addLiquidity(uint inputAmount, uint minBondingTokens) external nonReentrant whenNotPaused returns (uint baseBondingTokenOut)
 ```
 
 **Why this is effective**:
@@ -267,17 +263,17 @@ function sell(address seller, uint baseBondingToken, uint baseInputToken) extern
 
 ```solidity
 // BAD: No access control verification
-/// #if_succeeds autoLock == _autoLock;
-function setAutoLock(bool _autoLock) external
+/// #if_succeeds withdrawalFeeBasisPoints == _feeBasisPoints;
+function setWithdrawalFee(uint256 _feeBasisPoints) external
 ```
 
 **Solution**: Always verify access control first
 
 ```solidity
 // GOOD: Verifies ownership before state changes
-/// #if_succeeds {:msg "Only owner can set auto-lock"} msg.sender == owner();
-/// #if_succeeds {:msg "Auto-lock should be set to specified value"} autoLock == _autoLock;
-function setAutoLock(bool _autoLock) external onlyOwner
+/// #if_succeeds {:msg "Only owner can set withdrawal fee"} msg.sender == owner();
+/// #if_succeeds {:msg "Withdrawal fee should be set to specified value"} withdrawalFeeBasisPoints == _feeBasisPoints;
+function setWithdrawalFee(uint256 _feeBasisPoints) external onlyOwner
 ```
 
 ### 5. Pitfall: Not Using old() for State Comparisons

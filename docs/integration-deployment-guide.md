@@ -344,12 +344,12 @@ tokenLaunch.on("FeeCollected", (user, bondingTokenAmount, feeAmount, event) => {
 });
 
 // Monitor system events
-tokenLaunch.on("ContractLocked", (event) => {
-    console.log("Contract has been locked");
+tokenLaunch.on("Paused", (account, event) => {
+    console.log(`Contract has been paused by ${account}`);
 });
 
-tokenLaunch.on("ContractUnlocked", (event) => {
-    console.log("Contract has been unlocked");
+tokenLaunch.on("Unpaused", (account, event) => {
+    console.log(`Contract has been unpaused by ${account}`);
 });
 
 // Monitor configuration changes

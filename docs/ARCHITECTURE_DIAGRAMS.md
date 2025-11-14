@@ -24,7 +24,7 @@ User Request: removeLiquidity(bondingTokenAmount, minInputTokens)
 ├─────────────────────────────────────────────────────────────────┤
 │ • bondingTokenAmount > 0                                        │
 │ • User has sufficient bonding tokens                           │
-│ • Contract not locked                                          │
+│ • Contract not paused                                          │
 │ • Vault approval initialized                                   │
 └─────────────────────────────────────────────────────────────────┘
                                    ↓
@@ -122,9 +122,9 @@ User Request: removeLiquidity(bondingTokenAmount, minInputTokens)
                   ↓ YES              ↓ NO
                Continue            Error: "Insufficient bonding tokens"
                   ↓
-              Contract locked?
+              Contract paused?
                 ↓ NO               ↓ YES
-             Continue            Error: "Contract locked"
+             Continue            Error: "Pausable: paused"
                 ↓
         withdrawalFeeBasisPoints == 0?
               ↓ NO                    ↓ YES
@@ -171,14 +171,14 @@ User Request: removeLiquidity(bondingTokenAmount, minInputTokens)
                     │    │   Operations    │    │
                     │    │   Available     │    │
                     │    └─────────────────┘    │
-         lock()     │              ↑            │ setWithdrawalFee()
+         pause()    │              ↑            │ setWithdrawalFee()
             ↓       │              │            ↓
     ┌─────────────────┐           │     ┌─────────────────┐
-    │     LOCKED      │           │     │  FEE_UPDATED    │
-    │   No operations │           │     │ New fee active  │
-    │    allowed      │           │     │                 │
+    │     PAUSED      │           │     │  FEE_UPDATED    │
+    │  Critical ops   │           │     │ New fee active  │
+    │    blocked      │           │     │                 │
     └─────────────────┘           │     └─────────────────┘
-            ↓ unlock()            │              ↑
+            ↓ unpause()           │              ↑
             └─────────────────────┘              │
                                                  │
                        ┌─────────────────────────┘
@@ -196,7 +196,8 @@ Input: bondingTokenAmount, minInputTokens
 │    VALIDATION       │
 │   • Amount > 0      │
 │   • User balance    │
-│   • Contract unlocked│
+│   • Contract not    │
+│     paused          │
 └─────────────────────┘
         ↓ PASS            ↓ FAIL
 ┌─────────────────────┐   └→ REVERT
@@ -269,7 +270,7 @@ External Call: removeLiquidity(amount, minTokens)
 ┌─────────────────────────────────────┐
 │          ENTRY POINT                │
 │ • Reentrancy guard                  │
-│ • Lock modifier                     │
+│ • Pausable check (whenNotPaused)    │
 │ • Parameter validation              │
 └─────────────────────────────────────┘
     ↓
@@ -320,12 +321,12 @@ External Call: removeLiquidity(amount, minTokens)
     │  amount must be     │        ↓ NO              ↓ YES
     │  greater than 0"    │  ┌─────────────────┐    Continue
     └─────────────────────┘  │ REVERT:         │       ↓
-                             │ "Insufficient   │   Contract locked?
+                             │ "Insufficient   │   Contract paused?
                              │  bonding tokens"│    ↓ YES          ↓ NO
                              └─────────────────┘  ┌──────────────┐  Continue
                                                   │ REVERT:      │     ↓
-                                                  │ Via notLocked│ Fee calculation
-                                                  │ modifier     │     ↓
+                                                  │ "Pausable:   │ Fee calculation
+                                                  │  paused"     │     ↓
                                                   └──────────────┘  Mathematical
                                                                    operations
                                                                       ↓
@@ -355,7 +356,7 @@ External Call: removeLiquidity(amount, minTokens)
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  INPUT VALIDATION ERRORS          │  SYSTEM STATE ERRORS    │
-│  • Amount <= 0                    │  • Contract locked      │
+│  • Amount <= 0                    │  • Contract paused      │
 │  • Insufficient balance           │  • Vault not initialized│
 │  • Zero address                   │  • Reentrancy detected  │
 │                                   │                         │

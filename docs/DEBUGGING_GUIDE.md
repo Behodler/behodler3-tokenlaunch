@@ -310,7 +310,7 @@ require fee <= 10000;
 **Pattern 3: State Preconditions**
 ```javascript
 // Ensure valid initial state
-require !locked();
+require !paused();
 require vaultApprovalInitialized();
 require e.msg.sender == owner();
 ```
@@ -333,7 +333,7 @@ require e.msg.sender == owner();
    rule enhancedFeeTest(env e) {
        uint256 amount;
        require amount > 0 && amount <= 1000000;  // Reasonable bounds
-       require !locked();                        // Valid state
+       require !paused();                        // Valid state
 
        // Test logic here
    }

@@ -35,7 +35,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  */
 /// #invariant {:msg "Virtual K must be consistent with virtual pair product"} virtualK == 0 || virtualK == (virtualInputTokens + alpha) * (virtualL + beta);
 /// #invariant {:msg "Virtual liquidity parameters must be properly initialized together"} (virtualK > 0 && alpha > 0 && beta > 0) || (virtualK == 0 && alpha == 0 && beta == 0);
-/// #invariant {:msg "Contract cannot be locked and unlocked simultaneously"} locked == true || locked == false;
 /// #invariant {:msg "Vault approval state must be consistent"} vaultApprovalInitialized == true || vaultApprovalInitialized == false;
 /// #invariant {:msg "Seed input must always be zero (zero seed enforcement)"} seedInput == 0;
 /// #invariant {:msg "Desired average price must be between 0 and 1e18 when set"} desiredAveragePrice == 0 || (desiredAveragePrice > 0 && desiredAveragePrice < 1e18);
@@ -49,8 +48,6 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 /// #invariant {:msg "Token supply management: bonding token supply must not exceed funding goal"} fundingGoal == 0 || bondingToken.totalSupply() <= fundingGoal;
 /// #invariant {:msg "Token supply consistency: total supply starts at zero and grows"} bondingToken.totalSupply() >= 0;
 /// #invariant {:msg "Supply bounds: virtual L must be positive when virtual K is set"} virtualK == 0 || virtualL > 0;
-/// #invariant {:msg "Cross-function state consistency: locked state must prevent all operations"}
-/// !locked || (true);
 /// #invariant {:msg "Add/remove liquidity state consistency: virtual pair maintains K invariant"}
 /// virtualK == 0 || virtualK > 0;
 /// #invariant {:msg "State consistency across operations: virtual input tokens should not exceed funding goal"}
@@ -662,7 +659,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
      * @return bondingTokensOut Amount of bonding tokens minted
      */
     /// #if_succeeds {:msg "Input amount must be positive"} inputAmount > 0;
-    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
     /// #if_succeeds {:msg "Vault approval must be initialized"} vaultApprovalInitialized;
     /// #if_succeeds {:msg "Virtual K must be set (goals initialized)"} virtualK > 0;
     /// #if_succeeds {:msg "Output must meet minimum requirement"} bondingTokensOut >= minBondingTokens;
@@ -735,7 +731,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
      * @notice Security: Fee cannot exceed 100% (10000 basis points) due to validation in setWithdrawalFee
      */
     /// #if_succeeds {:msg "Bonding token amount must be positive"} bondingTokenAmount > 0;
-    /// #if_succeeds {:msg "Contract must not be locked"} !locked;
     /// #if_succeeds {:msg "User must have sufficient bonding tokens"} bondingTokenAmount <=
     /// bondingToken.balanceOf(msg.sender);
     /// #if_succeeds {:msg "Output must meet minimum requirement"} inputTokensOut >= minInputTokens;

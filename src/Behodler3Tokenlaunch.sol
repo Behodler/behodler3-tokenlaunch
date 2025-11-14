@@ -72,9 +72,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     /// @notice The vault contract for token storage
     IYieldStrategy public vault;
 
-    /// @notice Whether the contract is locked for emergency purposes
-    bool public locked;
-
     /// @notice Whether the vault approval has been initialized
     bool public vaultApprovalInitialized;
 
@@ -116,9 +113,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     /// @notice Desired average price for virtual liquidity mode (scaled by 1e18)
     uint256 public desiredAveragePrice;
 
-    /// @notice Auto-lock functionality flag
-    bool public autoLock;
-
     /// @notice Withdrawal fee in basis points (0-10000, where 10000 = 100%)
     uint256 public withdrawalFeeBasisPoints;
 
@@ -126,8 +120,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
 
     event LiquidityAdded(address indexed user, uint256 inputAmount, uint256 bondingTokensOut);
     event LiquidityRemoved(address indexed user, uint256 bondingTokenAmount, uint256 inputTokensOut);
-    event ContractLocked();
-    event ContractUnlocked();
     event VaultChanged(address indexed oldVault, address indexed newVault);
     event VirtualLiquidityGoalsSet( // Always zero with zero seed enforcement
     uint256 fundingGoal, uint256 seedInput, uint256 desiredAveragePrice, uint256 alpha, uint256 beta, uint256 virtualK);
@@ -136,11 +128,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     event PauserUpdated(address indexed oldPauser, address indexed newPauser);
 
     // ============ MODIFIERS ============
-
-    modifier notLocked() {
-        require(!locked, "B3: Contract is locked");
-        _;
-    }
 
     modifier onlyPauser() {
         require(msg.sender == pauser, "B3: Caller is not the pauser");
@@ -689,7 +676,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     function addLiquidity(uint256 inputAmount, uint256 minBondingTokens)
         external
         nonReentrant
-        notLocked
         whenNotPaused
         returns (uint256 bondingTokensOut)
     {
@@ -765,7 +751,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     function removeLiquidity(uint256 bondingTokenAmount, uint256 minInputTokens)
         external
         nonReentrant
-        notLocked
         whenNotPaused
         returns (uint256 inputTokensOut)
     {
@@ -898,36 +883,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
     }
 
     // ============ OWNER FUNCTIONS - ALL STUBS ============
-
-    /**
-     * @notice Lock the contract to prevent operations
-     */
-    /// #if_succeeds {:msg "Only owner can lock the contract"} msg.sender == owner();
-    /// #if_succeeds {:msg "Contract should be locked after function call"} locked == true;
-    function lock() external onlyOwner {
-        locked = true;
-        emit ContractLocked();
-    }
-
-    /**
-     * @notice Unlock the contract to allow operations
-     */
-    /// #if_succeeds {:msg "Only owner can unlock the contract"} msg.sender == owner();
-    /// #if_succeeds {:msg "Contract should be unlocked after function call"} locked == false;
-    function unlock() external onlyOwner {
-        locked = false;
-        emit ContractUnlocked();
-    }
-
-    /**
-     * @notice Set auto-lock functionality
-     * @param _autoLock Whether to enable auto-lock
-     */
-    /// #if_succeeds {:msg "Only owner can set auto-lock"} msg.sender == owner();
-    /// #if_succeeds {:msg "Auto-lock should be set to specified value"} autoLock == _autoLock;
-    function setAutoLock(bool _autoLock) external onlyOwner {
-        autoLock = _autoLock;
-    }
 
     /**
      * @notice Set withdrawal fee in basis points (0-10000) for removeLiquidity operations

@@ -285,28 +285,10 @@ contract GasBenchmarkTest is Test {
 
         uint256 gasStart;
 
-        // Lock/unlock operations
-        gasStart = gasleft();
-        tokenLaunch.lock();
-        recordGas("lock", gasStart, "owner_operation");
-
-        gasStart = gasleft();
-        tokenLaunch.unlock();
-        recordGas("unlock", gasStart, "owner_operation");
-
         // Fee setting
         gasStart = gasleft();
         tokenLaunch.setWithdrawalFee(100); // 1%
         recordGas("setWithdrawalFee", gasStart, "owner_operation");
-
-        // Auto-lock setting
-        gasStart = gasleft();
-        tokenLaunch.setAutoLock(true);
-        recordGas("setAutoLock", gasStart, "owner_operation");
-
-        gasStart = gasleft();
-        tokenLaunch.setAutoLock(false);
-        recordGas("setAutoLock", gasStart, "owner_operation");
 
         // Goal setting (expensive operation)
         gasStart = gasleft();
@@ -323,7 +305,7 @@ contract GasBenchmarkTest is Test {
         console.log("Total measurements taken: %d", measurements.length);
 
         // Calculate averages by operation type
-        string[10] memory operations = [
+        string[9] memory operations = [
             "addLiquidity",
             "removeLiquidity",
             "quoteAddLiquidity",
@@ -331,7 +313,6 @@ contract GasBenchmarkTest is Test {
             "getCurrentMarginalPrice",
             "getAveragePrice",
             "getTotalRaised",
-            "lock",
             "setWithdrawalFee",
             "setGoals"
         ];

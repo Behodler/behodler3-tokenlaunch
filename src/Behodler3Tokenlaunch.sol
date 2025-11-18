@@ -777,8 +777,15 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
             inputTokensOut = _calculateInputTokensOut(effectiveBondingTokens);
         }
 
-        // Check MEV protection
-        require(inputTokensOut >= minInputTokens, "B3: Insufficient output amount");
+        // Withdraw and transfer input tokens to user (only if amount > 0)
+        if (inputTokensOut > 0) {
+            uint balanceBefore = inputToken.balanceOf(address(this));
+            vault.withdraw(address(inputToken), (inputTokensOut), address(this));
+            uint withdrawn =  inputToken.balanceOf(address(this)) - balanceBefore;
+            
+            require(withdrawn >= minInputTokens, "B3: Insufficient output amount.");
+            require(inputToken.transfer(msg.sender, (withdrawn)), "B3: Transfer failed");
+        }
 
         // Burn full bonding token amount from user (supply decreases by full amount)
         bondingToken.burn(msg.sender, bondingTokenAmount);
@@ -786,12 +793,6 @@ contract Behodler3Tokenlaunch is ReentrancyGuard, Ownable, Pausable {
         // Emit fee collection event if fee was charged
         if (feeAmount > 0) {
             emit FeeCollected(msg.sender, bondingTokenAmount, feeAmount);
-        }
-
-        // Withdraw and transfer input tokens to user (only if amount > 0)
-        if (inputTokensOut > 0) {
-            vault.withdraw(address(inputToken), inputTokensOut, address(this));
-            require(inputToken.transfer(msg.sender, inputTokensOut), "B3: Transfer failed");
         }
 
         // Update virtual pair state using full bonding token amount for supply,
